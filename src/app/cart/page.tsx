@@ -12,33 +12,46 @@ import { useCart } from "../../context/CartContext";
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeItem } = useCart();
-  const [shippingBelow500g, setShippingBelow500g] = useState(40);
-  const [shippingAbove500g, setShippingAbove500g] = useState(80);
-  const [shippingWeightThreshold, setShippingWeightThreshold] = useState(500);
+  const [shippingDetails, setShippingDetails] = useState<{
+    subtotal: number;
+    totalWeight: number;
+    baseShipping: number;
+    extraWeightCharge: number;
+    shipping: number;
+    grandTotal: number;
+  } | null>(null);
+  const [isLoadingShipping, setIsLoadingShipping] = useState(false);
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchShippingDetails = async () => {
+      if (cartItems.length === 0) {
+        setShippingDetails(null);
+        return;
+      }
+      setIsLoadingShipping(true);
       try {
         const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-        const res = await axios.get(`${apiURL}/settings`);
-        if (res.data.success && res.data.data) {
-          const s = res.data.data;
-          if (s.shippingBelow500g !== undefined) setShippingBelow500g(s.shippingBelow500g);
-          if (s.shippingAbove500g !== undefined) setShippingAbove500g(s.shippingAbove500g);
-          if (s.shippingWeightThreshold !== undefined) setShippingWeightThreshold(s.shippingWeightThreshold);
+        const items = cartItems.map(item => ({
+          product: item.id,
+          quantity: item.quantity,
+          size: item.size === "Standard" ? undefined : item.size
+        }));
+        const res = await axios.post(`${apiURL}/payments/calculate-shipping`, { items });
+        if (res.data.success) {
+          setShippingDetails(res.data.data);
         }
       } catch (err) {
-        console.error("Failed to fetch settings for shipping", err);
+        console.error("Failed to calculate shipping from backend", err);
+      } finally {
+        setIsLoadingShipping(false);
       }
     };
-    fetchSettings();
-  }, []);
+    fetchShippingDetails();
+  }, [cartItems]);
 
-  const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const totalWeightGrams = cartItems.reduce((acc, item) => acc + (item.weight || 0) * item.quantity, 0);
-  
-  const shippingFee = subtotal > 0 ? (totalWeightGrams > shippingWeightThreshold ? shippingAbove500g : shippingBelow500g) : 0;
-  const total = subtotal + shippingFee;
+  const subtotal = shippingDetails ? shippingDetails.subtotal : cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const shippingFee = shippingDetails ? shippingDetails.shipping : 0;
+  const total = shippingDetails ? shippingDetails.grandTotal : subtotal;
 
   return (
     <div className="min-h-screen bg-white pt-24 pb-16">
@@ -171,11 +184,23 @@ export default function CartPage() {
                     )}
                   </span>
                 </div>
-                {totalWeightGrams > 0 && (
+                {shippingDetails && shippingDetails.totalWeight > 0 && (
                   <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
                     <span>Total Weight</span>
-                    <span>{totalWeightGrams.toFixed(2)} g</span>
+                    <span>{shippingDetails.totalWeight.toFixed(2)} kg</span>
                   </div>
+                )}
+                {shippingDetails && shippingDetails.extraWeightCharge > 0 && (
+                  <>
+                    <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
+                      <span>Base Shipping (first 1kg)</span>
+                      <span>₹{shippingDetails.baseShipping}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
+                      <span>Extra Weight Charge</span>
+                      <span>₹{shippingDetails.extraWeightCharge}</span>
+                    </div>
+                  </>
                 )}
               </div>
 

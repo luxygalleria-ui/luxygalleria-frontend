@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../../context/CartContext";
 import { getImageUrl, handleImageError } from "../../lib/imageUtils";
 import DynamicBanner from "./DynamicBanner";
+import { getAPIURL } from "../../lib/apiClient";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -29,8 +30,8 @@ export default function Navbar() {
     if (isSearchOpen && allProducts.length === 0) {
       const fetchProducts = async () => {
         try {
-          const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-          const res = await axios.get(`${BASE_URL}/v1/products`);
+          const apiURL = getAPIURL();
+          const res = await axios.get(`${apiURL}/products`);
           if (res.data.success && res.data.data) {
             setAllProducts(res.data.data);
           }
