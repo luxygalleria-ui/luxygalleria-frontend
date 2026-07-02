@@ -22,6 +22,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any | null>(null);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [liveResults, setLiveResults] = useState<any[]>([]);
 
@@ -65,13 +66,21 @@ export default function Navbar() {
   };
 
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("luxygalleria_user"));
+    const savedUser = localStorage.getItem("luxygalleria_user");
+    if (savedUser) {
+      setIsLoggedIn(true);
+      setUser(JSON.parse(savedUser));
+    } else {
+      setIsLoggedIn(false);
+      setUser(null);
+    }
   }, [pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("luxygalleria_user");
     localStorage.removeItem("luxygalleria_cart");
     setIsLoggedIn(false);
+    setUser(null);
     clearCart();
     router.push("/sign-in");
   };
@@ -140,10 +149,19 @@ export default function Navbar() {
         </button>
         <Link
           href={isLoggedIn ? "/profile" : "/sign-in"}
-          className="p-2 text-slate-900 hover:text-[#A68B5B] transition-colors duration-200 pointer-events-auto"
+          className="p-2 text-slate-900 hover:text-[#A68B5B] transition-colors duration-200 pointer-events-auto flex items-center justify-center"
           aria-label="Account"
         >
-          <User size={22} strokeWidth={2} />
+          {user && user.avatar ? (
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-6 h-6 rounded-full object-cover border border-slate-200"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <User size={22} strokeWidth={2} />
+          )}
         </Link>
       </div>
 
@@ -260,7 +278,16 @@ export default function Navbar() {
                   className="w-10 h-10 flex items-center justify-center text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
                   aria-label="Account"
                 >
-                  <User size={24} strokeWidth={2} className="w-6 h-6" />
+                  {user && user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <User size={24} strokeWidth={2} className="w-6 h-6" />
+                  )}
                 </Link>
 
                 {/* Logout Icon (Desktop) */}
@@ -407,7 +434,16 @@ export default function Navbar() {
                     className="w-10 h-10 flex items-center justify-center text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
                     aria-label="Account"
                   >
-                    <User size={24} strokeWidth={2} className="w-6 h-6" />
+                    {user && user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <User size={24} strokeWidth={2} className="w-6 h-6" />
+                    )}
                   </Link>
                 </motion.div>
               </motion.div>

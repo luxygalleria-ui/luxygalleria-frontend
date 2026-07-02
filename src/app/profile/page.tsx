@@ -14,6 +14,7 @@ interface UserProfile {
   _id: string;
   token?: string;
   phone?: string;
+  avatar?: string;
 }
 
 export default function ProfilePage() {
@@ -294,9 +295,18 @@ export default function ProfilePage() {
         <aside className="w-full md:w-72 border-r border-slate-100 flex flex-col shrink-0">
           {/* User Profile Info */}
           <div className="p-8 flex flex-col items-center border-b border-slate-100">
-            <div className="w-24 h-24 rounded-[32px] bg-[#8B5E34] text-white flex items-center justify-center text-4xl font-bold mb-4 shadow-lg shadow-[#8B5E34]/20">
-              {initials}
-            </div>
+            {user.avatar ? (
+              <img 
+                src={user.avatar} 
+                alt={user.name} 
+                className="w-24 h-24 rounded-[32px] object-cover mb-4 shadow-lg shadow-[#8B5E34]/20"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-[32px] bg-[#8B5E34] text-white flex items-center justify-center text-4xl font-bold mb-4 shadow-lg shadow-[#8B5E34]/20">
+                {initials}
+              </div>
+            )}
             <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
               VIP
             </div>
