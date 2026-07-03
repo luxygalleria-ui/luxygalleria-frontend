@@ -6,7 +6,8 @@ import Link from "next/link";
 import { ChevronRight, Minus, Plus, ShoppingBag, Trash2, ArrowRight } from "lucide-react";
 import axios from "axios";
 
-import { useCart } from "../../context/CartContext";
+import { useCart, calculateLocalShipping } from "../../context/CartContext";
+import { getAPIURL } from "../../lib/apiClient";
 
 // ─── Page Component ───────────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ export default function CartPage() {
       }
       setIsLoadingShipping(true);
       try {
-        const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        const apiURL = getAPIURL();
         const items = cartItems.map(item => ({
           product: item.id,
           quantity: item.quantity,
@@ -39,9 +40,12 @@ export default function CartPage() {
         const res = await axios.post(`${apiURL}/payments/calculate-shipping`, { items });
         if (res.data.success) {
           setShippingDetails(res.data.data);
+        } else {
+          setShippingDetails(calculateLocalShipping(cartItems));
         }
       } catch (err) {
-        console.error("Failed to calculate shipping from backend", err);
+        console.error("Failed to calculate shipping from backend, falling back to local calculation", err);
+        setShippingDetails(calculateLocalShipping(cartItems));
       } finally {
         setIsLoadingShipping(false);
       }

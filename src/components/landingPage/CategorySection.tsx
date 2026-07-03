@@ -132,13 +132,13 @@ export default function CategorySection() {
           className={`font-serif font-normal text-4xl md:text-5xl lg:text-7xl text-slate-900 leading-tight mb-6 transition-all duration-700 delay-100 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
         >
-          Sensory Categories
+          Galleria Collections
         </h2>
         <p
           className={`font-sans font-normal text-lg md:text-xl text-slate-500 leading-relaxed max-w-3xl mx-auto transition-all duration-700 delay-200 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
         >
-          Explore our world of high-performance luxury cosmetics, where science meets sensory indulgence.
+          Explore our curated selection of premium imported drinks, gourmet snacks, and luxury delicacies.
         </p>
       </div>
 

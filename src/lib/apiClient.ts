@@ -2,6 +2,11 @@ import axios from 'axios';
 
 // Centralized API client configuration
 export const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:5000';
+    }
+  }
   // Use environment variable if available
   if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '').replace('/api', '');
@@ -11,6 +16,11 @@ export const getBaseURL = () => {
 };
 
 export const getAPIURL = () => {
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:5000/api/v1';
+    }
+  }
   if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
     // If env already has /api/v1, return as-is
     if (process.env.NEXT_PUBLIC_API_URL.includes('/api/v1')) {

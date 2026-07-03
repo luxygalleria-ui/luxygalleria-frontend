@@ -5,7 +5,7 @@ import Image from "next/image";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Check, ShieldCheck, MapPin, X, Lock, ArrowRight } from "lucide-react";
-import { useCart } from "../../context/CartContext";
+import { useCart, calculateLocalShipping } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import { getAPIURL } from "../../lib/apiClient";
 
@@ -57,9 +57,12 @@ export default function CheckoutPage() {
         const res = await axios.post(`${apiURL}/payments/calculate-shipping`, { items });
         if (res.data.success) {
           setShippingDetails(res.data.data);
+        } else {
+          setShippingDetails(calculateLocalShipping(cartItems));
         }
       } catch (err) {
-        console.error("Failed to calculate shipping from backend", err);
+        console.error("Failed to calculate shipping from backend, falling back to local calculation", err);
+        setShippingDetails(calculateLocalShipping(cartItems));
       } finally {
         setIsLoadingShipping(false);
       }

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../../../context/ToastContext";
 import CartAnimation from "../../../components/CartAnimation";
-import { useCart } from "../../../context/CartContext";
+import { useCart, parseWeightFromVolume } from "../../../context/CartContext";
 import { getImageUrl, handleImageError } from "../../../lib/imageUtils";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -147,9 +147,9 @@ export default function ProductDetailPage() {
       id: product.id,
       name: product.name,
       image: getImageUrl(product.images[0]),
-      price: product.currentPrice,
+      price: selectedVariant.price || product.currentPrice,
       currency: product.currency,
-      weight: selectedVariant.weight || (product as any).weight || 0,
+      weight: selectedVariant.weight || parseWeightFromVolume(product.sizes?.[selectedSize] || '') || (product as any).weight || 0,
       size: product.sizes?.[selectedSize],
       quantity: qty,
     });

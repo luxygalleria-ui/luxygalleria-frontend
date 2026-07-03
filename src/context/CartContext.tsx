@@ -14,6 +14,79 @@ export interface CartItem {
   weight?: number;
 }
 
+export const parseWeightFromVolume = (volume: string): number | null => {
+  if (!volume) return null;
+  const match = volume.match(/(\d+(?:\.\d+)?)\s*(kg|g|l|ml)/i);
+  if (match) {
+    const value = parseFloat(match[1]);
+    const unit = match[2].toLowerCase();
+    if (unit === 'kg' || unit === 'l') {
+      return value;
+    } else if (unit === 'g' || unit === 'ml') {
+      return value / 1000;
+    }
+  }
+  return null;
+};
+
+export interface ShippingDetails {
+  subtotal: number;
+  totalWeight: number;
+  baseShipping: number;
+  extraWeightCharge: number;
+  shipping: number;
+  grandTotal: number;
+}
+
+export const calculateLocalShipping = (cartItems: CartItem[]): ShippingDetails => {
+  let subtotal = 0;
+  let totalWeight = 0;
+
+  for (const item of cartItems) {
+    const qty = item.quantity || 1;
+    const price = item.price || 0;
+    
+    let itemWeight = item.weight || 0;
+    if (!itemWeight && item.size) {
+      const parsed = parseWeightFromVolume(item.size);
+      if (parsed !== null) {
+        itemWeight = parsed;
+      }
+    }
+    
+    subtotal += price * qty;
+    totalWeight += itemWeight * qty;
+  }
+
+  let baseShipping = 0;
+  let extraWeightCharge = 0;
+  let shipping = 0;
+  let grandTotal = 0;
+
+  const roundedWeight = Math.round(totalWeight * 1000) / 1000;
+  if (subtotal > 0) {
+    if (roundedWeight <= 0.5) {
+      baseShipping = 40;
+    } else {
+      baseShipping = 80;
+    }
+
+    const extraWeight = Math.max(roundedWeight - 1.0, 0);
+    extraWeightCharge = Math.ceil(extraWeight) * 20;
+    shipping = baseShipping + extraWeightCharge;
+    grandTotal = subtotal + shipping;
+  }
+
+  return {
+    subtotal: Math.round(subtotal * 100) / 100,
+    totalWeight: Math.round(totalWeight * 1000) / 1000,
+    baseShipping,
+    extraWeightCharge,
+    shipping,
+    grandTotal: Math.round(grandTotal * 100) / 100
+  };
+};
+
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: CartItem) => void;
@@ -64,7 +137,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                   currency: '₹',
                   size: variant.volume || "Standard",
                   quantity: item.quantity,
-                  weight: variant.weight || item.product.weight || 0,
+                  weight: variant.weight || parseWeightFromVolume(variant.volume || '') || item.product.weight || 0,
                 };
               });
             setCartItems(items);
