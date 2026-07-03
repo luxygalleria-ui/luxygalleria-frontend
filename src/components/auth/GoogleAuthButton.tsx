@@ -29,6 +29,7 @@ function GoogleAuthButtonConfigured({ mode = "signin" }: GoogleAuthButtonProps) 
     : "http://localhost:5000";
   const apiURL = `${baseUrl}/api/v1`;
 
+  console.log("Google button rendered");
   const googleLogin = useGoogleLogin({
     flow: "implicit",
     onSuccess: async (tokenResponse: any) => {
@@ -84,7 +85,10 @@ function GoogleAuthButtonConfigured({ mode = "signin" }: GoogleAuthButtonProps) 
       error={error}
       mode={mode}
       disabled={false}
-      onClick={() => googleLogin()}
+      onClick={() => {
+        console.log("clicked");
+        googleLogin();
+      }}
     />
   );
 }
