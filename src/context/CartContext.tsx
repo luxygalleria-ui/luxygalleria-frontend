@@ -16,13 +16,13 @@ export interface CartItem {
 
 export const parseWeightFromVolume = (volume: string): number | null => {
   if (!volume) return null;
-  const match = volume.match(/(\d+(?:\.\d+)?)\s*(kg|g|l|ml)/i);
+  const match = volume.match(/(\d+(?:\.\d+)?)\s*(kg|g|gm|gms|l|ltr|liter|liters|litre|litres|ml)/i);
   if (match) {
     const value = parseFloat(match[1]);
     const unit = match[2].toLowerCase();
-    if (unit === 'kg' || unit === 'l') {
+    if (unit === 'kg' || unit === 'l' || unit === 'ltr' || unit === 'liter' || unit === 'liters' || unit === 'litre' || unit === 'litres') {
       return value;
-    } else if (unit === 'g' || unit === 'ml') {
+    } else if (unit === 'g' || unit === 'gm' || unit === 'gms' || unit === 'ml') {
       return value / 1000;
     }
   }
@@ -46,12 +46,15 @@ export const calculateLocalShipping = (cartItems: CartItem[]): ShippingDetails =
     const qty = item.quantity || 1;
     const price = item.price || 0;
     
-    let itemWeight = item.weight || 0;
-    if (!itemWeight && item.size) {
+    let itemWeight = 0;
+    if (item.size) {
       const parsed = parseWeightFromVolume(item.size);
       if (parsed !== null) {
         itemWeight = parsed;
       }
+    }
+    if (!itemWeight) {
+      itemWeight = item.weight || 0;
     }
     
     subtotal += price * qty;
@@ -137,7 +140,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                   currency: '₹',
                   size: variant.volume || "Standard",
                   quantity: item.quantity,
-                  weight: variant.weight || parseWeightFromVolume(variant.volume || '') || item.product.weight || 0,
+                  weight: parseWeightFromVolume(variant.volume || '') || variant.weight || item.product.weight || 0,
                 };
               });
             setCartItems(items);

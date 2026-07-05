@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import axios from "axios";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useCart } from "../../context/CartContext";
+import { useCart, parseWeightFromVolume } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import CartAnimation from "../../components/CartAnimation";
 import { Star, StarHalf, SlidersHorizontal, X, ChevronLeft } from "lucide-react";
@@ -26,6 +26,7 @@ interface Product {
   benefit: string;
   category: string;
   weight?: number;
+  size?: string;
 }
 
 // Categories and Products will be fetched dynamically
@@ -71,8 +72,8 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       image: getImageUrl(product.images[0]),
       price: product.currentPrice,
       currency: product.currency,
-      weight: (product as any).variants?.[0]?.weight || (product as any).weight || 0,
-      size: (product as any).size,
+      weight: parseWeightFromVolume(product.size || '') || product.weight || 0,
+      size: product.size,
       quantity: 1,
     });
     const nextCount = cartCount + 1;

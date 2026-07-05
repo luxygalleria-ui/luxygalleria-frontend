@@ -6,7 +6,7 @@ import axios from "axios";
 
 export default function FloatingActions() {
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState("7012552969");
+  const [whatsappNumber, setWhatsappNumber] = useState("917736989068");
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 

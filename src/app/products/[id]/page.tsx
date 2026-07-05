@@ -149,7 +149,7 @@ export default function ProductDetailPage() {
       image: getImageUrl(product.images[0]),
       price: selectedVariant.price || product.currentPrice,
       currency: product.currency,
-      weight: selectedVariant.weight || parseWeightFromVolume(product.sizes?.[selectedSize] || '') || (product as any).weight || 0,
+      weight: parseWeightFromVolume(product.sizes?.[selectedSize] || '') || selectedVariant.weight || (product as any).weight || 0,
       size: product.sizes?.[selectedSize],
       quantity: qty,
     });

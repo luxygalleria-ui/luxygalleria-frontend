@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { Star, StarHalf } from "lucide-react";
-import { useCart } from "../../context/CartContext";
+import { useCart, parseWeightFromVolume } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import CartAnimation from "../CartAnimation";
 
@@ -22,6 +22,7 @@ interface Product {
   dealBadge: string;
   benefit: string;
   weight?: number;
+  size?: string;
 }
 
 const DEFAULT_PRODUCTS: Product[] = [];
@@ -67,8 +68,8 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
       image: product.images[0],
       price: product.currentPrice,
       currency: product.currency,
-      weight: (product as any).weight || 0,
-      size: (product as any).size,
+      weight: parseWeightFromVolume(product.size || '') || product.weight || 0,
+      size: product.size,
       quantity: 1,
     });
     const nextCount = cartCount + 1;
