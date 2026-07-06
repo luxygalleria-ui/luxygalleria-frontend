@@ -490,7 +490,14 @@ export default function ProfilePage() {
                             {order.items.map((item: any, idx: number) => (
                               <div key={`${order._id}-item-${item.product?._id || idx}`} className="flex items-center gap-4 border-b border-slate-100 pb-4 last:border-0 last:pb-0">
                                 <div className="w-16 h-16 rounded-xl bg-slate-100 shrink-0 overflow-hidden">
-                                  {item.product?.images?.[0] ? (
+                                  {item.image ? (
+                                    <img 
+                                      src={getImageUrl(item.image)} 
+                                      alt={item.product?.name || 'Product variant'} 
+                                      className={`w-full h-full object-cover ${(order.orderStatus === 'delivered' || order.orderStatus === 'cancelled') ? 'grayscale' : ''}`} 
+                                      onError={handleImageError}
+                                    />
+                                  ) : item.product?.images?.[0] ? (
                                     <img 
                                       src={getImageUrl(item.product.images[0])} 
                                       alt={item.product?.name} 
@@ -502,7 +509,10 @@ export default function ProfilePage() {
                                   )}
                                 </div>
                                 <div className="flex-1">
-                                  <h4 className="font-bold text-sm text-slate-900">{item.product?.name || 'Product unavailable'}</h4>
+                                  <h4 className="font-bold text-sm text-slate-900">
+                                    {item.product?.name || 'Product unavailable'}
+                                    {item.size && <span className="text-xs text-[#8B5E34] ml-2 font-sans font-semibold">({item.size})</span>}
+                                  </h4>
                                   <p className="text-xs text-slate-500 mt-1">Qty: {item.quantity} | Price: ₹{item.price}</p>
                                 </div>
                               </div>

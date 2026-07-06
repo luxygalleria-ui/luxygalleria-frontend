@@ -51,6 +51,7 @@ export default function CheckoutPage() {
         const apiURL = getAPIURL();
         const items = cartItems.map(item => ({
           product: item.id,
+          variantId: item.variantId,
           quantity: item.quantity,
           size: item.size === "Standard" ? undefined : item.size
         }));
@@ -296,9 +297,12 @@ export default function CheckoutPage() {
       // Format items for backend
       const orderItems = cartItems.map(item => ({
         product: item.id,
+        variantId: item.variantId,
         quantity: item.quantity,
         price: item.price,
         size: item.size,
+        image: item.image,
+        subtotal: item.price * item.quantity,
       }));
 
       const orderShippingAddress = {
@@ -566,7 +570,7 @@ export default function CheckoutPage() {
             <div className="space-y-4 mb-6">
               <div className="flex justify-between items-center text-slate-500 font-sans text-sm">
                 <span>Subtotal</span>
-                <span className="text-slate-900">₹{subtotal.toFixed(2)}</span>
+                <span className="text-slate-900">₹{subtotal}</span>
               </div>
               <div className="flex justify-between items-center text-slate-500 font-sans text-sm">
                 <span>Shipping</span>
@@ -574,7 +578,7 @@ export default function CheckoutPage() {
                   {shipping === 0 ? (
                     <span className="text-green-600 font-bold tracking-wide">Free</span>
                   ) : (
-                    <span>₹{shipping.toFixed(2)}</span>
+                    <span>₹{shipping}</span>
                   )}
                 </span>
               </div>
@@ -588,11 +592,11 @@ export default function CheckoutPage() {
                 <>
                   <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
                     <span>Base Shipping (first 1kg)</span>
-                    <span>₹{shippingDetails.baseShipping.toFixed(2)}</span>
+                    <span>₹{shippingDetails.baseShipping}</span>
                   </div>
                   <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
                     <span>Extra Weight Charge</span>
-                    <span>₹{shippingDetails.extraWeightCharge.toFixed(2)}</span>
+                    <span>₹{shippingDetails.extraWeightCharge}</span>
                   </div>
                 </>
               )}
@@ -602,7 +606,7 @@ export default function CheckoutPage() {
 
             <div className="flex justify-between items-end mb-8">
               <span className="font-sans font-bold text-lg text-slate-900">Total</span>
-              <span className="font-sans font-black text-2xl text-slate-900">₹{total.toFixed(2)}</span>
+              <span className="font-sans font-black text-2xl text-slate-900">₹{total}</span>
             </div>
 
             <button

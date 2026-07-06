@@ -12,6 +12,7 @@ export interface CartItem {
   size?: string;
   quantity: number;
   weight?: number;
+  variantId?: string;
 }
 
 export const parseWeightFromVolume = (volume: string): number | null => {
@@ -93,8 +94,8 @@ export const calculateLocalShipping = (cartItems: CartItem[]): ShippingDetails =
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: CartItem) => void;
-  updateQuantity: (id: string, qty: number, size?: string) => void;
-  removeItem: (id: string, size?: string) => void;
+  updateQuantity: (id: string, qty: number, variantId?: string, size?: string) => void;
+  removeItem: (id: string, variantId?: string, size?: string) => void;
   clearCart: () => void;
   cartCount: number;
 }
@@ -131,16 +132,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             const items = res.data.data.items
               .filter((item: any) => item.product) // ensure product exists
               .map((item: any) => {
-                const variant = item.product.variants?.find((v: any) => v.volume === item.size) || item.product.variants?.[0] || {};
+                const variant = item.product.variants?.find((v: any) => v._id.toString() === item.variantId?.toString()) || item.product.variants?.[0] || {};
                 return {
                   id: item.product._id,
                   name: item.product.name,
-                  image: item.product.images?.[0] || '',
-                  price: variant.price || 0,
+                  image: variant.image || item.product.images?.[0] || '',
+                  price: variant.offerPrice || variant.price || 0,
                   currency: '₹',
                   size: variant.volume || "Standard",
                   quantity: item.quantity,
-                  weight: parseWeightFromVolume(variant.volume || '') || variant.weight || item.product.weight || 0,
+                  weight: variant.weight || parseWeightFromVolume(variant.volume || '') || item.product.weight || 0,
+                  variantId: item.variantId || variant._id?.toString() || '',
                 };
               });
             setCartItems(items);
@@ -166,11 +168,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = async (item: CartItem) => {
     setCartItems(prev => {
-      const existing = prev.find(i => i.id === item.id && i.size === item.size);
+      const existing = prev.find(i => i.id === item.id && (item.variantId ? i.variantId === item.variantId : i.size === item.size));
       let newCart;
       if (existing) {
         const newQty = existing.quantity + item.quantity;
-        newCart = prev.map(i => (i.id === item.id && i.size === item.size) ? { ...i, quantity: newQty } : i);
+        newCart = prev.map(i => (i.id === item.id && (item.variantId ? i.variantId === item.variantId : i.size === item.size)) ? { ...i, quantity: newQty } : i);
       } else {
         newCart = [...prev, item];
       }
@@ -183,6 +185,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       try {
         await axios.post(`${getApiUrl()}/cart`, {
           productId: item.id,
+          variantId: item.variantId,
           quantity: item.quantity,
           size: item.size
         }, {
@@ -197,12 +200,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateQuantity = async (id: string, qty: number, size?: string) => {
+  const updateQuantity = async (id: string, qty: number, variantId?: string, size?: string) => {
     if (qty < 1) return;
     setCartItems(prev => {
-      const existing = prev.find(i => i.id === id && i.size === size);
-      const validQty = qty;
-      const newCart = prev.map(i => (i.id === id && i.size === size) ? { ...i, quantity: validQty } : i);
+      const newCart = prev.map(i => (i.id === id && (variantId ? i.variantId === variantId : i.size === size)) ? { ...i, quantity: qty } : i);
       localStorage.setItem("luxygalleria_cart", JSON.stringify(newCart));
       return newCart;
     });
@@ -212,6 +213,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       try {
         await axios.put(`${getApiUrl()}/cart/item`, {
           productId: id,
+          variantId: variantId,
           quantity: qty,
           size: size
         }, {
@@ -226,9 +228,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const removeItem = async (id: string, size?: string) => {
+  const removeItem = async (id: string, variantId?: string, size?: string) => {
     setCartItems(prev => {
-      const newCart = prev.filter(i => !(i.id === id && i.size === size));
+      const newCart = prev.filter(i => !(i.id === id && (variantId ? i.variantId === variantId : i.size === size)));
       localStorage.setItem("luxygalleria_cart", JSON.stringify(newCart));
       return newCart;
     });
@@ -238,7 +240,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       try {
         await axios.delete(`${getApiUrl()}/cart/item`, {
           headers: { Authorization: `Bearer ${token}` },
-          data: { productId: id, size }
+          data: { productId: id, variantId, size }
         });
       } catch (err: any) {
         // Silently handle 401 - user session might have expired

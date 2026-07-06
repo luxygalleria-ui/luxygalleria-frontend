@@ -34,6 +34,7 @@ export default function CartPage() {
         const apiURL = getAPIURL();
         const items = cartItems.map(item => ({
           product: item.id,
+          variantId: item.variantId,
           quantity: item.quantity,
           size: item.size === "Standard" ? undefined : item.size
         }));
@@ -101,11 +102,11 @@ export default function CartPage() {
             <div className="lg:col-span-8 flex flex-col gap-6">
               {cartItems.map((item, index) => (
                 <div
-                  key={`${item.id}-${item.size || 'default'}-${index}`}
+                  key={`${item.id}-${item.variantId || item.size || 'default'}-${index}`}
                   className="flex flex-col sm:flex-row gap-6 p-8 sm:p-6 border border-slate-100 rounded-2xl bg-white relative group transition-shadow hover:shadow-md"
                 >
                   <button
-                    onClick={() => removeItem(item.id, item.size)}
+                    onClick={() => removeItem(item.id, item.variantId, item.size)}
                     aria-label="Remove item"
                     className="absolute top-2 right-4 sm:top-6 sm:right-6 text-slate-400 hover:text-red-500 transition-colors focus:outline-none"
                   >
@@ -137,15 +138,20 @@ export default function CartPage() {
                     </div>
 
                     <div className="flex items-center justify-between mt-auto">
-                      {/* Price */}
-                      <p className="font-sans font-bold text-xl text-slate-900">
-                        {item.currency}{item.price}
-                      </p>
+                      {/* Price & Subtotal */}
+                      <div className="flex flex-col gap-0.5">
+                        <p className="font-sans font-bold text-xl text-slate-900">
+                          {item.currency}{item.price * item.quantity}
+                        </p>
+                        <p className="text-[12px] text-slate-400 font-sans">
+                          {item.currency}{item.price} each
+                        </p>
+                      </div>
 
                       {/* Quantity Selector */}
                       <div className="inline-flex items-center border-2 border-slate-200 rounded-xl overflow-hidden bg-white">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.size)}
+                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.variantId, item.size)}
                           aria-label="Decrease quantity"
                           disabled={item.quantity <= 1}
                           className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
@@ -156,7 +162,7 @@ export default function CartPage() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.size)}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.variantId, item.size)}
                           aria-label="Increase quantity"
                           className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
                         >

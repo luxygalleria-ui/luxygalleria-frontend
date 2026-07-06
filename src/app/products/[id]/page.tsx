@@ -77,6 +77,13 @@ export default function ProductDetailPage() {
   const { addToCart, cartCount } = useCart();
   const { showToast } = useToast();
 
+  // Variant States
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
+  const [selectedVariantImage, setSelectedVariantImage] = useState<string>("");
+  const [selectedPrice, setSelectedPrice] = useState<number>(0);
+  const [selectedWeight, setSelectedWeight] = useState<number>(0);
+  const [selectedStock, setSelectedStock] = useState<number>(0);
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -110,8 +117,8 @@ export default function ProductDetailPage() {
             images: p.images && p.images.length > 0 ? p.images.map(getImageUrl) : [getImageUrl("/products/suncream-1.jpg")],
             rating: p.starRating || 0,
             reviewCount: p.reviewsCount || 0,
-            currentPrice: p.variants?.[0]?.price || 0,
-            originalPrice: p.variants?.[0]?.oldPrice || p.variants?.[0]?.price || 0,
+            currentPrice: p.variants?.[0]?.offerPrice || p.variants?.[0]?.price || 0,
+            originalPrice: p.variants?.[0]?.actualPrice || p.variants?.[0]?.oldPrice || p.variants?.[0]?.price || 0,
             currency: "₹",
             dealBadge: p.offerText || "",
             category: p.category || "all",
@@ -135,23 +142,71 @@ export default function ProductDetailPage() {
     if (id) fetchProducts();
   }, [id]);
 
+  // Set default variant on load
+  useEffect(() => {
+    if (product && product.variants && product.variants.length > 0) {
+      const firstVariant = product.variants[0];
+      setSelectedVariant(firstVariant);
+      setSelectedVariantImage(firstVariant.image || product.images[0]);
+      setSelectedPrice(firstVariant.offerPrice || firstVariant.price || 0);
+      setSelectedWeight(firstVariant.weight || product.weight || 0);
+      setSelectedStock(firstVariant.stock || 0);
+      setSelectedSize(0);
+      setActiveImage(0);
+    } else if (product) {
+      setSelectedVariant(null);
+      setSelectedVariantImage(product.images[0] || "");
+      setSelectedPrice(product.currentPrice);
+      setSelectedWeight(product.weight || 0);
+      setSelectedStock(0);
+      setSelectedSize(0);
+      setActiveImage(0);
+    }
+  }, [product]);
+
+  // Gallery calculation
+  const getGalleryImages = () => {
+    if (!product) return [];
+    if (!selectedVariant) return product.images;
+    
+    const variantImages: string[] = [];
+    if (selectedVariant.images && selectedVariant.images.length > 0) {
+      selectedVariant.images.forEach((img: string) => {
+        if (img) variantImages.push(getImageUrl(img));
+      });
+    } else if (selectedVariant.image) {
+      variantImages.push(getImageUrl(selectedVariant.image));
+    }
+    
+    const productImages = product.images.map(img => getImageUrl(img));
+    const combined = [...variantImages];
+    productImages.forEach(img => {
+      if (!combined.includes(img)) {
+        combined.push(img);
+      }
+    });
+    
+    return combined;
+  };
+
+  const galleryImages = getGalleryImages();
+
   const handleAddToCart = (e?: React.MouseEvent<HTMLElement>) => {
     if (e) {
       e.preventDefault();
     }
-    if (!product) return;
+    if (!product || !selectedVariant) return;
 
-    const savedUser = localStorage.getItem("luxygalleria_user");
-    const selectedVariant = product.variants?.[selectedSize] || {};
     addToCart({
       id: product.id,
       name: product.name,
-      image: getImageUrl(product.images[0]),
-      price: selectedVariant.price || product.currentPrice,
+      image: getImageUrl(selectedVariantImage || selectedVariant.image || product.images[0]),
+      price: selectedPrice,
       currency: product.currency,
-      weight: parseWeightFromVolume(product.sizes?.[selectedSize] || '') || selectedVariant.weight || (product as any).weight || 0,
-      size: product.sizes?.[selectedSize],
+      weight: selectedWeight,
+      size: selectedVariant.volume || "Standard",
       quantity: qty,
+      variantId: selectedVariant._id || selectedVariant.id,
     });
     const nextCount = cartCount + qty;
     showToast(`Added to cart. Cart now has ${nextCount} item${nextCount === 1 ? '' : 's'}.`, "success");
@@ -159,10 +214,18 @@ export default function ProductDetailPage() {
     setTimeout(() => setAdded(false), 2500);
   };
 
-  // Reset qty when variant changes
   const handleSizeChange = (i: number) => {
     setSelectedSize(i);
     setQty(1);
+    const variant = product?.variants?.[i];
+    if (variant) {
+      setSelectedVariant(variant);
+      setSelectedVariantImage(variant.image || product?.images[0] || "");
+      setSelectedPrice(variant.offerPrice || variant.price || 0);
+      setSelectedWeight(variant.weight || product?.weight || 0);
+      setSelectedStock(variant.stock || 0);
+      setActiveImage(0);
+    }
   };
 
   if (loading) {
@@ -189,7 +252,10 @@ export default function ProductDetailPage() {
     );
   }
 
-  const discount = Math.round((1 - product.currentPrice / product.originalPrice) * 100);
+  const variantActualPrice = selectedVariant?.actualPrice || selectedVariant?.oldPrice || product.originalPrice || 0;
+  const discount = variantActualPrice > selectedPrice
+    ? Math.round((1 - selectedPrice / variantActualPrice) * 100)
+    : 0;
 
   return (
     <div className="min-h-screen bg-white pt-30">
@@ -214,7 +280,7 @@ export default function ProductDetailPage() {
           <div className="flex flex-col gap-4">
             {/* Main Image */}
             <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center min-h-[28rem]">
-              {product.images.map((src, i) => (
+              {galleryImages.map((src, i) => (
                 <img
                   key={`${product.id}-main-${i}`}
                   src={src}
@@ -232,9 +298,9 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Thumbnails */}
-            {product.images.length > 1 && (
+            {galleryImages.length > 1 && (
               <div className="flex flex-wrap gap-3">
-                {product.images.map((src, i) => (
+                {galleryImages.map((src, i) => (
                   <button
                     key={`${product.id}-thumb-${i}`}
                     onClick={() => setActiveImage(i)}
@@ -297,15 +363,34 @@ export default function ProductDetailPage() {
             {/* Price */}
             <div className="flex items-end gap-3 mb-2">
               <span className="font-sans font-bold text-4xl text-slate-900">
-                {product.currency}{product.currentPrice}
+                {product.currency}{selectedPrice}
               </span>
-              <span className="font-sans text-lg text-slate-400 line-through mb-0.5">
-                {product.currency}{product.originalPrice}
-              </span>
+              {variantActualPrice > selectedPrice && (
+                <span className="font-sans text-lg text-slate-400 line-through mb-0.5">
+                  {product.currency}{variantActualPrice}
+                </span>
+              )}
             </div>
-            <p className="font-bold text-xs uppercase tracking-wider text-red-500 mb-6">
-              {product.dealBadge} — You save {product.currency}{product.originalPrice - product.currentPrice}
-            </p>
+            {discount > 0 && (
+              <p className="font-bold text-xs uppercase tracking-wider text-red-500 mb-6">
+                {product.dealBadge || `${discount}% OFF`} — You save {product.currency}{variantActualPrice - selectedPrice}
+              </p>
+            )}
+
+            {/* Weight & Stock Display */}
+            <div className="flex gap-6 mb-6 font-sans text-sm text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              <div>
+                <span className="font-semibold text-slate-700">Weight:</span> {selectedWeight >= 1 ? `${selectedWeight} kg` : `${selectedWeight * 1000} g`}
+              </div>
+              <div>
+                <span className="font-semibold text-slate-700">Stock:</span>{" "}
+                {selectedStock > 0 ? (
+                  <span className="text-green-600 font-semibold">In Stock ({selectedStock} available)</span>
+                ) : (
+                  <span className="text-red-500 font-semibold">Out of Stock</span>
+                )}
+              </div>
+            </div>
 
             {/* Size Selector */}
             {product.sizes.length > 1 && (
@@ -355,6 +440,7 @@ export default function ProductDetailPage() {
                 <button
                   onClick={() => setQty((q) => q + 1)}
                   aria-label="Increase quantity"
+                  disabled={selectedStock <= 0}
                   className="w-12 h-12 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
                 >
                   <Plus size={16} />
@@ -368,9 +454,12 @@ export default function ProductDetailPage() {
                 <button
                   type="button"
                   aria-label="Add to cart"
-                  className={`inline-flex items-center justify-center gap-3 px-6 py-3 rounded-full font-bold text-sm uppercase tracking-widest transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 ${added ? "bg-green-500 text-white" : "bg-slate-900 text-white hover:bg-slate-800"}`}
+                  disabled={selectedStock <= 0}
+                  className={`inline-flex items-center justify-center gap-3 px-6 py-3 rounded-full font-bold text-sm uppercase tracking-widest transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 ${selectedStock <= 0 ? "bg-slate-200 text-slate-400 cursor-not-allowed" : added ? "bg-green-500 text-white" : "bg-slate-900 text-white hover:bg-slate-800"}`}
                 >
-                  {added ? (
+                  {selectedStock <= 0 ? (
+                    "Out of Stock"
+                  ) : added ? (
                     <><Check size={18} /> Added</>
                   ) : (
                     <><ShoppingBag size={18} /> Add to Cart</>

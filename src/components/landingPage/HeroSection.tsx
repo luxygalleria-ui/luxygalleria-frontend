@@ -159,7 +159,7 @@ export default function HeroSection() {
 
   return (
     <section
-      className="relative w-full h-[80vh] md:h-screen overflow-hidden bg-black touch-pan-y"
+      className="relative w-full max-w-none overflow-hidden bg-black touch-pan-y h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] xl:h-[80vh]"
       aria-label="Hero section"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
@@ -203,38 +203,21 @@ export default function HeroSection() {
               className="absolute inset-0 overflow-hidden"
               style={{ willChange: "opacity" }}
             >
-              <motion.div
-                initial={{ scale: 1 }}
-                animate={{ scale: 1.15 }}
-                transition={{ duration: 10, ease: "easeOut" }}
-                className="absolute inset-0 origin-center"
-              >
-                <div className="hidden md:block absolute inset-0">
-                  <Image
-                    src={slide.image}
-                    alt={slide.alt}
-                    fill
-                    priority={index === 0 || index === 1}
-                    sizes="100vw"
-                    loading={index === 0 || index === 1 ? undefined : "lazy"}
-                    className="object-cover"
-                    unoptimized={slide.image.startsWith("http://localhost")}
-                  />
-                </div>
-                <div className="block md:hidden absolute inset-0">
-                  <Image
-                    src={slide.mobileImage || slide.image}
-                    alt={slide.alt}
-                    fill
-                    priority={index === 0 || index === 1}
-                    sizes="100vw"
-                    loading={index === 0 || index === 1 ? undefined : "lazy"}
-                    className="object-cover object-center"
-                    unoptimized={(slide.mobileImage || slide.image).startsWith("http://localhost")}
-                  />
-                </div>
-              </motion.div>
-              <div className="absolute inset-0 bg-black/20" /> {/* overlay */}
+              <div className="hidden md:block absolute inset-0 w-full h-full">
+                <img
+                  src={slide.image}
+                  alt={slide.alt}
+                  className="w-full h-full object-cover block"
+                />
+              </div>
+              <div className="block md:hidden absolute inset-0 w-full h-full">
+                <img
+                  src={slide.mobileImage || slide.image}
+                  alt={slide.alt}
+                  className="w-full h-full object-cover block"
+                />
+              </div>
+              <div className="absolute inset-0 bg-black/20 z-20 pointer-events-none" /> {/* overlay */}
 
               {/* Content specific to this slide */}
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-4 pointer-events-none">
