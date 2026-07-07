@@ -47,15 +47,12 @@ export const calculateLocalShipping = (cartItems: CartItem[]): ShippingDetails =
     const qty = item.quantity || 1;
     const price = item.price || 0;
     
-    let itemWeight = 0;
-    if (item.size) {
+    let itemWeight = item.weight || 0;
+    if (!itemWeight && item.size) {
       const parsed = parseWeightFromVolume(item.size);
       if (parsed !== null) {
         itemWeight = parsed;
       }
-    }
-    if (!itemWeight) {
-      itemWeight = item.weight || 0;
     }
     
     subtotal += price * qty;
