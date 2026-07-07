@@ -23,6 +23,7 @@ interface Product {
   benefit: string;
   weight?: number;
   size?: string;
+  variantId?: string;
 }
 
 const DEFAULT_PRODUCTS: Product[] = [];
@@ -71,6 +72,7 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
       weight: parseWeightFromVolume(product.size || '') || product.weight || 0,
       size: product.size,
       quantity: 1,
+      variantId: product.variantId,
     });
     const nextCount = cartCount + 1;
     showToast(`Added to cart. Cart now has ${nextCount} item${nextCount === 1 ? '' : 's'}.`, "success");
@@ -181,6 +183,7 @@ export default function ProductSection() {
             benefit: p.keyFeatures || "",
             weight: p.variants?.[0]?.weight || p.weight || 0,
             size: p.variants?.[0]?.volume || "Standard",
+            variantId: p.variants?.[0]?._id || p.variants?.[0]?.id || "",
           }));
           setProducts(mappedProds);
         }

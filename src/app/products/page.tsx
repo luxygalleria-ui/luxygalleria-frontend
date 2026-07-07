@@ -27,6 +27,7 @@ interface Product {
   category: string;
   weight?: number;
   size?: string;
+  variantId?: string;
 }
 
 // Categories and Products will be fetched dynamically
@@ -75,6 +76,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       weight: parseWeightFromVolume(product.size || '') || product.weight || 0,
       size: product.size,
       quantity: 1,
+      variantId: product.variantId,
     });
     const nextCount = cartCount + 1;
     showToast(`Added to cart. Cart now has ${nextCount} item${nextCount === 1 ? '' : 's'}.`, "success");
@@ -423,6 +425,7 @@ function ProductsContent() {
                 weight: p.variants?.[0]?.weight || p.weight || 0,
                 size: p.variants?.[0]?.volume || "Standard",
                 category: p.category ? p.category.toLowerCase().replace(/\s+/g, '-') : "all",
+                variantId: p.variants?.[0]?._id || p.variants?.[0]?.id || "",
               };
             });
             setProducts(mappedProds);
