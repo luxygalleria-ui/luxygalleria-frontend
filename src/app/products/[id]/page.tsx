@@ -83,6 +83,8 @@ export default function ProductDetailPage() {
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
   const [selectedWeight, setSelectedWeight] = useState<number>(0);
   const [selectedStock, setSelectedStock] = useState<number>(0);
+  const [selectedFlavorIndex, setSelectedFlavorIndex] = useState<number>(0);
+  const [selectedSizeIndex, setSelectedSizeIndex] = useState<number>(0);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -151,7 +153,20 @@ export default function ProductDetailPage() {
       setSelectedPrice(firstVariant.offerPrice || firstVariant.price || 0);
       setSelectedWeight(firstVariant.weight || product.weight || 0);
       setSelectedStock(firstVariant.stock || 0);
-      setSelectedSize(0);
+      
+      const uFlavors = Array.from(new Set(product.variants.map((v: any) => v.flavor || 'Default')));
+      const flavorIdx = uFlavors.indexOf(firstVariant.flavor || 'Default');
+      setSelectedFlavorIndex(flavorIdx !== -1 ? flavorIdx : 0);
+      
+      const flavorVal = uFlavors[flavorIdx !== -1 ? flavorIdx : 0] || 'Default';
+      const uSizes = Array.from(new Set(
+        product.variants
+          .filter((v: any) => (v.flavor || 'Default').toLowerCase() === flavorVal.toLowerCase())
+          .map((v: any) => v.size || v.volume || 'Standard')
+      ));
+      const sizeIdx = uSizes.indexOf(firstVariant.size || firstVariant.volume || 'Standard');
+      setSelectedSizeIndex(sizeIdx !== -1 ? sizeIdx : 0);
+      
       setActiveImage(0);
     } else if (product) {
       setSelectedVariant(null);
@@ -159,37 +174,45 @@ export default function ProductDetailPage() {
       setSelectedPrice(product.currentPrice);
       setSelectedWeight(product.weight || 0);
       setSelectedStock(0);
-      setSelectedSize(0);
+      setSelectedFlavorIndex(0);
+      setSelectedSizeIndex(0);
       setActiveImage(0);
     }
   }, [product]);
 
+  // Dynamically update document/tab title based on selected variant name or flavor
+  useEffect(() => {
+    if (product) {
+      const activeName = selectedVariant?.name || `${product.name}${selectedVariant?.flavor && selectedVariant.flavor !== 'Default' ? ` (${selectedVariant.flavor})` : ''}`;
+      document.title = `${activeName} | Luxy Galleria`;
+    }
+  }, [product, selectedVariant]);
+
   // Gallery calculation
   const getGalleryImages = () => {
     if (!product) return [];
-    if (!selectedVariant) return product.images;
-    
-    const variantImages: string[] = [];
-    if (selectedVariant.images && selectedVariant.images.length > 0) {
-      selectedVariant.images.forEach((img: string) => {
-        if (img) variantImages.push(getImageUrl(img));
-      });
-    } else if (selectedVariant.image) {
-      variantImages.push(getImageUrl(selectedVariant.image));
+    if (product.variants && product.variants.length > 0) {
+      return product.variants.map((v: any) => getImageUrl(v.image || product.images[0]));
     }
-    
-    const productImages = product.images.map(img => getImageUrl(img));
-    const combined = [...variantImages];
-    productImages.forEach(img => {
-      if (!combined.includes(img)) {
-        combined.push(img);
-      }
-    });
-    
-    return combined;
+    return product.images.map(img => getImageUrl(img));
   };
 
   const galleryImages = getGalleryImages();
+
+  // Dynamic variables for selectors
+  const uniqueFlavors = product && product.variants
+    ? Array.from(new Set(product.variants.map((v: any) => v.flavor || 'Default')))
+    : ['Default'];
+
+  const currentFlavorStr = uniqueFlavors[selectedFlavorIndex] || 'Default';
+
+  const uniqueSizes = product && product.variants
+    ? Array.from(new Set(
+        product.variants
+          .filter((v: any) => (v.flavor || 'Default').toLowerCase() === currentFlavorStr.toLowerCase())
+          .map((v: any) => v.size || v.volume || 'Standard')
+      ))
+    : ['Standard'];
 
   const handleAddToCart = (e?: React.MouseEvent<HTMLElement>) => {
     if (e) {
@@ -214,17 +237,120 @@ export default function ProductDetailPage() {
     setTimeout(() => setAdded(false), 2500);
   };
 
-  const handleSizeChange = (i: number) => {
-    setSelectedSize(i);
+  const findAndSelectVariant = (flavorVal: string, sizeVal: string) => {
+    if (!product || !product.variants || product.variants.length === 0) return;
+    
+    let match = product.variants.find((v: any) => 
+      (v.flavor || 'Default').toLowerCase() === flavorVal.toLowerCase() &&
+      (v.size || v.volume || 'Standard').toLowerCase() === sizeVal.toLowerCase()
+    );
+    
+    if (!match) {
+      match = product.variants.find((v: any) => 
+        (v.flavor || 'Default').toLowerCase() === flavorVal.toLowerCase()
+      );
+    }
+    
+    if (!match) {
+      match = product.variants.find((v: any) => 
+        (v.size || v.volume || 'Standard').toLowerCase() === sizeVal.toLowerCase()
+      );
+    }
+    
+    if (!match) {
+      match = product.variants[0];
+    }
+    
+    if (match) {
+      setSelectedVariant(match);
+      setSelectedVariantImage(match.image || product.images[0]);
+      setSelectedPrice(match.offerPrice || match.price || 0);
+      setSelectedWeight(match.weight || product.weight || 0);
+      setSelectedStock(match.stock || 0);
+      
+      const variantIndexInList = product.variants.findIndex((v: any) => v._id === match._id || v.id === match.id);
+      if (variantIndexInList !== -1) {
+        setActiveImage(variantIndexInList);
+      }
+    }
+  };
+
+  const handleFlavorChange = (i: number) => {
+    if (!product || !product.variants) return;
+    setSelectedFlavorIndex(i);
+    
+    const uFlavors = Array.from(new Set(product.variants.map((v: any) => v.flavor || 'Default')));
+    const nextFlavor = uFlavors[i] || 'Default';
+    
+    // Find available sizes for the new flavor
+    const uSizesNew = Array.from(new Set(
+      product.variants
+        .filter((v: any) => (v.flavor || 'Default').toLowerCase() === nextFlavor.toLowerCase())
+        .map((v: any) => v.size || v.volume || 'Standard')
+    ));
+    
+    // Check if the current size is available in the new flavor's sizes
+    const currentSizeStr = uniqueSizes[selectedSizeIndex] || 'Standard';
+    let nextSizeIdx = uSizesNew.indexOf(currentSizeStr);
+    if (nextSizeIdx === -1) {
+      nextSizeIdx = 0;
+    }
+    
+    setSelectedSizeIndex(nextSizeIdx);
+    const nextSizeStr = uSizesNew[nextSizeIdx] || 'Standard';
+    
+    findAndSelectVariant(nextFlavor, nextSizeStr);
     setQty(1);
-    const variant = product?.variants?.[i];
-    if (variant) {
+  };
+
+  const handleSizeChange = (i: number) => {
+    if (!product || !product.variants) return;
+    setSelectedSizeIndex(i);
+    
+    const uFlavors = Array.from(new Set(product.variants.map((v: any) => v.flavor || 'Default')));
+    const currentFlavor = uFlavors[selectedFlavorIndex] || 'Default';
+    
+    const uSizes = Array.from(new Set(
+      product.variants
+        .filter((v: any) => (v.flavor || 'Default').toLowerCase() === currentFlavor.toLowerCase())
+        .map((v: any) => v.size || v.volume || 'Standard')
+    ));
+    const nextSizeStr = uSizes[i] || 'Standard';
+    
+    findAndSelectVariant(currentFlavor, nextSizeStr);
+    setQty(1);
+  };
+
+  const handleThumbnailClick = (i: number) => {
+    setActiveImage(i);
+    if (product && product.variants && product.variants.length > i) {
+      const variant = product.variants[i];
       setSelectedVariant(variant);
-      setSelectedVariantImage(variant.image || product?.images[0] || "");
+      setSelectedVariantImage(variant.image || product.images[0]);
       setSelectedPrice(variant.offerPrice || variant.price || 0);
-      setSelectedWeight(variant.weight || product?.weight || 0);
+      setSelectedWeight(variant.weight || product.weight || 0);
       setSelectedStock(variant.stock || 0);
-      setActiveImage(0);
+      
+      const flavorVal = variant.flavor || 'Default';
+      const sizeVal = variant.size || variant.volume || 'Standard';
+      
+      const uFlavors = Array.from(new Set(product.variants.map((v: any) => v.flavor || 'Default')));
+      const flavorIdx = uFlavors.indexOf(flavorVal);
+      if (flavorIdx !== -1) {
+        setSelectedFlavorIndex(flavorIdx);
+      }
+      
+      const uSizes = Array.from(new Set(
+        product.variants
+          .filter((v: any) => (v.flavor || 'Default').toLowerCase() === flavorVal.toLowerCase())
+          .map((v: any) => v.size || v.volume || 'Standard')
+      ));
+      const sizeIdx = uSizes.indexOf(sizeVal);
+      if (sizeIdx !== -1) {
+        setSelectedSizeIndex(sizeIdx);
+      } else {
+        setSelectedSizeIndex(0);
+      }
     }
   };
 
@@ -269,7 +395,7 @@ export default function ProductDetailPage() {
         <ChevronRight size={12} />
         <Link href="/products" className="hover:text-slate-700 transition-colors">Products</Link>
         <ChevronRight size={12} />
-        <span className="text-slate-700 font-semibold line-clamp-1">{product.name}</span>
+        <span className="text-slate-700 font-semibold line-clamp-1">{selectedVariant?.name || product.name}</span>
       </nav>
 
       {/* ── Main Section ── */}
@@ -303,9 +429,9 @@ export default function ProductDetailPage() {
                 {galleryImages.map((src, i) => (
                   <button
                     key={`${product.id}-thumb-${i}`}
-                    onClick={() => setActiveImage(i)}
+                    onClick={() => handleThumbnailClick(i)}
                     aria-label={`View image ${i + 1}`}
-                    className={`relative w-24 h-24 rounded-3xl overflow-hidden border-2 transition-all duration-200 flex-shrink-0 ${i === activeImage ? "border-slate-900 shadow-lg" : "border-slate-200 hover:border-slate-400"}`}
+                    className={`relative w-24 h-24 rounded-3xl overflow-hidden border-2 transition-all duration-200 flex-shrink-0 ${i === activeImage ? "border-[#A68B5B] shadow-lg scale-105" : "border-slate-200 hover:border-slate-400"}`}
                   >
                     <img
                       src={src}
@@ -327,16 +453,19 @@ export default function ProductDetailPage() {
             </p>
 
             {/* Name */}
-            <h1 className="font-serif font-normal text-3xl md:text-4xl text-slate-900 leading-tight mb-3">
-              {product.name}
+            <h1 className="font-serif font-normal text-3xl md:text-4xl text-slate-900 leading-tight mb-1">
+              {selectedVariant?.name || `${product.name} ${selectedVariant?.flavor && selectedVariant.flavor !== 'Default' ? `(${selectedVariant.flavor})` : ''}`}
             </h1>
+            {selectedVariant?.sku && (
+              <p className="text-xs text-slate-400 font-mono mb-3">SKU: {selectedVariant.sku}</p>
+            )}
 
             {/* Tagline */}
             <div className="mb-5">
               <p className={`font-sans text-slate-500 text-base leading-relaxed whitespace-pre-wrap transition-all duration-300 ${!isDescriptionExpanded ? 'line-clamp-3' : ''}`}>
-                {product.tagline}
+                {selectedVariant?.description || product.tagline}
               </p>
-              {product.tagline && product.tagline.length > 150 && (
+              {(selectedVariant?.description || product.tagline) && (selectedVariant?.description || product.tagline).length > 150 && (
                 <button
                   onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
                   className="text-[#8B5E34] font-semibold text-sm mt-1 hover:text-[#5A3A1E] transition-colors inline-block"
@@ -392,23 +521,50 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
+            {/* Flavor Selector */}
+            {uniqueFlavors.length > 1 && (
+              <div className="mb-6">
+                <p className="font-sans font-semibold text-sm text-slate-700 mb-3 uppercase tracking-[0.1em]">
+                  Flavor
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {uniqueFlavors.map((flavor, i) => {
+                    const isSelected = i === selectedFlavorIndex;
+                    return (
+                      <button
+                        key={flavor}
+                        onClick={() => handleFlavorChange(i)}
+                        className={`px-5 py-2.5 rounded-xl font-sans font-semibold text-sm border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 relative ${isSelected
+                          ? "border-slate-900 bg-slate-900 text-white"
+                          : "border-slate-200 text-slate-600 hover:border-slate-400 bg-white"
+                          }`}
+                        aria-pressed={isSelected}
+                      >
+                        {flavor}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Size Selector */}
-            {product.sizes.length > 1 && (
+            {uniqueSizes.length > 1 && (
               <div className="mb-6">
                 <p className="font-sans font-semibold text-sm text-slate-700 mb-3 uppercase tracking-[0.1em]">
                   Size
                 </p>
                 <div className="flex gap-2 flex-wrap">
-                  {product.sizes.map((size, i) => {
+                  {uniqueSizes.map((size, i) => {
                     return (
                       <button
                         key={size}
                         onClick={() => handleSizeChange(i)}
-                        className={`px-5 py-2.5 rounded-xl font-sans font-semibold text-sm border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 relative ${i === selectedSize
+                        className={`px-5 py-2.5 rounded-xl font-sans font-semibold text-sm border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 relative ${i === selectedSizeIndex
                           ? "border-slate-900 bg-slate-900 text-white"
                           : "border-slate-200 text-slate-600 hover:border-slate-400 bg-white"
                           }`}
-                        aria-pressed={i === selectedSize}
+                        aria-pressed={i === selectedSizeIndex}
                       >
                         {size}
                       </button>
