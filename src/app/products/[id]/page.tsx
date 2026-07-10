@@ -79,7 +79,8 @@ export default function ProductDetailPage() {
 
   // Variant States
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
-  const [selectedVariantImage, setSelectedVariantImage] = useState<string>("");
+  const [selectedProductImage, setSelectedProductImage] = useState<string>("");
+  const [showVariantImage, setShowVariantImage] = useState<boolean>(false);
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
   const [selectedWeight, setSelectedWeight] = useState<number>(0);
   const [selectedStock, setSelectedStock] = useState<number>(0);
@@ -149,7 +150,8 @@ export default function ProductDetailPage() {
     if (product && product.variants && product.variants.length > 0) {
       const firstVariant = product.variants[0];
       setSelectedVariant(firstVariant);
-      setSelectedVariantImage(firstVariant.image || product.images[0]);
+      setSelectedProductImage(product.images?.[0] ? getImageUrl(product.images[0]) : "");
+      setShowVariantImage(!!firstVariant.image);
       setSelectedPrice(firstVariant.offerPrice || firstVariant.price || 0);
       setSelectedWeight(firstVariant.weight || product.weight || 0);
       setSelectedStock(firstVariant.stock || 0);
@@ -170,7 +172,8 @@ export default function ProductDetailPage() {
       setActiveImage(0);
     } else if (product) {
       setSelectedVariant(null);
-      setSelectedVariantImage(product.images[0] || "");
+      setSelectedProductImage(product.images?.[0] ? getImageUrl(product.images[0]) : "");
+      setShowVariantImage(false);
       setSelectedPrice(product.currentPrice);
       setSelectedWeight(product.weight || 0);
       setSelectedStock(0);
@@ -191,10 +194,22 @@ export default function ProductDetailPage() {
   // Gallery calculation
   const getGalleryImages = () => {
     if (!product) return [];
-    if (product.variants && product.variants.length > 0) {
-      return product.variants.map((v: any) => getImageUrl(v.image || product.images[0]));
+    const list: string[] = [];
+    if (product.images) {
+      product.images.forEach(img => {
+        const url = getImageUrl(img);
+        if (!list.includes(url)) list.push(url);
+      });
     }
-    return product.images.map(img => getImageUrl(img));
+    if (product.variants) {
+      product.variants.forEach((v: any) => {
+        if (v.image) {
+          const url = getImageUrl(v.image);
+          if (!list.includes(url)) list.push(url);
+        }
+      });
+    }
+    return list;
   };
 
   const galleryImages = getGalleryImages();
@@ -263,15 +278,10 @@ export default function ProductDetailPage() {
     
     if (match) {
       setSelectedVariant(match);
-      setSelectedVariantImage(match.image || product.images[0]);
+      setShowVariantImage(!!match.image);
       setSelectedPrice(match.offerPrice || match.price || 0);
       setSelectedWeight(match.weight || product.weight || 0);
       setSelectedStock(match.stock || 0);
-      
-      const variantIndexInList = product.variants.findIndex((v: any) => v._id === match._id || v.id === match.id);
-      if (variantIndexInList !== -1) {
-        setActiveImage(variantIndexInList);
-      }
     }
   };
 
@@ -323,34 +333,9 @@ export default function ProductDetailPage() {
 
   const handleThumbnailClick = (i: number) => {
     setActiveImage(i);
-    if (product && product.variants && product.variants.length > i) {
-      const variant = product.variants[i];
-      setSelectedVariant(variant);
-      setSelectedVariantImage(variant.image || product.images[0]);
-      setSelectedPrice(variant.offerPrice || variant.price || 0);
-      setSelectedWeight(variant.weight || product.weight || 0);
-      setSelectedStock(variant.stock || 0);
-      
-      const flavorVal = variant.flavor || 'Default';
-      const sizeVal = variant.size || variant.volume || 'Standard';
-      
-      const uFlavors = Array.from(new Set(product.variants.map((v: any) => v.flavor || 'Default')));
-      const flavorIdx = uFlavors.indexOf(flavorVal);
-      if (flavorIdx !== -1) {
-        setSelectedFlavorIndex(flavorIdx);
-      }
-      
-      const uSizes = Array.from(new Set(
-        product.variants
-          .filter((v: any) => (v.flavor || 'Default').toLowerCase() === flavorVal.toLowerCase())
-          .map((v: any) => v.size || v.volume || 'Standard')
-      ));
-      const sizeIdx = uSizes.indexOf(sizeVal);
-      if (sizeIdx !== -1) {
-        setSelectedSizeIndex(sizeIdx);
-      } else {
-        setSelectedSizeIndex(0);
-      }
+    if (galleryImages && galleryImages.length > i) {
+      setSelectedProductImage(galleryImages[i]);
+      setShowVariantImage(false);
     }
   };
 
@@ -406,16 +391,25 @@ export default function ProductDetailPage() {
           <div className="flex flex-col gap-4">
             {/* Main Image */}
             <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center min-h-[28rem]">
-              {galleryImages.map((src, i) => (
+              {showVariantImage && selectedVariant?.image ? (
                 <img
-                  key={`${product.id}-main-${i}`}
-                  src={src}
-                  alt={`${product.name} view ${i + 1}`}
-                  loading={i === 0 ? "eager" : "lazy"}
+                  src={getImageUrl(selectedVariant.image)}
+                  alt={`${product.name} - ${selectedVariant.flavor}`}
                   onError={handleImageError}
-                  className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${i === activeImage ? "opacity-100" : "opacity-0"}`}
+                  className="absolute inset-0 w-full h-full object-contain"
                 />
-              ))}
+              ) : (
+                galleryImages.map((src, i) => (
+                  <img
+                    key={`${product.id}-main-${i}`}
+                    src={src}
+                    alt={`${product.name} view ${i + 1}`}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    onError={handleImageError}
+                    className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${i === activeImage ? "opacity-100" : "opacity-0"}`}
+                  />
+                ))
+              )}
               {discount > 0 && (
                 <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
                   {discount}% OFF
@@ -424,7 +418,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Thumbnails */}
-            {galleryImages.length > 1 && (
+            {galleryImages.length > 0 && (
               <div className="flex flex-wrap gap-3">
                 {galleryImages.map((src, i) => (
                   <button
@@ -454,8 +448,18 @@ export default function ProductDetailPage() {
 
             {/* Name */}
             <h1 className="font-serif font-normal text-3xl md:text-4xl text-slate-900 leading-tight mb-1">
-              {selectedVariant?.name || `${product.name} ${selectedVariant?.flavor && selectedVariant.flavor !== 'Default' ? `(${selectedVariant.flavor})` : ''}`}
+              {product.name}
             </h1>
+            {selectedVariant?.name && selectedVariant.name !== product.name && (
+              <h2 className="text-lg font-medium text-slate-600 mb-1">
+                {selectedVariant.name}
+              </h2>
+            )}
+            {selectedVariant?.flavor && selectedVariant.flavor !== 'Default' && (
+              <p className="text-sm font-semibold text-[#8B5E34] mb-3">
+                Flavor: {selectedVariant.flavor}
+              </p>
+            )}
             {selectedVariant?.sku && (
               <p className="text-xs text-slate-400 font-mono mb-3">SKU: {selectedVariant.sku}</p>
             )}
