@@ -238,7 +238,7 @@ export default function ProductDetailPage() {
     addToCart({
       id: product.id,
       name: product.name,
-      image: getImageUrl(selectedVariantImage || selectedVariant.image || product.images[0]),
+      image: getImageUrl(selectedVariant?.image || product.images?.[0] || ""),
       price: selectedPrice,
       currency: product.currency,
       weight: selectedWeight,
