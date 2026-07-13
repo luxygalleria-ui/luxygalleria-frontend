@@ -342,6 +342,7 @@ export default function ProductDetailPage() {
   };
 
   const handleThumbnailClick = (i: number) => {
+    if (!product || !product.variants) return;
     setActiveImage(i);
     if (galleryImages && galleryImages.length > i) {
       const clickedImageUrl = galleryImages[i];
