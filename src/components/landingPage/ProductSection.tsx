@@ -9,6 +9,7 @@ import { Star, StarHalf } from "lucide-react";
 import { useCart, parseWeightFromVolume } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import CartAnimation from "../CartAnimation";
+import { getImageUrl, handleImageError } from "../../lib/imageUtils";
 
 interface Product {
   id: string;
@@ -24,6 +25,7 @@ interface Product {
   weight?: number;
   size?: string;
   variantId?: string;
+  variants?: any[];
 }
 
 const DEFAULT_PRODUCTS: Product[] = [];
@@ -66,7 +68,7 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
     addToCart({
       id: product.id,
       name: product.name,
-      image: product.images[0],
+      image: product.images && product.images.length > 0 ? product.images[0] : (product.variants?.find((v: any) => v.image)?.image || ""),
       price: product.currentPrice,
       currency: product.currency,
       weight: parseWeightFromVolume(product.size || '') || product.weight || 0,
@@ -89,22 +91,26 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
       <Link href={`/products/${product.id}`} className="flex flex-col flex-grow outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 rounded-2xl overflow-hidden">
         {/* Image Area */}
         <div className="relative overflow-hidden aspect-[3/4] bg-slate-50 flex-shrink-0">
-          {product.images.slice(0, 2).map((img, i) => {
-            const hasMultipleImages = product.images.length > 1;
+          {((product.images && product.images.length > 0 && product.images[0] !== "/products/suncream-1.jpg") 
+            ? product.images 
+            : (product.variants?.find((v: any) => v.image)?.image 
+                ? [product.variants.find((v: any) => v.image).image] 
+                : ["/products/suncream-1.jpg"])
+          ).slice(0, 2).map((img, i) => {
+            const hasMultipleImages = ((product.images && product.images.length > 0 && product.images[0] !== "/products/suncream-1.jpg") ? product.images : []).length > 1;
             return (
-              <Image
+              <img
                 key={`${product.id}-landing-${i}`}
-                src={img}
+                src={getImageUrl(img)}
                 alt={`${product.name} product image ${i + 1}`}
-                fill
-                loading={index > 2 ? "lazy" : "eager"}
-                sizes="(max-width: 640px) 280px, (max-width: 1024px) 33vw, 20vw"
-                className={`object-cover transition-all duration-500 ease-in-out group-hover:scale-105 ${hasMultipleImages
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-in-out group-hover:scale-105 ${hasMultipleImages
                   ? i === 0
                     ? "opacity-100 group-hover:opacity-0"
                     : "opacity-0 group-hover:opacity-100"
                   : "opacity-100"
                   }`}
+                onError={handleImageError}
+                loading={index > 2 ? "lazy" : "eager"}
               />
             );
           })}
@@ -184,6 +190,7 @@ export default function ProductSection() {
             weight: p.variants?.[0]?.weight || p.weight || 0,
             size: p.variants?.[0]?.volume || "Standard",
             variantId: p.variants?.[0]?._id || p.variants?.[0]?.id || "",
+            variants: p.variants || [],
           }));
           setProducts(mappedProds);
         }

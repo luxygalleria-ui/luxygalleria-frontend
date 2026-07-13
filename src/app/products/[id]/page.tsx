@@ -150,7 +150,8 @@ export default function ProductDetailPage() {
     if (product && product.variants && product.variants.length > 0) {
       const firstVariant = product.variants[0];
       setSelectedVariant(firstVariant);
-      setSelectedProductImage(product.images?.[0] ? getImageUrl(product.images[0]) : "");
+      const fallbackVariantImg = product.variants?.find((v: any) => v.image)?.image || "";
+      setSelectedProductImage(product.images?.[0] ? getImageUrl(product.images[0]) : (fallbackVariantImg ? getImageUrl(fallbackVariantImg) : ""));
       setShowVariantImage(!!firstVariant.image);
       setSelectedPrice(firstVariant.offerPrice || firstVariant.price || 0);
       setSelectedWeight(firstVariant.weight || product.weight || 0);
@@ -282,6 +283,15 @@ export default function ProductDetailPage() {
       setSelectedPrice(match.offerPrice || match.price || 0);
       setSelectedWeight(match.weight || product.weight || 0);
       setSelectedStock(match.stock || 0);
+      if (match.image) {
+        const url = getImageUrl(match.image);
+        const list = getGalleryImages();
+        const idx = list.indexOf(url);
+        if (idx !== -1) {
+          setActiveImage(idx);
+          setSelectedProductImage(url);
+        }
+      }
     }
   };
 
@@ -334,8 +344,38 @@ export default function ProductDetailPage() {
   const handleThumbnailClick = (i: number) => {
     setActiveImage(i);
     if (galleryImages && galleryImages.length > i) {
-      setSelectedProductImage(galleryImages[i]);
-      setShowVariantImage(false);
+      const clickedImageUrl = galleryImages[i];
+      setSelectedProductImage(clickedImageUrl);
+      
+      // Try to find a variant that uses this image
+      const matchingVariant = product.variants?.find((v: any) => v.image && getImageUrl(v.image) === clickedImageUrl);
+      if (matchingVariant) {
+        setSelectedVariant(matchingVariant);
+        setShowVariantImage(true);
+        setSelectedPrice(matchingVariant.offerPrice || matchingVariant.price || 0);
+        setSelectedWeight(matchingVariant.weight || product.weight || 0);
+        setSelectedStock(matchingVariant.stock || 0);
+
+        // Also update flavor and size dropdowns/selections
+        const uFlavors = Array.from(new Set(product.variants.map((v: any) => v.flavor || 'Default')));
+        const flavorIdx = uFlavors.indexOf(matchingVariant.flavor || 'Default');
+        if (flavorIdx !== -1) {
+          setSelectedFlavorIndex(flavorIdx);
+        }
+
+        const currentFlavorStr = matchingVariant.flavor || 'Default';
+        const uSizes = Array.from(new Set(
+          product.variants
+            .filter((v: any) => (v.flavor || 'Default').toLowerCase() === currentFlavorStr.toLowerCase())
+            .map((v: any) => v.size || v.volume || 'Standard')
+        ));
+        const sizeIdx = uSizes.indexOf(matchingVariant.size || matchingVariant.volume || 'Standard');
+        if (sizeIdx !== -1) {
+          setSelectedSizeIndex(sizeIdx);
+        }
+      } else {
+        setShowVariantImage(false);
+      }
     }
   };
 
@@ -732,12 +772,10 @@ export default function ProductDetailPage() {
                 className="group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-lg transition-shadow duration-300 flex flex-col"
               >
                 <div className="relative aspect-square overflow-hidden bg-slate-50">
-                  <Image
-                    src={getImageUrl(p.images[0])}
+                  <img
+                    src={getImageUrl(p.images && p.images.length > 0 ? p.images[0] : (p.variants?.find((v: any) => v.image)?.image || ""))}
                     alt={p.name}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     onError={handleImageError}
                   />
                 </div>

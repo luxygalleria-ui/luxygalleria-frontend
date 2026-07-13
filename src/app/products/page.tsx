@@ -28,6 +28,7 @@ interface Product {
   weight?: number;
   size?: string;
   variantId?: string;
+  variants?: any[];
 }
 
 // Categories and Products will be fetched dynamically
@@ -70,7 +71,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
     addToCart({
       id: product.id,
       name: product.name,
-      image: getImageUrl(product.images[0]),
+      image: getImageUrl(product.images && product.images.length > 0 ? product.images[0] : (product.variants?.find((v: any) => v.image)?.image || "")),
       price: product.currentPrice,
       currency: product.currency,
       weight: parseWeightFromVolume(product.size || '') || product.weight || 0,
@@ -101,23 +102,24 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       <Link href={`/products/${product.id}`} className="flex flex-col flex-grow focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50">
         {/* Image */}
         <div className="relative aspect-[3/4] overflow-hidden bg-slate-50">
-          {product.images.map((src, i) => (
-            <Image
+          {(product.images && product.images.length > 0 ? product.images : [(product.variants?.find((v: any) => v.image)?.image || "")]).map((src, i) => (
+            <img
               key={`${product.id}-img-${i}`}
               src={getImageUrl(src)}
               alt={`${product.name} image ${i + 1}`}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 25vw"
-              className={`object-cover transition-opacity duration-500 group-hover:scale-105 group-hover:transition-transform motion-reduce:transition-none ${i === imgIdx ? "opacity-100" : "opacity-0"}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 group-hover:scale-105 group-hover:transition-transform motion-reduce:transition-none ${i === imgIdx ? "opacity-100" : "opacity-0"}`}
               onError={handleImageError}
+              loading="lazy"
             />
           ))}
           {/* Dots */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {product.images.map((_, i) => (
-              <div key={`${product.id}-dot-${i}`} className={`w-2 h-2 rounded-full transition-colors ${i === imgIdx ? "bg-white" : "bg-white/50"}`} />
-            ))}
-          </div>
+          {product.images && product.images.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {product.images.map((_, i) => (
+                <div key={`${product.id}-dot-${i}`} className={`w-2 h-2 rounded-full transition-colors ${i === imgIdx ? "bg-white" : "bg-white/50"}`} />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -414,7 +416,11 @@ function ProductsContent() {
               return {
                 id: p._id,
                 name: p.name,
-                images: p.images && p.images.length > 0 ? p.images.map(getImageUrl) : [getImageUrl("/products/suncream-1.jpg")],
+                 images: p.images && p.images.length > 0 
+                  ? p.images.map(getImageUrl) 
+                  : (p.variants?.find((v: any) => v.image)?.image 
+                      ? [getImageUrl(p.variants.find((v: any) => v.image).image)] 
+                      : [getImageUrl("/products/suncream-1.jpg")]),
                 rating: p.starRating || 0,
                 reviewCount: p.reviewsCount || 0,
                 currentPrice: p.variants?.[0]?.price || 0,
@@ -426,6 +432,7 @@ function ProductsContent() {
                 size: p.variants?.[0]?.volume || "Standard",
                 category: p.category ? p.category.toLowerCase().replace(/\s+/g, '-') : "all",
                 variantId: p.variants?.[0]?._id || p.variants?.[0]?.id || "",
+                variants: p.variants || [],
               };
             });
             setProducts(mappedProds);
