@@ -345,7 +345,7 @@ export default function CheckoutPage() {
         });
 
         if (verifyRes.data.success) {
-          clearCart();
+          await clearCart();
           window.location.href = "/order-success";
         } else {
           setIsVerifyingPayment(false);
@@ -386,7 +386,7 @@ export default function CheckoutPage() {
             });
 
             if (verifyRes.data.success) {
-              clearCart();
+              await clearCart();
               window.location.href = "/order-success";
             } else {
               setIsVerifyingPayment(false);

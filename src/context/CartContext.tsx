@@ -93,7 +93,7 @@ interface CartContextType {
   addToCart: (item: CartItem) => void;
   updateQuantity: (id: string, qty: number, variantId?: string, size?: string) => void;
   removeItem: (id: string, variantId?: string, size?: string) => void;
-  clearCart: () => void;
+  clearCart: () => Promise<void>;
   cartCount: number;
 }
 
