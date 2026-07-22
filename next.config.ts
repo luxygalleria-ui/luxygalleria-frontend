@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   // Ship smaller production bundles (SWC minification is on by default in prod builds)
   productionBrowserSourceMaps: false,
   compress: true,
+  poweredByHeader: false, // drop X-Powered-By header (best practices)
   images: {
     dangerouslyAllowLocalIP: true,
     // Serve modern, better-compressed formats (AVIF preferred, WebP fallback)
