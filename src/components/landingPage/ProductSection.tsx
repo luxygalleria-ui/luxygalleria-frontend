@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { Star, StarHalf } from "lucide-react";
 import { useCart, parseWeightFromVolume } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import CartAnimation from "../CartAnimation";
@@ -22,6 +21,7 @@ interface Product {
   currency: string;
   dealBadge: string;
   benefit: string;
+  stock: number;
   weight?: number;
   size?: string;
   variantId?: string;
@@ -43,18 +43,6 @@ const normalizeImg = (img: any) => {
   return `${baseUrl.replace(/\/$/, "")}/${str.replace(/^\/+/, "")}`;
 };
 
-const renderStars = (rating: number) => {
-  return Array.from({ length: 5 }, (_, i) => {
-    if (i < Math.floor(rating)) {
-      return <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />;
-    }
-    if (i === Math.floor(rating) && rating % 1 !== 0) {
-      return <StarHalf key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />;
-    }
-    return <Star key={i} className="w-4 h-4 fill-slate-200 text-slate-200" />;
-  });
-};
-
 function ProductCard({ product, isVisible, index }: { product: Product; isVisible: boolean; index: number }) {
   const [isAdded, setIsAdded] = useState(false);
   const { addToCart, cartCount } = useCart();
@@ -62,8 +50,14 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
 
   const router = useRouter();
 
+  const isOutOfStock = (product.stock ?? 0) <= 0;
+
   const handleAddToCart = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
+    if (isOutOfStock) {
+      showToast(`${product.name} is out of stock.`, "error");
+      return;
+    }
     const savedUser = localStorage.getItem("luxygalleria_user");
     addToCart({
       id: product.id,
@@ -114,15 +108,17 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
               />
             );
           })}
+          {isOutOfStock && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60">
+              <span className="bg-slate-900/90 text-white text-[10px] md:text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full">
+                Out of Stock
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Content Area */}
         <div className="px-4 pt-4 pb-3 flex flex-col flex-grow">
-          <div className="flex items-center justify-center gap-0.5 mb-2" aria-label={`${product.rating} out of 5 stars`}>
-            {renderStars(product.rating)}
-            <span className="text-sm font-medium text-slate-400 ml-1">({product.reviewCount})</span>
-          </div>
-
           <h3 className="font-sans font-bold text-sm md:text-lg text-slate-900 leading-tight text-center mb-2 md:mb-3 line-clamp-2">
             {product.name}
           </h3>
@@ -146,18 +142,29 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
         </div>
       </Link>
       <div className="px-4 pb-6">
-        <CartAnimation onAdd={handleAddToCart}>
+        {isOutOfStock ? (
           <button
             type="button"
-            aria-label={`Add ${product.name} to cart`}
-            className={`w-full text-white font-sans font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 ${isAdded
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-slate-500 hover:bg-slate-600"
-              }`}
+            disabled
+            aria-label={`${product.name} is out of stock`}
+            className="w-full text-slate-400 bg-slate-200 font-sans font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full cursor-not-allowed"
           >
-            {isAdded ? "ADDED TO CART" : "ADD TO CART"}
+            OUT OF STOCK
           </button>
-        </CartAnimation>
+        ) : (
+          <CartAnimation onAdd={handleAddToCart}>
+            <button
+              type="button"
+              aria-label={`Add ${product.name} to cart`}
+              className={`w-full text-white font-sans font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 ${isAdded
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-slate-500 hover:bg-slate-600"
+                }`}
+            >
+              {isAdded ? "ADDED TO CART" : "ADD TO CART"}
+            </button>
+          </CartAnimation>
+        )}
       </div>
     </article>
   );
@@ -179,6 +186,9 @@ export default function ProductSection() {
           const mappedProds = landingProds.map((p: any) => ({
             id: p._id,
             name: p.name,
+            stock: (p.variants && p.variants.length > 0)
+              ? p.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0)
+              : (Number(p.stock) || 0),
             images: p.images && p.images.length > 0 ? p.images.map(normalizeImg) : ["/products/suncream-1.jpg"],
             rating: p.starRating || 0,
             reviewCount: p.reviewsCount || 0,

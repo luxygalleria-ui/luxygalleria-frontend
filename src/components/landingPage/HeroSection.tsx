@@ -208,6 +208,9 @@ export default function HeroSection() {
                   src={slide.image}
                   alt={slide.alt}
                   className="w-full h-full object-cover block"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  decoding="async"
                 />
               </div>
               <div className="block md:hidden absolute inset-0 w-full h-full">
@@ -215,6 +218,9 @@ export default function HeroSection() {
                   src={slide.mobileImage || slide.image}
                   alt={slide.alt}
                   className="w-full h-full object-cover block"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  decoding="async"
                 />
               </div>
               <div className="absolute inset-0 bg-black/20 z-20 pointer-events-none" /> {/* overlay */}

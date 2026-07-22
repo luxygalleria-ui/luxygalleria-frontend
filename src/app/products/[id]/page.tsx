@@ -6,8 +6,7 @@ import Link from "next/link";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Star, StarHalf, ShoppingBag, ChevronRight,
-  Shield, Truck, RotateCcw, Plus, Minus, Check,
+  ShoppingBag, ChevronRight, Plus, Minus, Check,
 } from "lucide-react";
 import { useToast } from "../../../context/ToastContext";
 import CartAnimation from "../../../components/CartAnimation";
@@ -38,23 +37,6 @@ interface Product {
 
 // Data will be fetched dynamically from backend
 
-const TRUST_BADGES = [
-  { Icon: Truck, label: "Free Delivery", sub: "On orders above ₹499" },
-  { Icon: RotateCcw, label: "Easy Returns", sub: "7-day return policy" },
-  { Icon: Shield, label: "100% Authentic", sub: "Genuine products only" },
-];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const renderStars = (rating: number) =>
-  Array.from({ length: 5 }, (_, i) => {
-    if (i < Math.floor(rating))
-      return <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />;
-    if (i === Math.floor(rating) && rating % 1 !== 0)
-      return <StarHalf key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />;
-    return <Star key={i} className="w-4 h-4 fill-slate-200 text-slate-200" />;
-  });
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProductDetailPage() {
@@ -70,7 +52,6 @@ export default function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState(0);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const [activeTab, setActiveTab] = useState<"benefits" | "ingredients" | "how-to">("benefits");
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isIngredientsExpanded, setIsIngredientsExpanded] = useState(false);
   const [showAllThumbs, setShowAllThumbs] = useState(false);
@@ -520,17 +501,6 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Rating */}
-            <div className="flex items-center gap-2 mb-6">
-              <div className="flex items-center gap-0.5" aria-label={`${product.rating} out of 5 stars`}>
-                {renderStars(product.rating)}
-              </div>
-              <span className="text-sm font-semibold text-slate-700">{product.rating.toFixed(1)}</span>
-              {product.reviewCount > 0 && (
-                <span className="text-sm text-slate-400">({product.reviewCount} reviews)</span>
-              )}
-            </div>
-
             {/* Divider */}
             <div className="h-px bg-slate-100 mb-6" />
 
@@ -676,77 +646,29 @@ export default function ProductDetailPage() {
               </Link>
             </div>
 
-            {/* Trust badges */}
-            <div className="grid grid-cols-3 gap-3 p-5 bg-slate-50 rounded-2xl border border-slate-100">
-              {TRUST_BADGES.map(({ Icon, label, sub }) => (
-                <div key={label} className="flex flex-col items-center text-center gap-1.5">
-                  <div className="w-9 h-9 rounded-xl bg-[#8B5E34] flex items-center justify-center">
-                    <Icon size={16} className="text-white" />
-                  </div>
-                  <p className="font-sans font-bold text-xs text-slate-900 leading-tight">{label}</p>
-                  <p className="font-sans text-[10px] text-slate-400 leading-tight">{sub}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Info Tabs ── */}
+      {/* ── Ingredients ── */}
       <section className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-12 md:py-16">
-        {/* Tab Bar */}
-        <div className="flex border-b border-slate-200 mb-8 gap-8">
-          {([
-            { key: "benefits", label: "Benefits" },
-            { key: "ingredients", label: "Ingredients" },
-            { key: "how-to", label: "How to Use" },
-          ] as const).map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`pb-4 font-sans font-bold text-sm uppercase tracking-[0.12em] border-b-2 transition-all duration-200 focus:outline-none ${activeTab === key
-                ? "border-slate-900 text-slate-900"
-                : "border-transparent text-slate-400 hover:text-slate-700"
-                }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="border-b border-slate-200 mb-8">
+          <h2 className="pb-4 font-sans font-bold text-sm uppercase tracking-[0.12em] border-b-2 border-slate-900 text-slate-900 inline-block">
+            Ingredients
+          </h2>
         </div>
 
-        {/* Tab Content */}
         <div className="max-w-2xl">
-          {activeTab === "benefits" && (
-            <ul className="space-y-3">
-              {product.benefits.map((b) => (
-                <li key={b} className="flex items-start gap-3">
-                  <div className="mt-0.5 w-5 h-5 rounded-full bg-[#A68B5B]/10 flex items-center justify-center flex-shrink-0">
-                    <Check size={11} className="text-[#8B5E34]" strokeWidth={3} />
-                  </div>
-                  <span className="font-sans text-base text-slate-700">{b}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {activeTab === "ingredients" && (
-            <div>
-              <p className={`font-sans text-base text-slate-600 leading-relaxed whitespace-pre-wrap transition-all duration-300 ${!isIngredientsExpanded ? 'line-clamp-4' : ''}`}>
-                {product.ingredients}
-              </p>
-              {product.ingredients && product.ingredients.length > 200 && (
-                <button
-                  onClick={() => setIsIngredientsExpanded(!isIngredientsExpanded)}
-                  className="text-[#8B5E34] font-semibold text-sm mt-2 hover:text-[#5A3A1E] transition-colors inline-block"
-                >
-                  {isIngredientsExpanded ? 'Read Less' : 'Read More'}
-                </button>
-              )}
-            </div>
-          )}
-          {activeTab === "how-to" && (
-            <p className="font-sans text-base text-slate-600 leading-relaxed">
-              {product.howToUse}
-            </p>
+          <p className={`font-sans text-base text-slate-600 leading-relaxed whitespace-pre-wrap transition-all duration-300 ${!isIngredientsExpanded ? 'line-clamp-4' : ''}`}>
+            {product.ingredients}
+          </p>
+          {product.ingredients && product.ingredients.length > 200 && (
+            <button
+              onClick={() => setIsIngredientsExpanded(!isIngredientsExpanded)}
+              className="text-[#8B5E34] font-semibold text-sm mt-2 hover:text-[#5A3A1E] transition-colors inline-block"
+            >
+              {isIngredientsExpanded ? 'Read Less' : 'Read More'}
+            </button>
           )}
         </div>
       </section>

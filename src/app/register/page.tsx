@@ -67,16 +67,11 @@ export default function RegisterPage() {
         }]
       });
 
-      console.log('📨 Registration response:', response.data);
-
-      // Check if OTP is returned
-      const otpValue = response.data.data?.otp || '';
-      if (otpValue) {
-        sessionStorage.setItem('dev_otp', otpValue);
+      // Direct signup — account is created and logged in immediately
+      if (response.data.data) {
+        localStorage.setItem("luxygalleria_user", JSON.stringify(response.data.data));
       }
-
-      // Redirect to OTP verification page with OTP in URL
-      router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&code=${otpValue}`);
+      router.push("/");
     } catch (err: any) {
       // Don't log 400 errors to console (expected: email already exists, etc.)
       const status = err.response?.status;
@@ -138,7 +133,7 @@ export default function RegisterPage() {
               <input
                 id="fullName"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Enter your full name"
                 {...register("fullName")}
                 className={`w-full bg-slate-50 border rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors ${
                   errors.fullName ? "border-red-500 ring-1 ring-red-500" : "border-slate-100"
@@ -157,7 +152,7 @@ export default function RegisterPage() {
                 <input
                   id="email"
                   type="email"
-                  placeholder="you@luxury.com"
+                  placeholder="Enter your email address"
                   {...register("email")}
                   className={`w-full bg-slate-50 border rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors ${
                     errors.email ? "border-red-500 ring-1 ring-red-500" : "border-slate-100"
@@ -173,7 +168,7 @@ export default function RegisterPage() {
                 <input
                   id="phone"
                   type="tel"
-                  placeholder="1234567890"
+                  placeholder="10-digit mobile number"
                   {...register("phone")}
                   className={`w-full bg-slate-50 border rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors ${
                     errors.phone ? "border-red-500 ring-1 ring-red-500" : "border-slate-100"
@@ -259,7 +254,7 @@ export default function RegisterPage() {
                 <input
                   id="street"
                   type="text"
-                  placeholder="123 Luxury Ave"
+                  placeholder="House no, street"
                   {...register("street")}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors"
                 />
@@ -271,7 +266,7 @@ export default function RegisterPage() {
                 <input
                   id="city"
                   type="text"
-                  placeholder="Metropolis"
+                  placeholder="City"
                   {...register("city")}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors"
                 />
@@ -287,7 +282,7 @@ export default function RegisterPage() {
                 <input
                   id="state"
                   type="text"
-                  placeholder="NY"
+                  placeholder="State"
                   {...register("state")}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors"
                 />
@@ -299,7 +294,7 @@ export default function RegisterPage() {
                 <input
                   id="zipCode"
                   type="text"
-                  placeholder="10001"
+                  placeholder="6-digit PIN code"
                   {...register("zipCode")}
                   className={`w-full bg-slate-50 border rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors ${
                     errors.zipCode ? "border-red-500 ring-1 ring-red-500" : "border-slate-100"
@@ -314,7 +309,7 @@ export default function RegisterPage() {
                 <input
                   id="country"
                   type="text"
-                  placeholder="United States"
+                  placeholder="Country"
                   {...register("country")}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors"
                 />

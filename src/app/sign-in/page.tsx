@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Eye, EyeOff, ShieldCheck, UserPlus, ArrowRight, Mail } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck, UserPlus, ArrowRight } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
 import GoogleAuthButton from "../../components/auth/GoogleAuthButton";
 import { getAPIURL } from "../../lib/apiClient";
@@ -34,12 +34,10 @@ export default function SignInPage() {
   const router = useRouter();
   const { showToast } = useToast();
   const [apiError, setApiError] = useState<string | null>(null);
-  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
 
   const onSubmit = async (data: SignInValues) => {
     try {
       setApiError(null);
-      setUnverifiedEmail(null);
       const apiURL = getAPIURL();
       const res = await axios.post(`${apiURL}/auth/customer-login`, {
         email: data.email,
@@ -60,13 +58,7 @@ export default function SignInPage() {
       if (status === 401) {
         setApiError("Invalid email or password. Please try again.");
       } else if (status === 403) {
-        // Check if it's an unverified email error - redirect to verify-otp
-        if (serverMsg && serverMsg.toLowerCase().includes('verify')) {
-          setUnverifiedEmail(data.email);
-          setApiError(null);
-        } else {
-          setApiError(serverMsg || "Account not verified. Please check your email for OTP.");
-        }
+        setApiError(serverMsg || "Your account cannot be accessed. Please contact support.");
       } else {
         console.error("Sign in error:", err);
         setApiError(serverMsg || "Something went wrong. Please try again.");
@@ -112,35 +104,6 @@ export default function SignInPage() {
             Enter your credentials to continue.
           </p>
 
-          {/* Helpful Hint */}
-          <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs font-semibold text-blue-700 uppercase mb-2">💡 Tip</p>
-            <p className="text-sm text-blue-700">
-              Don't have an account yet? <Link href="/register" className="font-bold underline hover:text-blue-900">Create one first</Link>, verify your email with OTP, then login here.
-            </p>
-          </div>
-
-          {/* Unverified Email Banner */}
-          {unverifiedEmail && (
-            <div className="mb-8 p-5 bg-amber-50 border-2 border-amber-300 rounded-xl">
-              <div className="flex items-start gap-3">
-                <Mail size={20} className="text-amber-600 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-sm font-bold text-amber-800 mb-1">Email not verified yet!</p>
-                  <p className="text-sm text-amber-700 mb-3">
-                    Please verify your email address <strong>{unverifiedEmail}</strong> to continue.
-                  </p>
-                  <button
-                    onClick={() => router.push(`/verify-otp?email=${encodeURIComponent(unverifiedEmail)}`)}
-                    className="bg-amber-600 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors"
-                  >
-                    Verify Email Now →
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-7">
             {apiError && (
               <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100">
@@ -159,7 +122,7 @@ export default function SignInPage() {
               <input
                 id="email"
                 type="email"
-                placeholder="you@luxury.com"
+                placeholder="Enter your email address"
                 {...register("email")}
                 className={`w-full bg-slate-50 border rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors ${errors.email ? "border-red-500 ring-1 ring-red-500" : "border-slate-100"
                   }`}
