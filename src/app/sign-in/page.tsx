@@ -67,9 +67,9 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row pt-24">
+    <div className="min-h-screen flex flex-col md:flex-row pt-0">
       {/* ── Left Panel: Brand Context ── */}
-      <div className="bg-[#F5F0EB] md:w-1/2 flex flex-col justify-center px-6 py-10 md:p-16 lg:p-24 relative overflow-hidden">
+      <div className="bg-[#F5F0EB] md:w-1/2 flex flex-col justify-center px-6 py-0 md:p-16 lg:p-24 relative overflow-hidden">
         {/* Subtle decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#e8ddd4]/60 to-transparent rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#d4c5b5]/40 to-transparent rounded-full blur-2xl" />
@@ -80,16 +80,16 @@ export default function SignInPage() {
           </p>
 
           <h1 className="font-serif font-normal text-4xl md:text-5xl lg:text-6xl text-[#0A192F] leading-tight mb-6">
-            Welcome back to your premium beauty experience.
+            Discover Premium Imported Collections
           </h1>
 
           <p className="font-sans text-slate-600 text-base leading-relaxed mb-12 max-w-sm">
-            Sign in to access your curated collection, track orders, and enjoy a seamless luxury shopping journey.
+            Access exclusive imported beverages, gourmet snacks, premium chocolates, and international delicacies from Luxy Galleria. Sign in to manage your orders, wishlist, and enjoy a seamless shopping experience.
           </p>
 
           <div className="flex items-center gap-3 text-slate-700">
             <ShieldCheck size={20} className="text-slate-900" />
-            <span className="font-sans font-medium text-sm">Secure Authentication</span>
+            <span className="font-sans font-medium text-sm">Premium Imported Products</span>
           </div>
         </div>
       </div>
