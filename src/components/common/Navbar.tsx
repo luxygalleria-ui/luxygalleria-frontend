@@ -169,9 +169,11 @@ export default function Navbar() {
       <div className="flex items-center justify-center md:justify-start flex-1 md:flex-none z-10 min-w-0">
         <Link href="/" className="group flex items-center" aria-label="Luxy Galleria home">
           <img
-            src="/luxy_logo.png"
+            src="/luxy_logo_trimmed.png"
             alt="Luxy Galleria"
-            className="h-10 sm:h-12 lg:h-14 w-auto max-w-[150px] sm:max-w-[210px] md:max-w-[260px] object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
+            width={654}
+            height={393}
+            className="h-8 sm:h-9 lg:h-10 w-auto max-w-[110px] sm:max-w-[130px] lg:max-w-[150px] object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
           />
         </Link>
       </div>

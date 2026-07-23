@@ -81,25 +81,27 @@ export default function Footer() {
   return (
     <footer className="bg-slate-100 text-slate-900 w-full border-t border-slate-200">
       <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-12 md:py-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 items-start gap-x-12 gap-y-10">
 
           {/* Brand column */}
-          <div className="lg:col-span-6">
-            <Link href="/" className="inline-flex items-center mb-8 group" aria-label="Luxy Galleria home">
+          <div className="lg:col-span-6 flex flex-col">
+            <Link href="/" className="inline-flex items-center mb-4 group" aria-label="Luxy Galleria home">
               <img
-                src="/luxy_logo.png"
+                src="/luxy_logo_footer.png"
                 alt="Luxy Galleria"
-                className="h-16 md:h-20 w-auto max-w-[220px] object-contain mix-blend-multiply group-hover:drop-shadow-lg transition-all duration-300"
+                width={654}
+                height={393}
+                className="h-auto w-40 md:w-44 max-w-[180px] object-contain mix-blend-multiply group-hover:drop-shadow-lg transition-all duration-300"
               />
             </Link>
 
             {/* Delivered To */}
-            <p className="max-w-2xl text-[15px] md:text-base leading-8 text-slate-600">
+            <p className="max-w-[540px] text-[15px] md:text-base leading-[1.8] text-slate-600">
               Delivered To : {leadingCities}, and {lastCity}.
             </p>
 
             {/* Socials */}
-            <div className="mt-8 flex flex-wrap items-center gap-4">
+            <div className="mt-6 flex flex-wrap items-center gap-4">
               {socials.map(({ svg, label, href, hoverClass }) => (
                 <a
                   key={label + href}
@@ -118,9 +120,9 @@ export default function Footer() {
           </div>
 
           {/* Quick Links column */}
-          <div className="lg:col-span-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#A68B5B] mb-6">Quick Links</h3>
-            <ul className="space-y-3">
+          <div className="lg:col-span-3 lg:mt-3">
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#A68B5B] mb-6 leading-none">Quick Links</h3>
+            <ul className="space-y-3 text-sm text-slate-600">
               {footerLinks.map(({ label, href }) => (
                 <li key={href}>
                   <Link
@@ -135,8 +137,8 @@ export default function Footer() {
           </div>
 
           {/* Contact column */}
-          <div className="lg:col-span-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#A68B5B] mb-6">Contact</h3>
+          <div className="lg:col-span-3 lg:mt-3">
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#A68B5B] mb-6 leading-none">Contact</h3>
             <ul className="space-y-3 text-sm text-slate-600">
               <li>
                 <a href="mailto:infoluxygalleria@gmail.com" className="text-slate-600 hover:text-[#A68B5B] transition-colors font-medium">
@@ -153,7 +155,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 pt-6 border-t border-slate-200 text-xs text-slate-500">
+        <div className="mt-10 pt-8 border-t border-slate-200 text-xs text-slate-500">
           <p>© {new Date().getFullYear()} <span className="font-bold text-[#A68B5B]">Luxy Galleria</span>. All rights reserved.</p>
         </div>
       </div>

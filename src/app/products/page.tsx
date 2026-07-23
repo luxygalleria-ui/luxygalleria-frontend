@@ -25,8 +25,6 @@ interface Product {
   dealBadge: string;
   benefit: string;
   category: string;
-  department: string;
-  brand: string;
   stock: number;
   weight?: number;
   size?: string;
@@ -175,17 +173,11 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 interface FilterSidebarProps {
   categories: { id: string; label: string }[];
   activeCategory: string;
-  departments: string[];
-  activeDepartment: string;
-  brands: string[];
-  activeBrand: string;
   minPrice: number;
   maxPrice: number;
   pendingMin: number;
   pendingMax: number;
   onCategoryChange: (id: string) => void;
-  onDepartmentChange: (v: string) => void;
-  onBrandChange: (v: string) => void;
   onMinChange: (v: number) => void;
   onMaxChange: (v: number) => void;
   onApply: () => void;
@@ -193,9 +185,9 @@ interface FilterSidebarProps {
 }
 
 function FilterSidebar({
-  categories, activeCategory, departments, activeDepartment, brands, activeBrand,
+  categories, activeCategory,
   pendingMin, pendingMax,
-  onCategoryChange, onDepartmentChange, onBrandChange, onMinChange, onMaxChange, onApply, onClear,
+  onCategoryChange, onMinChange, onMaxChange, onApply, onClear,
 }: FilterSidebarProps) {
   const trackRef = useRef<HTMLDivElement>(null);
 
@@ -243,76 +235,6 @@ function FilterSidebar({
               {cat.label}
             </button>
           ))}
-        </div>
-      </div>
-
-      {/* Departments */}
-      <div>
-        <p className="font-sans font-semibold text-xs tracking-[0.15em] uppercase text-slate-400 mb-4">
-          Departments
-        </p>
-        <div className="flex flex-col gap-2.5">
-          <button
-            aria-pressed={activeDepartment === "all"}
-            onClick={() => onDepartmentChange("all")}
-            className={`px-5 py-3 rounded-xl font-sans font-medium text-sm text-left transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 ${activeDepartment === "all"
-              ? "bg-[#A68B5B] text-white"
-              : "bg-[#1a1a1a] text-slate-300 border border-[#2a2a2a] hover:bg-[#252525] hover:text-white"
-              }`}
-          >
-            All Departments
-          </button>
-          {departments.map((dept) => (
-            <button
-              key={dept}
-              aria-pressed={activeDepartment === dept}
-              onClick={() => onDepartmentChange(dept)}
-              className={`px-5 py-3 rounded-xl font-sans font-medium text-sm text-left transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 ${activeDepartment === dept
-                ? "bg-[#A68B5B] text-white"
-                : "bg-[#1a1a1a] text-slate-300 border border-[#2a2a2a] hover:bg-[#252525] hover:text-white"
-                }`}
-            >
-              {dept}
-            </button>
-          ))}
-          {departments.length === 0 && (
-            <p className="text-xs text-slate-500 italic px-1">No departments assigned yet.</p>
-          )}
-        </div>
-      </div>
-
-      {/* Brands */}
-      <div>
-        <p className="font-sans font-semibold text-xs tracking-[0.15em] uppercase text-slate-400 mb-4">
-          Brands
-        </p>
-        <div className="flex flex-col gap-2.5">
-          <button
-            aria-pressed={activeBrand === "all"}
-            onClick={() => onBrandChange("all")}
-            className={`px-5 py-3 rounded-xl font-sans font-medium text-sm text-left transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 ${activeBrand === "all"
-              ? "bg-[#A68B5B] text-white"
-              : "bg-[#1a1a1a] text-slate-300 border border-[#2a2a2a] hover:bg-[#252525] hover:text-white"
-              }`}
-          >
-            All Brands
-          </button>
-          {brands.map((b) => (
-            <button
-              key={b}
-              aria-pressed={activeBrand === b}
-              onClick={() => onBrandChange(b)}
-              className={`px-5 py-3 rounded-xl font-sans font-medium text-sm text-left transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 ${activeBrand === b
-                ? "bg-[#A68B5B] text-white"
-                : "bg-[#1a1a1a] text-slate-300 border border-[#2a2a2a] hover:bg-[#252525] hover:text-white"
-                }`}
-            >
-              {b}
-            </button>
-          ))}
-          {brands.length === 0 && (
-            <p className="text-xs text-slate-500 italic px-1">No brands assigned yet.</p>
-          )}
         </div>
       </div>
 
@@ -461,8 +383,6 @@ function ProductsContent() {
   const [loading, setLoading] = useState(true);
 
   const [activeCategory, setActiveCategory] = useState(initialCategory);
-  const [activeDepartment, setActiveDepartment] = useState("all");
-  const [activeBrand, setActiveBrand] = useState("all");
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(PRICE_MAX);
@@ -527,8 +447,6 @@ function ProductsContent() {
                 weight: p.variants?.[0]?.weight || p.weight || 0,
                 size: p.variants?.[0]?.volume || "Standard",
                 category: p.category ? p.category.toLowerCase().replace(/\s+/g, '-') : "all",
-                department: p.department || "",
-                brand: p.brand || "",
                 variantId: p.variants?.[0]?._id || p.variants?.[0]?.id || "",
                 variants: p.variants || [],
               };
@@ -568,8 +486,6 @@ function ProductsContent() {
 
   const handleClear = () => {
     setActiveCategory("all");
-    setActiveDepartment("all");
-    setActiveBrand("all");
     setPendingMin(0);
     setPendingMax(PRICE_MAX);
     setMinPrice(0);
@@ -578,35 +494,23 @@ function ProductsContent() {
     setDrawerOpen(false);
   };
 
-  // Departments & Brands are derived from the products themselves (managed per-product in admin)
-  const departments = useMemo(
-    () => Array.from(new Set(products.map((p) => p.department).filter(Boolean))).sort(),
-    [products]
-  );
-  const brands = useMemo(
-    () => Array.from(new Set(products.map((p) => p.brand).filter(Boolean))).sort(),
-    [products]
-  );
-
   const filtered = useMemo(
     () =>
       products.filter(
         (p) =>
           (activeCategory === "all" || p.category.toLowerCase() === activeCategory.toLowerCase()) &&
-          (activeDepartment === "all" || (p.department || "").toLowerCase() === activeDepartment.toLowerCase()) &&
-          (activeBrand === "all" || (p.brand || "").toLowerCase() === activeBrand.toLowerCase()) &&
           p.currentPrice >= minPrice &&
           p.currentPrice <= maxPrice &&
           (searchTerm === "" ||
             p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.benefit.toLowerCase().includes(searchTerm.toLowerCase()))
       ),
-    [activeCategory, activeDepartment, activeBrand, minPrice, maxPrice, products, searchTerm]
+    [activeCategory, minPrice, maxPrice, products, searchTerm]
   );
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeCategory, activeDepartment, activeBrand, minPrice, maxPrice, searchTerm]);
+  }, [activeCategory, minPrice, maxPrice, searchTerm]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginatedProducts = filtered.slice(
@@ -630,11 +534,9 @@ function ProductsContent() {
   }, [drawerOpen]);
 
   const sidebarProps: FilterSidebarProps = {
-    categories, activeCategory, departments, activeDepartment, brands, activeBrand,
+    categories, activeCategory,
     minPrice, maxPrice, pendingMin, pendingMax,
     onCategoryChange: setActiveCategory,
-    onDepartmentChange: setActiveDepartment,
-    onBrandChange: setActiveBrand,
     onMinChange: setPendingMin,
     onMaxChange: setPendingMax,
     onApply: handleApply,
