@@ -146,8 +146,8 @@ export default function CheckoutPage() {
     const errors: Record<string, string> = {};
     if (!newAddressForm.city.trim()) errors.city = "City is required.";
     if (!newAddressForm.state.trim()) errors.state = "State is required.";
-    if (!newAddressForm.zip.trim()) errors.zip = "ZIP code is required.";
-    else if (!/^\d{5,6}$/.test(newAddressForm.zip.trim())) errors.zip = "Enter a valid 5-6 digit ZIP code.";
+    if (!newAddressForm.zip.trim()) errors.zip = "PIN code is required.";
+    else if (!/^\d{5,6}$/.test(newAddressForm.zip.trim())) errors.zip = "Enter a valid 5-6 digit PIN code.";
     if (newAddressForm.street.trim() && newAddressForm.street.trim().length < 3) errors.street = "Street must be at least 3 characters.";
     setAddressErrors(errors);
     return Object.keys(errors).length === 0;
@@ -686,10 +686,11 @@ export default function CheckoutPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block font-sans font-bold text-sm text-slate-700 mb-2">ZIP Code <span className="text-red-500">*</span></label>
+                  <label className="block font-sans font-bold text-sm text-slate-700 mb-2">PIN Code <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={newAddressForm.zip}
+                    placeholder="6-digit PIN Code"
                     onChange={(e) => { setNewAddressForm({ ...newAddressForm, zip: e.target.value }); setAddressErrors(prev => ({ ...prev, zip: '' })); }}
                     className={`w-full border rounded-xl px-4 py-3 text-base text-slate-900 focus:outline-none focus:border-[#0A192F] placeholder:text-slate-400 ${addressErrors.zip ? 'border-red-400 ring-1 ring-red-400' : 'border-slate-200'}`}
                   />

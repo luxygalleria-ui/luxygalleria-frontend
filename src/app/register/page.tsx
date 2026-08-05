@@ -22,7 +22,7 @@ const registerSchema = z
     street: z.string().optional(),
     city: z.string().optional(),
     state: z.string().optional(),
-    zipCode: z.string().optional().refine((val) => !val || /^\d{5,6}$/.test(val), { message: "ZIP code must be 5-6 digits." }),
+    zipCode: z.string().optional().refine((val) => !val || /^\d{5,6}$/.test(val), { message: "PIN code must be 5-6 digits." }),
     country: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -89,7 +89,7 @@ export default function RegisterPage() {
       {/* ── Left Panel: Brand Context ── */}
       <div className="bg-[#F5F0EB] lg:w-5/12 flex flex-col justify-center px-6 py-0 lg:p-16 xl:p-24 relative overflow-hidden">
         <div className="max-w-md mx-auto relative z-10 w-full">
-          <p className="font-sans font-bold text-xs uppercase tracking-[0.25em] text-slate-800 mb-6 lg:mb-8">
+          <p className="font-sans font-bold text-xs uppercase tracking-[0.25em] text-[#A68B5B] mb-6 lg:mb-8">
             LUXY GALLERIA MEMBERSHIP
           </p>
           
@@ -289,18 +289,18 @@ export default function RegisterPage() {
               </div>
               <div>
                 <label htmlFor="zipCode" className="block font-sans font-bold text-xs uppercase tracking-wider text-slate-800 mb-2.5">
-                  Zip Code
+                  PIN Code
                 </label>
                 <input
                   id="zipCode"
                   type="text"
-                  placeholder="6-digit PIN code"
+                  placeholder="6-digit PIN Code"
                   {...register("zipCode")}
                   className={`w-full bg-slate-50 border rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors ${
                     errors.zipCode ? "border-red-500 ring-1 ring-red-500" : "border-slate-100"
                   }`}
                 />
-                {errors.zipCode && <p className="mt-2 text-sm text-red-500">{errors.zipCode.message}</p>}
+                {errors.zipCode && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.zipCode.message}</p>}
               </div>
               <div>
                 <label htmlFor="country" className="block font-sans font-bold text-xs uppercase tracking-wider text-slate-800 mb-2.5">

@@ -75,7 +75,7 @@ export default function SignInPage() {
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#d4c5b5]/40 to-transparent rounded-full blur-2xl" />
 
         <div className="max-w-lg mx-auto relative z-10 w-full">
-          <p className="font-sans font-bold text-xs uppercase tracking-[0.25em] text-slate-800 mb-6 md:mb-8">
+          <p className="font-sans font-bold text-xs uppercase tracking-[0.25em] text-[#A68B5B] mb-6 md:mb-8">
             LUXY GALLERIA LUXURY COMMERCE
           </p>
 

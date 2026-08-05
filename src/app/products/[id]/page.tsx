@@ -521,18 +521,10 @@ export default function ProductDetailPage() {
               </p>
             )}
 
-            {/* Weight & Stock Display */}
+            {/* Weight Display */}
             <div className="flex gap-6 mb-6 font-sans text-sm text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-100">
               <div>
                 <span className="font-semibold text-slate-700">Weight:</span> {selectedWeight >= 1 ? `${selectedWeight} kg` : `${selectedWeight * 1000} g`}
-              </div>
-              <div>
-                <span className="font-semibold text-slate-700">Stock:</span>{" "}
-                {selectedStock > 0 ? (
-                  <span className="text-green-600 font-semibold">In Stock ({selectedStock} available)</span>
-                ) : (
-                  <span className="text-red-500 font-semibold">Out of Stock</span>
-                )}
               </div>
             </div>
 
@@ -628,9 +620,7 @@ export default function ProductDetailPage() {
                   disabled={selectedStock <= 0}
                   className={`inline-flex items-center justify-center gap-3 px-6 py-3 rounded-full font-bold text-sm uppercase tracking-widest transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 ${selectedStock <= 0 ? "bg-slate-200 text-slate-400 cursor-not-allowed" : added ? "bg-green-500 text-white" : "bg-slate-900 text-white hover:bg-slate-800"}`}
                 >
-                  {selectedStock <= 0 ? (
-                    "Out of Stock"
-                  ) : added ? (
+                  {added ? (
                     <><Check size={18} /> Added</>
                   ) : (
                     <><ShoppingBag size={18} /> Add to Cart</>
