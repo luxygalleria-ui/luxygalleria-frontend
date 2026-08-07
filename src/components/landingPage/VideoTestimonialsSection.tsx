@@ -42,9 +42,8 @@ function AutoplayVideoThumbnail({ youtubeId, clientName }: { youtubeId: string; 
 
       {/* Muted Autoplay Video Overlay (shows on hover with smooth transition) */}
       <div
-        className={`absolute inset-0 transition-opacity duration-500 ${
-          isHovered ? "opacity-100" : "opacity-0"
-        }`}
+        className={`absolute inset-0 transition-opacity duration-500 ${isHovered ? "opacity-100" : "opacity-0"
+          }`}
       >
         <iframe
           src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&rel=0&showinfo=0&modestbranding=1&loop=1&playlist=${youtubeId}`}
@@ -67,7 +66,7 @@ export default function VideoTestimonialsSection() {
   const [loading, setLoading] = useState(true);
   const [activeDot, setActiveDot] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
-  
+
   // Modal state
   const [selectedVideo, setSelectedVideo] = useState<VideoTestimonial | null>(null);
 
@@ -165,21 +164,21 @@ export default function VideoTestimonialsSection() {
   if (!loading && testimonials.length === 0) return null;
 
   return (
-    <section 
+    <section
       className="bg-gradient-to-b from-[#2A1F15] to-[#3D2F22] w-full py-16 md:py-24 overflow-hidden border-t border-b border-[#A68B5B]/20"
       onMouseEnter={() => setAutoplay(false)}
       onMouseLeave={() => setAutoplay(true)}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
-        
+
         {/* Header Block */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-12 gap-6">
           <div className="bg-gradient-to-r from-[#2C1A10] via-[#422812] to-[#6B5344] rounded-2xl px-8 md:px-10 py-6 md:py-7 -ml-6 md:-ml-10 pl-8 md:pl-10">
-            <p className="font-sans font-bold text-xs tracking-[0.25em] uppercase text-[#C9A961] mb-2">
-              LUXURY IN MOTION
+            <p className="font-sans font-semibold text-xs md:text-sm text-[#C9A961] mb-2">
+              Watch, unbox, and experience Luxy Galleria.
             </p>
             <h2 className="font-serif font-normal text-3xl md:text-4xl lg:text-5xl text-white leading-tight">
-              Client Success Stories
+              Luxy Snack Station
             </h2>
           </div>
 
@@ -227,20 +226,20 @@ export default function VideoTestimonialsSection() {
               className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar pb-4"
             >
               {testimonials.map((t) => (
-                <div 
+                <div
                   key={t._id}
                   className="snap-start shrink-0 w-full md:w-[calc(50%-16px)] lg:w-[calc(33.333%-21px)]"
                 >
-                  <article 
+                  <article
                     className="group relative rounded-3xl border border-[#A68B5B]/20 bg-white hover:bg-[#FFFBF7] backdrop-blur-sm p-5 md:p-6 flex flex-col justify-between transition-all duration-500 hover:border-[#A68B5B]/50 hover:shadow-2xl hover:-translate-y-2 shadow-lg shadow-[#A68B5B]/15 h-full cursor-pointer"
                     onClick={() => setSelectedVideo(t)}
                   >
                     {/* Video Thumbnail Wrapper with Autoplay - Larger */}
-                    <div 
+                    <div
                       className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-slate-900 border border-[#A68B5B]/20 group-hover:border-[#A68B5B]/40 transition-all duration-500"
                     >
-                      <AutoplayVideoThumbnail 
-                        youtubeId={t.youtubeId} 
+                      <AutoplayVideoThumbnail
+                        youtubeId={t.youtubeId}
                         clientName={t.clientName}
                       />
                       {/* Play Button Overlay */}
@@ -275,17 +274,16 @@ export default function VideoTestimonialsSection() {
               // (e.g. on 3-col desktop, activeDot reaches up to testimonials.length - 3)
               const maxDots = testimonials.length;
               if (idx >= maxDots) return null;
-              
+
               const isSelected = activeDot === idx;
               return (
                 <button
                   key={idx}
                   onClick={() => scrollToCard(idx)}
-                  className={`h-2 rounded-full transition-all duration-350 ${
-                    isSelected 
-                      ? "w-8 bg-[#A68B5B]" 
-                      : "w-2 bg-[#A68B5B]/30 hover:bg-[#A68B5B]/60"
-                  }`}
+                  className={`h-2 rounded-full transition-all duration-350 ${isSelected
+                    ? "w-8 bg-[#A68B5B]"
+                    : "w-2 bg-[#A68B5B]/30 hover:bg-[#A68B5B]/60"
+                    }`}
                   aria-label={`Go to slide ${idx + 1}`}
                 />
               );

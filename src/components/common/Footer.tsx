@@ -45,22 +45,12 @@ const socials = [
       </svg>
     )
   },
-  {
-    label: "YouTube",
-    href: "https://youtube.com/@luxysnackstation?si=oqzX6swsa1f5hYBz",
-    hoverClass: "hover:text-[#FF0000] hover:border-[#FF0000]/30 hover:bg-[#FF0000]/5",
-    svg: (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-      </svg>
-    )
-  },
+
 ];
 
 const footerLinks = [
-  { label: "About Us", href: "/about" },
-  { label: "Privacy Policy", href: "/privacy-policy" },
-  { label: "Terms & Conditions", href: "/terms-and-conditions" },
+  { label: "About", href: "/about" },
+  { label: "Featured Products", href: "/products" },
 ];
 
 const deliveryCities = [
@@ -79,84 +69,106 @@ export default function Footer() {
   const lastCity = deliveryCities[deliveryCities.length - 1];
 
   return (
-    <footer className="bg-slate-100 text-slate-900 w-full border-t border-slate-200">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-12 md:py-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 items-start gap-x-12 gap-y-10">
-
-          {/* Brand column */}
-          <div className="lg:col-span-6 flex flex-col">
-            <Link href="/" className="inline-flex items-center mb-4 group" aria-label="Luxy Galleria home">
-              <img
-                src="/luxy_logo_footer.png"
-                alt="Luxy Galleria"
-                width={654}
-                height={393}
-                className="h-auto w-40 md:w-44 max-w-[180px] object-contain mix-blend-multiply group-hover:drop-shadow-lg transition-all duration-300"
-              />
-            </Link>
-
-            {/* Delivered To */}
-            <p className="max-w-[540px] text-[15px] md:text-base leading-[1.8] text-slate-600">
-              Delivered To : {leadingCities}, and {lastCity}.
-            </p>
-
-            {/* Socials */}
-            <div className="mt-6 flex flex-wrap items-center gap-4">
-              {socials.map(({ svg, label, href, hoverClass }) => (
-                <a
-                  key={label + href}
-                  href={href}
-                  aria-label={label}
-                  rel="noopener noreferrer"
-                  className={`flex h-11 w-11 items-center justify-center rounded-full bg-white border-2 border-[#A68B5B]/20 transition-all text-[#A68B5B] ${hoverClass} shadow-sm hover:shadow-md`}
-                  target="_blank"
-                  referrerPolicy="no-referrer"
-                  title={label}
-                >
-                  {svg}
-                </a>
-              ))}
+    <footer className="bg-slate-100 text-slate-900 w-full border-t border-slate-200 overflow-hidden">
+      <div 
+        className="mx-auto w-full max-w-[1400px]" 
+        style={{ paddingLeft: 'clamp(16px, 4vw, 60px)', paddingRight: 'clamp(16px, 4vw, 60px)' }}
+      >
+        <div className="py-12 md:py-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12">
+  
+            {/* Brand column */}
+            <div className="md:col-span-2 lg:col-span-6 flex flex-col items-center md:items-start text-center md:text-left">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-5 sm:gap-6 mb-6 w-full justify-center md:justify-start">
+                <Link href="/" className="inline-flex shrink-0 items-center group" aria-label="Luxy Galleria home">
+                  <img
+                    src="/luxy_logo_footer.png"
+                    alt="Luxy Galleria"
+                    width={654}
+                    height={393}
+                    className="h-auto w-[clamp(120px,15vw,180px)] object-contain mix-blend-multiply group-hover:drop-shadow-lg transition-all duration-300"
+                  />
+                </Link>
+    
+                {/* Tagline */}
+                <p className="max-w-[280px] text-[clamp(13px,1.5vw,15px)] leading-relaxed text-slate-500 mt-3 sm:mt-0">
+                  More than a snack store, a destination for worldwide treats and everyday cravings.
+                </p>
+              </div>
+  
+              {/* Delivery Cities */}
+              <p className="max-w-full lg:max-w-xl text-[clamp(12px,1.2vw,14px)] leading-relaxed text-slate-500 mb-8 w-full">
+                Delivered To: {leadingCities}, and {lastCity}.
+              </p>
+  
+              {/* Socials */}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 md:gap-4 w-full">
+                {socials.map(({ svg, label, href }) => (
+                  <a
+                    key={label + href}
+                    href={href}
+                    aria-label={label}
+                    rel="noopener noreferrer"
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-white border border-slate-200 transition-all duration-300 text-[#8B5E34] hover:text-white hover:bg-[#8B5E34] hover:border-[#8B5E34] shadow-sm hover:shadow-md hover:-translate-y-1"
+                    target="_blank"
+                    referrerPolicy="no-referrer"
+                    title={label}
+                  >
+                    {svg}
+                  </a>
+                ))}
+              </div>
+            </div>
+  
+            {/* Quick Links column */}
+            <div className="md:col-span-1 lg:col-span-3 flex flex-col items-center md:items-start text-center md:text-left">
+              <h3 className="text-[clamp(11px,1vw,12px)] font-bold uppercase tracking-[0.2em] text-[#8B5E34] mb-5 md:mb-6 leading-none">Company</h3>
+              <ul className="space-y-3">
+                {footerLinks.map(({ label, href }) => (
+                  <li key={href}>
+                    <Link
+                      href={href}
+                      className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1"
+                    >
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+  
+            {/* Contact column */}
+            <div className="md:col-span-1 lg:col-span-3 flex flex-col items-center md:items-start text-center md:text-left">
+              <h3 className="text-[clamp(11px,1vw,12px)] font-bold uppercase tracking-[0.2em] text-[#8B5E34] mb-5 md:mb-6 leading-none">Contact</h3>
+              <ul className="space-y-3 w-full">
+                <li className="text-[clamp(13px,1.5vw,14px)] text-slate-500 font-medium leading-relaxed max-w-[260px] md:max-w-none mx-auto md:mx-0 break-words">
+                  printiqo, near Mavoor police station, Calicut road, Mavoor
+                </li>
+                <li>
+                  <a href="tel:+918111939595" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1">
+                    +91 8111939595
+                  </a>
+                </li>
+                <li>
+                  <a href="tel:+914952884595" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1">
+                    0495-2884595
+                  </a>
+                </li>
+                <li>
+                  <a href="mailto:printiqo.in@gmail.com" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 break-all">
+                    printiqo.in@gmail.com
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
-
-          {/* Quick Links column */}
-          <div className="lg:col-span-3 lg:mt-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#A68B5B] mb-6 leading-none">Quick Links</h3>
-            <ul className="space-y-3 text-sm text-slate-600">
-              {footerLinks.map(({ label, href }) => (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    className="text-sm text-slate-600 hover:text-[#A68B5B] transition-colors font-medium"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact column */}
-          <div className="lg:col-span-3 lg:mt-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#A68B5B] mb-6 leading-none">Contact</h3>
-            <ul className="space-y-3 text-sm text-slate-600">
-              <li>
-                <a href="mailto:infoluxygalleria@gmail.com" className="text-slate-600 hover:text-[#A68B5B] transition-colors font-medium">
-                  infoluxygalleria@gmail.com
-                </a>
-              </li>
-              <li>
-                <a href="tel:+919074881551" className="text-slate-600 hover:text-[#A68B5B] transition-colors font-medium">
-                  +91 9074881551
-                </a>
-              </li>
-            </ul>
-          </div>
         </div>
-
+  
         {/* Bottom bar */}
-        <div className="mt-10 pt-8 border-t border-slate-200 text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} <span className="font-bold text-[#A68B5B]">Luxy Galleria</span>. All rights reserved.</p>
+        <div className="py-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-center md:justify-between gap-4">
+          <p className="text-[clamp(11px,1vw,12px)] text-slate-500 text-center md:text-left w-full">
+            © {new Date().getFullYear()} <span className="font-bold text-[#8B5E34]">Luxy Galleria</span>. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import HeroSection from "../components/landingPage/HeroSection";
 import CategorySection from "../components/landingPage/CategorySection";
+import BrandSection from "../components/landingPage/BrandSection";
 import ProductSection from "../components/landingPage/ProductSection";
 
 // Below-the-fold, JS-heavy (video modal + animations). Defer its bundle so it
@@ -17,6 +18,7 @@ export default function Home() {
     <main className="min-h-screen bg-background">
       <HeroSection />
       <CategorySection />
+      <BrandSection />
       <ProductSection />
       <VideoTestimonialsSection />
     </main>

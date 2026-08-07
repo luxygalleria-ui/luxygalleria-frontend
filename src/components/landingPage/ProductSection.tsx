@@ -30,18 +30,7 @@ interface Product {
 
 const DEFAULT_PRODUCTS: Product[] = [];
 
-const normalizeImg = (img: any) => {
-  if (!img) return "/products/suncream-1.jpg";
-  const str = String(img).trim();
-  if (!str) return "/products/suncream-1.jpg";
-  if (str.startsWith("http://") || str.startsWith("https://") || str.startsWith("/")) {
-    return str;
-  }
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL
-    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "")
-    : "http://localhost:5000";
-  return `${baseUrl.replace(/\/$/, "")}/${str.replace(/^\/+/, "")}`;
-};
+// Removed custom normalizeImg as we will use getImageUrl from imageUtils
 
 function ProductCard({ product, isVisible, index }: { product: Product; isVisible: boolean; index: number }) {
   const [isAdded, setIsAdded] = useState(false);
@@ -181,7 +170,16 @@ export default function ProductSection() {
         const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
         const res = await axios.get(`${apiURL}/products`);
         if (res.data.success && res.data.data) {
-          const landingProds = res.data.data.filter((p: any) => p.showOnLandingPage === true);
+          let landingProds = res.data.data.filter((p: any) => p.showOnLandingPage === true);
+        
+          // Fallback: If no products or very few products are explicitly marked for landing page, 
+          // just show the newest products.
+          if (landingProds.length < 4) {
+            landingProds = res.data.data;
+          }
+          
+          // Limit to 8 products
+          landingProds = landingProds.slice(0, 8);
 
           const mappedProds = landingProds.map((p: any) => ({
             id: p._id,
@@ -189,7 +187,7 @@ export default function ProductSection() {
             stock: (p.variants && p.variants.length > 0)
               ? p.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0)
               : (Number(p.stock) || 0),
-            images: p.images && p.images.length > 0 ? p.images.map(normalizeImg) : ["/products/suncream-1.jpg"],
+            images: p.images && p.images.length > 0 ? p.images.map(getImageUrl) : ["/products/suncream-1.jpg"],
             rating: p.starRating || 0,
             reviewCount: p.reviewsCount || 0,
             currentPrice: p.variants?.[0]?.price || 0,

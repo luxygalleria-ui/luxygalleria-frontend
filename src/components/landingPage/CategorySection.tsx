@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { getImageUrl, handleImageError } from "../../lib/imageUtils";
 
 const DEFAULT_CATEGORIES = [
   {
@@ -40,13 +41,13 @@ export default function CategorySection() {
         const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
         const res = await axios.get(`${apiURL}/categories`);
         if (res.data.success && res.data.data) {
-          const activeCats = res.data.data.filter((c: any) => c.status === 'ACTIVE').slice(0, 3);
+          const activeCats = res.data.data.filter((c: any) => c.status === 'ACTIVE').slice(0, 6);
 
           if (activeCats.length > 0) {
             const formatted = activeCats.map((c: any, index: number) => ({
               id: c.name.toLowerCase().replace(/\s+/g, '-'),
               label: c.name,
-              image: c.image || DEFAULT_CATEGORIES[index % 3].image,
+              image: c.image ? getImageUrl(c.image) : DEFAULT_CATEGORIES[index % 3].image,
               alt: `${c.name} category`
             }));
             setCategories(formatted);
@@ -61,29 +62,41 @@ export default function CategorySection() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (window.innerWidth >= 768 || categories.length === 0) return;
+      if (categories.length === 0) return;
 
       const container = scrollRef.current;
       if (container) {
-        const nextIndex = (currentIndexRef.current + 1) % categories.length;
-        const scrollBehavior = nextIndex === 0 ? 'auto' : 'smooth';
+        const firstChild = container.children[0] as HTMLElement;
+        const gap = window.innerWidth >= 768 ? 24 : 16; // md:gap-6 or gap-4
+        const itemWidth = firstChild ? firstChild.clientWidth + gap : 300;
+
+        let nextIndex = currentIndexRef.current + 1;
+        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+        
+        if (container.scrollLeft >= maxScrollLeft - 10) {
+          nextIndex = 0;
+        }
 
         currentIndexRef.current = nextIndex;
-        setActiveIndex(nextIndex);
-        container.scrollTo({
-          left: currentIndexRef.current * container.clientWidth,
-          behavior: scrollBehavior
-        });
+        setActiveIndex(nextIndex % categories.length);
+
+        if (nextIndex === 0) {
+          container.scrollTo({ left: 0, behavior: 'auto' });
+        } else {
+          container.scrollBy({ left: itemWidth, behavior: 'smooth' });
+        }
       }
     }, 3000);
 
     const handleScroll = () => {
-      if (scrollRef.current && window.innerWidth < 768) {
-        const index = Math.round(
-          scrollRef.current.scrollLeft / scrollRef.current.clientWidth
-        );
-        currentIndexRef.current = index;
-        setActiveIndex(index);
+      if (scrollRef.current) {
+        const firstChild = scrollRef.current.children[0] as HTMLElement;
+        if (firstChild) {
+          const gap = window.innerWidth >= 768 ? 24 : 16;
+          const itemWidth = firstChild.clientWidth + gap;
+          const index = Math.round(scrollRef.current.scrollLeft / itemWidth);
+          setActiveIndex(index % categories.length);
+        }
       }
     };
 
@@ -98,7 +111,7 @@ export default function CategorySection() {
         container.removeEventListener('scroll', handleScroll);
       }
     };
-  }, []);
+  }, [categories]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -132,7 +145,7 @@ export default function CategorySection() {
           className={`font-serif font-normal text-4xl md:text-5xl lg:text-7xl text-slate-900 leading-tight mb-6 transition-all duration-700 delay-100 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
         >
-          Galleria Collections
+          A World of Premium Treats
         </h2>
         <p
           className={`font-sans font-normal text-lg md:text-xl text-slate-500 leading-relaxed max-w-3xl mx-auto transition-all duration-700 delay-200 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
@@ -142,13 +155,13 @@ export default function CategorySection() {
         </p>
       </div>
 
-      {/* Category Grid with Names Below */}
+      {/* Category Slider */}
       <div
         ref={scrollRef}
-        className="w-full flex overflow-x-auto snap-x snap-mandatory md:grid md:grid-cols-3 gap-0 md:gap-1 px-0 md:px-6 pb-4 border-b border-gray-100 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="w-full flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 px-6 pb-8 border-b border-gray-100 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {categories.map((category, index) => (
-          <div key={category.id} className="w-full flex-shrink-0 snap-center flex flex-col md:w-auto md:flex-shrink md:snap-align-none px-6 md:px-0 py-4 md:py-0">
+          <div key={category.id} className="w-[85vw] md:w-[350px] flex-shrink-0 snap-center flex flex-col">
             {/* Mobile Card Layout (New Style) */}
             <Link
               href={`/products?category=${category.id}`}
@@ -164,6 +177,7 @@ export default function CategorySection() {
                 priority={index === 0}
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105"
+                onError={(e) => handleImageError(e as any)}
               />
 
               {/* Gradient Overlay */}
@@ -185,7 +199,7 @@ export default function CategorySection() {
             <Link
               href={`/products?category=${category.id}`}
               aria-label={`Browse ${category.label}`}
-              className={`hidden md:block group relative overflow-hidden aspect-square lg:aspect-[4/3] focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+              className={`hidden md:block group relative overflow-hidden aspect-[4/5] focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none rounded-[2rem] shadow-md ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
                 }`}
               style={{ transitionDelay: `${index * 150}ms` }}
             >
@@ -196,6 +210,7 @@ export default function CategorySection() {
                 priority={index === 0}
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-110"
+                onError={(e) => handleImageError(e as any)}
               />
               <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors duration-500 motion-reduce:transition-none" />
 

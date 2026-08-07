@@ -14,7 +14,7 @@ export default function AboutPage() {
   return (
     <>
       <title>About Us – LUXY GALLERIA</title>
-      <meta name="description" content="Learn about Luxy Galleria — India's premium destination for imported snacks, drinks, and global flavours." />
+      <meta name="description" content="Learn about Luxy Galleria — India's premium destination for imported chocolates, drinks & global treats." />
 
       <main className="min-h-screen bg-slate-50">
         {/* Hero */}
@@ -41,7 +41,7 @@ export default function AboutPage() {
               className="text-slate-400 text-base md:text-lg leading-relaxed max-w-2xl mx-auto"
               style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(1rem)", transition: "opacity 0.6s ease 300ms, transform 0.6s ease 300ms" }}
             >
-              India's premium destination for imported snacks, drinks & global flavours.
+              India's premium destination for imported chocolates, drinks & global treats.
             </p>
           </div>
         </section>
@@ -61,6 +61,14 @@ export default function AboutPage() {
               <h2 className="text-2xl font-bold text-slate-900 mb-4">Our Story</h2>
               <p>
                 Founded with a passion for global flavours, Luxy Galleria started as a small curated collection of hard-to-find international products. Today, we serve thousands of happy customers across India, offering a carefully selected range of imported chips, chocolates, energy drinks, exotic snacks, and more — all sourced from trusted international suppliers.
+              </p>
+            </section>
+
+            <section className="bg-[#8B5E34]/10 p-6 md:p-8 rounded-2xl text-center">
+              <h2 className="text-2xl font-bold text-[#8B5E34] mb-3">Luxy Snack Station</h2>
+              <p className="text-lg text-slate-800 font-medium italic">
+                Watch, unbox, and experience<br/>
+                Luxy Galleria.
               </p>
             </section>
 
