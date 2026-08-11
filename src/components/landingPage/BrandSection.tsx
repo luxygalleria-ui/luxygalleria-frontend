@@ -35,33 +35,10 @@ export default function BrandSection() {
     fetchBrands();
   }, []);
 
-  useEffect(() => {
-    // Autoplay slider for brands
-    const interval = setInterval(() => {
-      if (brands.length === 0) return;
-      const container = scrollRef.current;
-      if (container) {
-        let nextIndex = currentIndexRef.current + 1;
-        // Approximation of how many items fit in view, so we reset properly
-        const maxScrollLeft = container.scrollWidth - container.clientWidth;
-        if (container.scrollLeft >= maxScrollLeft - 10) {
-          nextIndex = 0;
-        }
-
-        currentIndexRef.current = nextIndex;
-        if (nextIndex === 0) {
-          container.scrollTo({ left: 0, behavior: 'auto' });
-        } else {
-          // scroll by roughly one item width (around 150px + gap)
-          container.scrollBy({ left: 160, behavior: 'smooth' });
-        }
-      }
-    }, 2500);
-
-    return () => clearInterval(interval);
-  }, [brands]);
 
   useEffect(() => {
+    if (brands.length === 0) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -77,13 +54,20 @@ export default function BrandSection() {
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [brands]);
 
   if (brands.length === 0) return null;
 
+  // Split the exact brands into two rows without ANY duplicates
+  const row1Brands = brands.filter((_, index) => index % 2 === 0);
+  const row2Brands = brands.filter((_, index) => index % 2 !== 0);
+
+  // Only animate if there are enough brands to overflow the screen nicely
+  const shouldAnimate = brands.length >= 8;
+
   return (
-    <section ref={sectionRef} className="bg-background pt-10 pb-6 w-full">
-      <div className="text-center px-6 mb-8">
+    <section ref={sectionRef} className="bg-background py-8 md:py-12 w-full overflow-hidden">
+      <div className="text-center px-6 mb-8 md:mb-10">
         <h2
           className={`font-sans font-black text-2xl md:text-3xl tracking-[0.15em] uppercase text-slate-900 mb-2 transition-all duration-600 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
@@ -98,29 +82,54 @@ export default function BrandSection() {
         />
       </div>
 
-      <div
-        ref={scrollRef}
-        className="w-full flex items-center overflow-x-auto gap-6 md:gap-10 px-6 md:px-12 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {brands.map((brand, index) => (
-          <div
-            key={brand._id}
-            className={`w-[120px] md:w-[150px] h-[120px] md:h-[150px] flex-shrink-0 flex items-center justify-center p-4 bg-white border border-slate-100 rounded-2xl shadow-sm transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none hover:shadow-md ${
-              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-            }`}
-            style={{ transitionDelay: `${(index % 5) * 100}ms` }}
-          >
-            <div className="relative w-full h-full">
-              <Image
-                src={getImageUrl(brand.logo)}
-                alt={brand.name}
-                fill
-                className="object-contain"
-                onError={(e) => handleImageError(e as any)}
-              />
-            </div>
+      <div className="w-full flex flex-col gap-6 md:gap-8 pb-4">
+        {/* Row 1 - Moves Left */}
+        {row1Brands.length > 0 && (
+          <div className={`flex w-max gap-6 md:gap-8 px-6 ${shouldAnimate ? 'animate-marquee-left hover:[animation-play-state:paused]' : 'mx-auto justify-center'}`}>
+            {row1Brands.map((brand, index) => (
+              <div
+                key={`${brand._id}-r1-${index}`}
+                className={`w-[120px] md:w-[150px] h-[120px] md:h-[150px] flex-shrink-0 flex items-center justify-center p-4 bg-white border border-slate-100 rounded-2xl shadow-sm transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none hover:shadow-md hover:-translate-y-1 hover:border-[#A68B5B]/30 ${
+                  isVisible ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                <div className="relative w-full h-full">
+                  <Image
+                    src={getImageUrl(brand.logo)}
+                    alt={brand.name}
+                    fill
+                    className="object-contain"
+                    onError={(e) => handleImageError(e as any)}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
+
+        {/* Row 2 - Moves Right */}
+        {row2Brands.length > 0 && (
+          <div className={`flex w-max gap-6 md:gap-8 px-6 ${shouldAnimate ? 'animate-marquee-right hover:[animation-play-state:paused] ml-[-100px]' : 'mx-auto justify-center'}`}>
+            {row2Brands.map((brand, index) => (
+              <div
+                key={`${brand._id}-r2-${index}`}
+                className={`w-[120px] md:w-[150px] h-[120px] md:h-[150px] flex-shrink-0 flex items-center justify-center p-4 bg-white border border-slate-100 rounded-2xl shadow-sm transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none hover:shadow-md hover:-translate-y-1 hover:border-[#A68B5B]/30 ${
+                  isVisible ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                <div className="relative w-full h-full">
+                  <Image
+                    src={getImageUrl(brand.logo)}
+                    alt={brand.name}
+                    fill
+                    className="object-contain"
+                    onError={(e) => handleImageError(e as any)}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
