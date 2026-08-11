@@ -86,7 +86,7 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
                 key={`${product.id}-landing-${i}`}
                 src={getImageUrl(img)}
                 alt={`${product.name} product image ${i + 1}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-in-out group-hover:scale-105 ${hasMultipleImages
+                className={`absolute inset-0 w-full h-full object-contain transition-all duration-500 ease-in-out group-hover:scale-105 ${hasMultipleImages
                   ? i === 0
                     ? "opacity-100 group-hover:opacity-0"
                     : "opacity-0 group-hover:opacity-100"
@@ -170,18 +170,7 @@ export default function ProductSection() {
         const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
         const res = await axios.get(`${apiURL}/products`);
         if (res.data.success && res.data.data) {
-          let landingProds = res.data.data.filter((p: any) => p.showOnLandingPage === true);
-        
-          // Fallback: If no products or very few products are explicitly marked for landing page, 
-          // just show the newest products.
-          if (landingProds.length < 4) {
-            landingProds = res.data.data;
-          }
-          
-          // Limit to 8 products
-          landingProds = landingProds.slice(0, 8);
-
-          const mappedProds = landingProds.map((p: any) => ({
+          const mappedProds = res.data.data.map((p: any) => ({
             id: p._id,
             name: p.name,
             stock: (p.variants && p.variants.length > 0)
@@ -245,7 +234,7 @@ export default function ProductSection() {
 
       {/* Product Grid */}
       <div className="w-full px-4 md:px-8 lg:px-12">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6 pb-4 md:pb-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 pb-4 md:pb-0">
           {products.map((product, index) => (
             <ProductCard
               key={product.id}
