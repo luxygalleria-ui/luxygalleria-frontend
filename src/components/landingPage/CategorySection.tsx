@@ -132,9 +132,9 @@ export default function CategorySection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="bg-background pt-12 md:pt-20 lg:pt-24 w-full">
+    <section ref={sectionRef} className="bg-background pt-8 md:pt-12 w-full">
       {/* Section Header */}
-      <div className="text-center px-6 md:px-12 max-w-4xl mx-auto mb-8 md:mb-16">
+      <div className="text-center px-6 md:px-12 max-w-4xl mx-auto mb-6 md:mb-8">
         <p
           className={`font-sans font-semibold text-xs tracking-[0.3em] uppercase text-[#5A3A1E] mb-4 transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
@@ -142,7 +142,7 @@ export default function CategorySection() {
           THE CURATED SELECTION
         </p>
         <h2
-          className={`font-serif font-normal text-4xl md:text-5xl lg:text-7xl text-slate-900 leading-tight mb-6 transition-all duration-700 delay-100 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          className={`font-serif font-normal text-3xl md:text-4xl lg:text-5xl text-slate-900 leading-tight mb-4 transition-all duration-700 delay-100 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
         >
           A World of Premium Treats

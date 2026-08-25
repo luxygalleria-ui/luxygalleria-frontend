@@ -165,14 +165,14 @@ export default function VideoTestimonialsSection() {
 
   return (
     <section
-      className="bg-gradient-to-b from-[#2A1F15] to-[#3D2F22] w-full py-16 md:py-24 overflow-hidden border-t border-b border-[#A68B5B]/20"
+      className="bg-gradient-to-b from-[#2A1F15] to-[#3D2F22] w-full py-10 md:py-12 overflow-hidden border-t border-b border-[#A68B5B]/20"
       onMouseEnter={() => setAutoplay(false)}
       onMouseLeave={() => setAutoplay(true)}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
 
         {/* Header Block */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-12 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
           <div className="bg-gradient-to-r from-[#2C1A10] via-[#422812] to-[#6B5344] rounded-2xl px-8 md:px-10 py-6 md:py-7 -ml-6 md:-ml-10 pl-8 md:pl-10">
             <p className="font-sans font-semibold text-xs md:text-sm text-[#C9A961] mb-2">
               Watch, unbox, and experience Luxy Galleria.

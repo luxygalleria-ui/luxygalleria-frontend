@@ -107,8 +107,8 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
         </div>
 
         {/* Content Area */}
-        <div className="px-4 pt-4 pb-3 flex flex-col flex-grow">
-          <h3 className="font-sans font-bold text-sm md:text-lg text-slate-900 leading-tight text-center mb-2 md:mb-3 line-clamp-2">
+        <div className="px-3 md:px-4 pt-3 md:pt-4 pb-2 md:pb-3 flex flex-col flex-grow">
+          <h3 className="font-sans font-bold text-sm md:text-lg text-slate-900 leading-tight text-center mb-2 md:mb-3 line-clamp-2 min-h-[2.5em]">
             {product.name}
           </h3>
 
@@ -121,22 +121,22 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
             </span>
           </div>
 
-          <div className="text-red-600 font-sans font-bold text-[10px] sm:text-xs uppercase tracking-wider text-center mb-1">
+          <div className="text-red-600 font-sans font-bold text-[10px] sm:text-xs uppercase tracking-wider text-center mb-1 min-h-[1.25em]">
             {product.dealBadge}
           </div>
 
-          <p className="font-sans font-normal text-xs text-slate-500 text-center line-clamp-1">
+          <p className="font-sans font-normal text-xs text-slate-500 text-center line-clamp-1 min-h-[1.25em]">
             {product.benefit}
           </p>
         </div>
       </Link>
-      <div className="px-4 pb-6">
+      <div className="px-3 md:px-4 pb-4 md:pb-5">
         {isOutOfStock ? (
           <button
             type="button"
             disabled
             aria-label={`${product.name} is out of stock`}
-            className="w-full text-slate-400 bg-slate-200 font-sans font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full cursor-not-allowed"
+            className="w-full inline-flex items-center justify-center text-center leading-none min-h-[2.25rem] md:min-h-[2.75rem] pl-[0.1em] text-slate-400 bg-slate-200 font-sans font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full cursor-not-allowed"
           >
             OUT OF STOCK
           </button>
@@ -145,7 +145,7 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
             <button
               type="button"
               aria-label={`Add ${product.name} to cart`}
-              className={`w-full text-white font-sans font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 ${isAdded
+              className={`w-full inline-flex items-center justify-center text-center leading-none min-h-[2.25rem] md:min-h-[2.75rem] pl-[0.1em] text-white font-sans font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 ${isAdded
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-slate-500 hover:bg-slate-600"
                 }`}
@@ -217,24 +217,24 @@ export default function ProductSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="bg-background pt-6 md:pt-12 pb-12 md:pb-20 w-full">
+    <section ref={sectionRef} className="bg-background py-8 md:py-12 w-full">
       {/* Section Header */}
       <div className="text-center px-6">
         <h2
-          className={`font-sans font-black text-5xl md:text-6xl lg:text-7xl tracking-[0.15em] uppercase text-slate-900 mb-4 transition-all duration-600 ease-out motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+          className={`font-sans font-black text-3xl md:text-4xl lg:text-5xl tracking-[0.15em] uppercase text-slate-900 mb-3 transition-all duration-600 ease-out motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
             }`}
         >
           OUR PRODUCTS
         </h2>
         <div
-          className={`w-20 h-1 bg-slate-500 mx-auto mt-4 mb-8 md:mb-12 transition-transform duration-500 delay-200 origin-center motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "scale-x-100" : "scale-x-0"
+          className={`w-20 h-1 bg-slate-500 mx-auto mt-3 mb-6 md:mb-8 transition-transform duration-500 delay-200 origin-center motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "scale-x-100" : "scale-x-0"
             }`}
         />
       </div>
 
       {/* Product Grid */}
       <div className="w-full px-4 md:px-8 lg:px-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 pb-4 md:pb-0">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {products.map((product, index) => (
             <ProductCard
               key={product.id}
@@ -247,7 +247,7 @@ export default function ProductSection() {
       </div>
 
       {/* View All Products Button */}
-      <div className="flex justify-center mt-8 md:mt-12 px-6">
+      <div className="flex justify-center mt-8 px-6">
         <Link
           href="/products"
           className="border border-slate-500 text-slate-500 font-sans font-bold text-xs md:text-sm uppercase tracking-widest py-4 px-12 hover:bg-slate-500 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2"

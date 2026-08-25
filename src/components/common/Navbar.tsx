@@ -179,22 +179,34 @@ export default function Navbar() {
         </div>
 
         {/* ── Center: Nav links (Hidden on mobile) ── */}
-        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 lg:gap-12">
+        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-4 lg:gap-8 whitespace-nowrap">
           <Link
             href="/"
-            className="font-sans font-black text-base tracking-[0.15em] uppercase text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
+            className="font-sans font-black text-sm lg:text-base tracking-[0.15em] uppercase text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
           >
             HOME
           </Link>
           <Link
             href="/products"
-            className="font-sans font-black text-base tracking-[0.15em] uppercase text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
+            className="font-sans font-black text-sm lg:text-base tracking-[0.15em] uppercase text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
           >
             SHOP
           </Link>
           <Link
+            href="/gifting"
+            className="font-sans font-black text-sm lg:text-base tracking-[0.15em] uppercase text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
+          >
+            GIFTING
+          </Link>
+          <Link
+            href="/new-arrivals"
+            className="font-sans font-black text-sm lg:text-base tracking-[0.15em] uppercase text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
+          >
+            NEW ARRIVALS
+          </Link>
+          <Link
             href="/about"
-            className="font-sans font-black text-base tracking-[0.15em] uppercase text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
+            className="font-sans font-black text-sm lg:text-base tracking-[0.15em] uppercase text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
           >
             ABOUT
           </Link>
@@ -566,6 +578,20 @@ export default function Navbar() {
                   className="font-sans font-bold text-base tracking-[0.15em] uppercase text-slate-900 hover:text-[#A68B5B] transition-colors py-3 border-b border-slate-100"
                 >
                   SHOP
+                </Link>
+                <Link
+                  href="/gifting"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="font-sans font-bold text-base tracking-[0.15em] uppercase text-slate-900 hover:text-[#A68B5B] transition-colors py-3 border-b border-slate-100"
+                >
+                  GIFTING
+                </Link>
+                <Link
+                  href="/new-arrivals"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="font-sans font-bold text-base tracking-[0.15em] uppercase text-slate-900 hover:text-[#A68B5B] transition-colors py-3 border-b border-slate-100"
+                >
+                  NEW ARRIVALS
                 </Link>
                 <Link
                   href="/about"
