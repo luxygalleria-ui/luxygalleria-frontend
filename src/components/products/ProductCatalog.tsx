@@ -455,43 +455,36 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
-  // Fetch Metadata (Categories and Brands)
+  // Fetch filter facets — only the categories/brands that actually occur in
+  // this collection, so the sidebar never offers an option that yields nothing.
   useEffect(() => {
-    const fetchMetadata = async () => {
+    const toOption = (name: string) => ({
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      label: name
+    });
+
+    const fetchFacets = async () => {
       try {
         const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-        const [catRes, brandRes] = await Promise.all([
-          axios.get(`${apiURL}/categories`),
-          axios.get(`${apiURL}/brands`)
-        ]);
-
-        if (catRes.data.success && catRes.data.data) {
-          const activeBackendCats = catRes.data.data.filter((c: any) => c.status === 'ACTIVE');
-          setCategories([
-            { id: "all", label: "All Categories" },
-            ...activeBackendCats.map((c: any) => ({
-              id: c.name.toLowerCase().replace(/\s+/g, '-'),
-              label: c.name
-            }))
-          ]);
+        const params: any = { facets: true };
+        if (collection === "gifting") {
+          params.gifting = true;
+        } else if (collection === "newArrival") {
+          params.newArrival = true;
         }
 
-        if (brandRes.data.success && brandRes.data.data) {
-          const activeBackendBrands = brandRes.data.data.filter((b: any) => b.status === 'ACTIVE');
-          setDbBrands([
-            { id: "all", label: "All Brands" },
-            ...activeBackendBrands.map((b: any) => ({
-              id: b.name.toLowerCase().replace(/\s+/g, '-'),
-              label: b.name
-            }))
-          ]);
+        const res = await axios.get(`${apiURL}/products`, { params });
+        if (res.data.success && res.data.data) {
+          const { categories = [], brands = [] } = res.data.data;
+          setCategories([{ id: "all", label: "All Categories" }, ...categories.map(toOption)]);
+          setDbBrands([{ id: "all", label: "All Brands" }, ...brands.map(toOption)]);
         }
       } catch (err) {
-        console.error("Failed to fetch filter metadata:", err);
+        console.error("Failed to fetch filter facets:", err);
       }
     };
-    fetchMetadata();
-  }, []);
+    fetchFacets();
+  }, [collection]);
 
   // Sync state from URL search params
   useEffect(() => {
@@ -711,11 +704,11 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pt-8">
       <div className="flex min-h-[calc(100vh-5rem)]">
 
         {/* ── Desktop Sidebar ─────────────────────────────────────── */}
-        <aside className="hidden lg:block w-80 xl:w-88 bg-[#fbf9f6] border-r border-slate-100 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto shrink-0 p-6">
+        <aside className="hidden lg:block w-80 xl:w-88 bg-[#fbf9f6] border-r border-slate-100 sticky top-30 h-[calc(100vh-120px)] overflow-y-auto shrink-0 p-6">
           <div className="bg-white rounded-[2rem] border border-slate-100/80 shadow-sm overflow-hidden">
             <FilterSidebar {...sidebarProps} />
           </div>
