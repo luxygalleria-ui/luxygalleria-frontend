@@ -280,7 +280,7 @@ function FilterSidebar({
             )}
           </button>
           {brandsOpen && (
-            <div className="flex flex-col gap-2.5 pt-1">
+            <div className="flex flex-col gap-2.5 pt-1 max-h-60 overflow-y-auto pr-1 overscroll-contain">
               {dbBrands.map((b) => (
                 <button
                   key={b.id}
@@ -353,12 +353,12 @@ function FilterSidebar({
             <div className="flex items-center justify-between px-1">
               <div className="text-left">
                 <p className="text-[10px] text-slate-400 font-sans font-medium uppercase tracking-wider">Min</p>
-                <p className="text-base font-bold text-[#8B5E34] font-sans">₹{pendingMin.toString().padStart(4, '0')}</p>
+                <p className="text-base font-bold text-[#8B5E34] font-sans">₹{Math.round(pendingMin)}</p>
               </div>
               <span className="text-slate-300 font-bold">—</span>
               <div className="text-right">
                 <p className="text-[10px] text-slate-400 font-sans font-medium uppercase tracking-wider">Max</p>
-                <p className="text-base font-bold text-[#8B5E34] font-sans">₹{pendingMax.toString().padStart(4, '0')}</p>
+                <p className="text-base font-bold text-[#8B5E34] font-sans">₹{Math.round(pendingMax)}</p>
               </div>
             </div>
           </div>
@@ -420,6 +420,29 @@ const DEFAULT_CATEGORIES = [
 const DEFAULT_BRANDS = [
   { id: "all", label: "All Brands" },
 ];
+
+/**
+ * Builds the next query string for a filter change.
+ * A value of null/undefined/"all"/"" clears that param; 0 is a real bound and
+ * is kept. Changing anything other than the page resets back to page 1.
+ */
+export function buildFilterParams(current: string, newParams: Record<string, unknown>) {
+  const params = new URLSearchParams(current);
+
+  if (!Object.prototype.hasOwnProperty.call(newParams, 'page')) {
+    params.set('page', '1');
+  }
+
+  for (const [key, val] of Object.entries(newParams)) {
+    if (val === null || val === undefined || val === 'all' || val === '') {
+      params.delete(key);
+    } else {
+      params.set(key, String(val));
+    }
+  }
+
+  return params;
+}
 
 export interface CatalogProps {
   /** Restricts the catalog to a tagged collection. */
@@ -508,25 +531,17 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
   }, [searchParams]);
 
   // Unified router push to sync states to URL query params
-  const updateUrlFilters = useCallback((newParams: any) => {
-    const params = new URLSearchParams(searchParams.toString());
-    
-    // Reset page to 1 when changing filters
-    if (!newParams.hasOwnProperty('page')) {
-      params.set('page', '1');
-    }
-
-    Object.keys(newParams).forEach(key => {
-      const val = newParams[key];
-      if (val === null || val === undefined || val === 'all' || val === '') {
-        params.delete(key);
-      } else {
-        params.set(key, val.toString());
-      }
-    });
-
+  const updateUrlFilters = useCallback((newParams: Record<string, unknown>) => {
+    const params = buildFilterParams(searchParams.toString(), newParams);
     router.push(`${pathname}?${params.toString()}`);
   }, [searchParams, router, pathname]);
+
+  // Keep the latest pusher in a ref so the debounce below is not re-armed every
+  // time `updateUrlFilters` gets a new identity (it does on every navigation).
+  const updateUrlFiltersRef = useRef(updateUrlFilters);
+  useEffect(() => {
+    updateUrlFiltersRef.current = updateUrlFilters;
+  });
 
   // Automatic debounced filter update for Price changes
   useEffect(() => {
@@ -534,13 +549,13 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
       return;
     }
     const handler = setTimeout(() => {
-      updateUrlFilters({
-        minPrice: pendingMin,
-        maxPrice: pendingMax
+      updateUrlFiltersRef.current({
+        minPrice: Math.round(pendingMin),
+        maxPrice: Math.round(pendingMax)
       });
     }, 450); // 450ms debounce for high performance range sliding
     return () => clearTimeout(handler);
-  }, [pendingMin, pendingMax, minPrice, maxPrice, updateUrlFilters]);
+  }, [pendingMin, pendingMax, minPrice, maxPrice]);
 
   // Fetch Products based on URL query state
   const fetchProducts = useCallback(async () => {
@@ -561,10 +576,10 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
         params.brand = activeBrand;
       }
       if (minPrice > 0) {
-        params.minPrice = minPrice;
+        params.minPrice = Math.round(minPrice);
       }
       if (maxPrice < PRICE_MAX) {
-        params.maxPrice = maxPrice;
+        params.maxPrice = Math.round(maxPrice);
       }
       if (searchTerm) {
         params.search = searchTerm;
@@ -633,7 +648,21 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
     setDrawerOpen(false);
   };
 
+  // Reset every filter in local state as well as in the URL. Relying on the
+  // router push alone is not enough: pushing the bare pathname is a no-op when
+  // the URL is already clean, so `searchParams` never changes and the sync
+  // effect never fires. Resetting state here also keeps pending === committed,
+  // which stops the debounced price effect from re-pushing stale bounds.
   const handleClearAll = () => {
+    setActiveCategory("all");
+    setActiveBrand("all");
+    setSearchTerm("");
+    setSortBy("newest");
+    setMinPrice(0);
+    setMaxPrice(PRICE_MAX);
+    setPendingMin(0);
+    setPendingMax(PRICE_MAX);
+    setCurrentPage(1);
     router.push(pathname);
     setDrawerOpen(false);
   };
@@ -655,7 +684,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
       chips.push({ key: 'brand', label: `${brandObj ? brandObj.label : activeBrand}`, value: 'all' });
     }
     if (minPrice > 0 || maxPrice < PRICE_MAX) {
-      chips.push({ key: 'price', label: `₹${minPrice} - ₹${maxPrice}`, value: 'price' });
+      chips.push({ key: 'price', label: `₹${Math.round(minPrice)} - ₹${Math.round(maxPrice)}`, value: 'price' });
     }
     if (searchTerm) {
       chips.push({ key: 'search', label: `Search: "${searchTerm}"`, value: '' });
@@ -665,12 +694,21 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
 
   const removeChip = (key: string) => {
     if (key === 'category') {
+      setActiveCategory("all");
       updateUrlFilters({ category: 'all' });
     } else if (key === 'brand') {
+      setActiveBrand("all");
       updateUrlFilters({ brand: 'all' });
     } else if (key === 'price') {
-      updateUrlFilters({ minPrice: 0, maxPrice: PRICE_MAX });
+      // null drops the params entirely; resetting pending alongside committed
+      // keeps the debounced price effect from re-applying the old range.
+      setMinPrice(0);
+      setMaxPrice(PRICE_MAX);
+      setPendingMin(0);
+      setPendingMax(PRICE_MAX);
+      updateUrlFilters({ minPrice: null, maxPrice: null });
     } else if (key === 'search') {
+      setSearchTerm("");
       updateUrlFilters({ search: '' });
     }
   };

@@ -141,23 +141,20 @@ export default function Footer() {
             <div className="md:col-span-1 lg:col-span-3 flex flex-col items-center md:items-start text-center md:text-left">
               <h3 className="text-[clamp(11px,1vw,12px)] font-bold uppercase tracking-[0.2em] text-[#8B5E34] mb-5 md:mb-6 leading-none">Contact</h3>
               <ul className="space-y-3 w-full">
-                <li className="text-[clamp(13px,1.5vw,14px)] text-slate-500 font-medium leading-relaxed max-w-[260px] md:max-w-none mx-auto md:mx-0 break-words">
-                  printiqo, near Mavoor police station, Calicut road, Mavoor
-                </li>
                 <li>
-                  <a href="tel:+918111939595" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1">
-                    +91 8111939595
+                  <a href="tel:+919074881551" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1">
+                    +91 907 4881 551
                   </a>
                 </li>
                 <li>
-                  <a href="tel:+914952884595" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1">
-                    0495-2884595
+                  <a href="mailto:infoluxygalleria@gmail.com" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 break-all">
+                    infoluxygalleria@gmail.com
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:printiqo.in@gmail.com" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 break-all">
-                    printiqo.in@gmail.com
-                  </a>
+                  <Link href="/contact-us" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1">
+                    Contact Us
+                  </Link>
                 </li>
               </ul>
             </div>

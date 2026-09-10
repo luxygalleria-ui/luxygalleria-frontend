@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import * as RadixAccordion from "@radix-ui/react-accordion";
 import {
   MessageCircle,
   Phone,
@@ -13,7 +12,6 @@ import {
   Clock,
   Send,
   CheckCircle2,
-  ChevronRight,
   ChevronLeft,
 } from "lucide-react";
 import axios from "axios";
@@ -534,187 +532,7 @@ export default function ContactUsPage() {
         {/* ── Contact Form ──────────────────────────────────────────── */}
         <ContactForm />
 
-        {/* ── FAQ ──────────────────────────────────────────────────── */}
-        <FAQSection />
-
       </main>
     </>
-  );
-}
-
-// ─── FAQ Data ─────────────────────────────────────────────────────────────────
-
-interface FAQItem {
-  _id: string;
-  question: string;
-  answer: string;
-}
-
-// ─── FAQ Section ──────────────────────────────────────────────────────────────
-
-function FAQSection() {
-  const { ref: headerRef, visible: headerVisible } = useInView(0.2);
-  const { ref: listRef, visible: listVisible } = useInView(0.1);
-  const [faqs, setFaqs] = useState<FAQItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchFaqs = async () => {
-      try {
-        const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-        const res = await axios.get(`${apiURL}/faqs`);
-        if (res.data.success) {
-          setFaqs(res.data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch FAQs:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFaqs();
-  }, []);
-
-  return (
-    <section id="faq" className="w-full bg-white py-16 md:py-20 lg:py-24" aria-label="Frequently asked questions">
-      <div className="max-w-3xl mx-auto px-6 md:px-8">
-
-        {/* ── Header ── */}
-        <div
-          ref={headerRef}
-          className="text-center mb-12 md:mb-16"
-        >
-          {/* Eyebrow */}
-          <p
-            className="font-sans font-semibold text-xs tracking-[0.2em] uppercase text-[#A68B5B] mb-4"
-            style={{
-              opacity: headerVisible ? 1 : 0,
-              transition: "opacity 0.4s ease 0ms",
-            }}
-          >
-            SUPPORT CENTER
-          </p>
-
-          {/* Headline */}
-          <h2
-            className="font-sans font-bold text-3xl md:text-4xl lg:text-5xl text-slate-900 leading-tight mb-6"
-            style={{
-              opacity: headerVisible ? 1 : 0,
-              transform: headerVisible ? "translateY(0)" : "translateY(1rem)",
-              transition: "opacity 0.6s ease 100ms, transform 0.6s ease 100ms",
-            }}
-          >
-            Frequently Asked Questions
-          </h2>
-
-          {/* Subheadline */}
-          <p
-            className="font-sans text-slate-500 text-base md:text-lg leading-relaxed max-w-2xl mx-auto"
-            style={{
-              opacity: headerVisible ? 1 : 0,
-              transform: headerVisible ? "translateY(0)" : "translateY(1rem)",
-              transition: "opacity 0.6s ease 200ms, transform 0.6s ease 200ms",
-            }}
-          >
-            Find quick answers to common questions about our premium skincare experience.
-          </p>
-        </div>
-
-        {/* ── Accordion ── */}
-        <div ref={listRef}>
-          <RadixAccordion.Root
-            type="single"
-            collapsible
-            className="w-full space-y-4"
-          >
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#A68B5B]/50"></div>
-              </div>
-            ) : faqs.length === 0 ? (
-              <div className="text-center py-8 text-slate-500 font-medium">No frequently asked questions available at the moment.</div>
-            ) : faqs.map((item, i) => (
-              <RadixAccordion.Item
-                key={item._id}
-                value={item._id}
-                className="border border-slate-200 rounded-2xl bg-white overflow-hidden
-                           hover:border-slate-300 transition-colors duration-200
-                           data-[state=open]:border-slate-300
-                           focus-within:ring-2 focus-within:ring-[#A68B5B]/50 focus-within:ring-offset-2"
-                style={{
-                  opacity: listVisible ? 1 : 0,
-                  transform: listVisible ? "translateY(0)" : "translateY(1rem)",
-                  transition: `opacity 0.4s ease ${300 + i * 80}ms, transform 0.4s ease ${300 + i * 80}ms`,
-                }}
-              >
-                {/* Trigger */}
-                <RadixAccordion.Header>
-                  <RadixAccordion.Trigger
-                    className="group w-full flex items-center justify-between
-                               px-6 md:px-8 py-5 md:py-6 text-left
-                               focus:outline-none"
-                    aria-label={item.question}
-                  >
-                    <span className="font-sans font-bold text-base md:text-lg text-slate-900 pr-4">
-                      {item.question}
-                    </span>
-                    <ChevronRight
-                      size={20}
-                      aria-hidden="true"
-                      className="flex-shrink-0 text-slate-400
-                                 group-data-[state=open]:text-[#A68B5B]/50
-                                 group-data-[state=open]:rotate-90
-                                 transition-all duration-300 motion-reduce:transition-none"
-                    />
-                  </RadixAccordion.Trigger>
-                </RadixAccordion.Header>
-
-                {/* Content — smooth height via Radix CSS variables */}
-                <RadixAccordion.Content
-                  className="overflow-hidden accordion-content"
-                >
-                  <div className="px-6 md:px-8 pb-6">
-                    <p className="font-sans text-slate-600 text-base leading-relaxed">
-                      {item.answer}
-                    </p>
-                  </div>
-                </RadixAccordion.Content>
-              </RadixAccordion.Item>
-            ))}
-          </RadixAccordion.Root>
-        </div>
-
-        {/* ── CTA ── */}
-        {/* <div
-          className="mt-12 text-center"
-          style={{
-            opacity: listVisible ? 1 : 0,
-            transition: `opacity 0.5s ease ${300 + FAQ_ITEMS.length * 80 + 100}ms`,
-          }}
-        >
-          <p className="font-sans text-slate-500 text-base mb-4">
-            Still have questions?
-          </p>
-          <a
-            href="#contact-form"
-            onClick={(e) => {
-              e.preventDefault();
-              document.querySelector("form[aria-label='Contact form']")?.scrollIntoView({ behavior: "smooth", block: "center" });
-            }}
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full
-                       bg-[#8B5E34] text-white font-bold text-sm tracking-[0.12em] uppercase
-                       hover:bg-[#6B4423] transition-colors duration-300
-                       shadow-lg shadow-[#A68B5B]/50/30
-                       focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2
-                       motion-reduce:transition-none"
-            aria-label="Send us a message via the contact form"
-          >
-            <Send size={16} />
-            Send Us a Message
-          </a>
-        </div> */}
-
-      </div>
-    </section>
   );
 }
