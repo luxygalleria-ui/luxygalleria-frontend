@@ -10,9 +10,9 @@ interface Settings {
 
 const DEFAULT_BANNER = "✨ WELCOME TO LUXY GALLERIA — Premium Imported Snacks & Drinks | No minimum order value ✨";
 
+// Rendered inside Navbar, which lives in the root layout — so this bar shows on every page.
 export default function DynamicBanner() {
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [loaded, setLoaded] = useState(false);
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
   useEffect(() => {
@@ -24,41 +24,48 @@ export default function DynamicBanner() {
         }
       } catch {
         // Silently fail — use default banner
-      } finally {
-        setLoaded(true);
       }
     };
     fetchSettings();
   }, [baseUrl]);
 
-  // While loading or if banner inactive, fallback to default banner
   const rawBanner = settings?.bannerText?.trim() || DEFAULT_BANNER;
-  // Split banner text by lines and clean them up
   const bannerLines = rawBanner
     .split('\n')
     .map(line => line.trim())
     .filter(line => line.length > 0);
 
+  const copy = (hidden: boolean) => (
+    <div className="flex shrink-0" aria-hidden={hidden || undefined}>
+      {bannerLines.map((line, index) => (
+        <span key={index} className="inline-block whitespace-nowrap px-12 sm:px-24">
+          {line}
+        </span>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="bg-slate-500 text-slate-100 text-[12px] sm:text-xs font-bold py-2.5 relative z-[60] tracking-widest overflow-hidden select-none border-b border-slate-600/20 flex justify-center items-center">
+    <div className="bg-slate-500 text-slate-100 text-[12px] sm:text-xs font-bold py-2.5 relative z-[60] tracking-widest overflow-hidden select-none border-b border-slate-600/20">
       <style>{`
+        /* Two identical copies side by side; shifting by exactly one copy (-50%) loops seamlessly with no gap or jump */
         @keyframes marquee-scroll {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
         }
-        .marquee {
-          display: inline-block;
-          white-space: nowrap;
+        .marquee-track {
+          display: flex;
+          width: max-content;
           animation: marquee-scroll 25s linear infinite;
+          will-change: transform;
         }
-        .marquee:hover { animation-play-state: paused; }
+        @media (prefers-reduced-motion: reduce) {
+          .marquee-track { animation: none; }
+        }
       `}</style>
-      <div className="marquee px-4">
-        {bannerLines.map((line, index) => (
-          <span key={index} className="inline-block mx-24">
-            {line}
-          </span>
-        ))}
+      <div className="marquee-track">
+        {copy(false)}
+        {copy(true)}
       </div>
     </div>
   );

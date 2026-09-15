@@ -25,19 +25,11 @@ interface ISlide {
   subheadline: string;
 }
 
-const DEFAULT_SLIDES: ISlide[] = [
-  {
-    id: "default-1",
-    image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1200&auto=format&fit=crop",
-    mobileImage: "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=800&auto=format&fit=crop",
-    alt: "Luxy Galleria premium imported products",
-    headline: "TASTE THE WORLD",
-    subheadline: "Premium imported snacks, drinks & more — delivered to your door.",
-  },
-];
+const SLIDE_DELAY_MS = 6000;
 
 export default function HeroSection() {
-  const [allSlides, setAllSlides] = useState<ISlide[]>(DEFAULT_SLIDES);
+  // null = still fetching; render a skeleton instead of placeholder content
+  const [allSlides, setAllSlides] = useState<ISlide[] | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,6 +52,7 @@ export default function HeroSection() {
 
   useEffect(() => {
     const fetchBanners = async () => {
+      let slides: ISlide[] = [];
       try {
         const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
         const res = await axios.get(`${apiURL}/banners`);
@@ -69,7 +62,7 @@ export default function HeroSection() {
           );
           if (activeBanners.length > 0) {
             const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
-            const mapped = activeBanners.map((b) => ({
+            slides = activeBanners.map((b) => ({
               id: b._id,
               image: b.image.startsWith("/")
                 ? `${baseUrl}${b.image}`
@@ -81,13 +74,12 @@ export default function HeroSection() {
               headline: b.title,
               subheadline: b.description,
             }));
-            setAllSlides(mapped);
           }
         }
       } catch (err) {
         console.error("Failed to fetch banners", err);
-        // Keep default slides on error
       }
+      setAllSlides(slides);
     };
     fetchBanners();
   }, []);
@@ -101,12 +93,10 @@ export default function HeroSection() {
   }, []);
 
   // Filter slides dynamically based on screen size
-  const displaySlides = allSlides.filter(slide => {
-    if (slide.id.startsWith("default-")) return true;
-    return isMobile ? !!slide.mobileImage : true;
-  });
-
-  const finalSlides = displaySlides.length > 0 ? displaySlides : DEFAULT_SLIDES;
+  // On mobile prefer banners that have a mobile image; if none do, show all (desktop image is used)
+  const slides = allSlides ?? [];
+  const mobileSlides = slides.filter((slide) => !!slide.mobileImage);
+  const finalSlides = isMobile && mobileSlides.length > 0 ? mobileSlides : slides;
 
   useEffect(() => {
     if (currentSlide >= finalSlides.length) {
@@ -114,13 +104,14 @@ export default function HeroSection() {
     }
   }, [finalSlides.length, currentSlide]);
 
+  // Timeout keyed on currentSlide: every slide (including after manual nav/swipe) gets the full delay
   useEffect(() => {
     if (isLoading || finalSlides.length <= 1) return;
-    const timer = setInterval(() => {
+    const timer = setTimeout(() => {
       setCurrentSlide((prev) => (prev + 1) % finalSlides.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, [isLoading, finalSlides.length]);
+    }, SLIDE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [isLoading, currentSlide, finalSlides.length]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % finalSlides.length);
@@ -157,10 +148,15 @@ export default function HeroSection() {
     }
   };
 
+  // Loaded but no active banners: render no hero at all
+  if (allSlides !== null && finalSlides.length === 0) return null;
+
   return (
     <section
-      className="relative w-full max-w-none overflow-hidden bg-black touch-pan-y h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] xl:h-[80vh]"
+      // Aspect ratios match the uploaded banners (desktop 2048x768, mobile 1:1); object-cover fills edge to edge
+      className={`relative w-full max-w-none overflow-hidden touch-pan-y aspect-square md:aspect-[8/3] ${allSlides === null ? "bg-slate-100 animate-pulse" : "bg-black"}`}
       aria-label="Hero section"
+      aria-busy={allSlides === null}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={handleTouchEnd}

@@ -166,7 +166,7 @@ export default function CategorySection() {
             <Link
               href={`/products?category=${category.id}`}
               aria-label={`Browse ${category.label}`}
-              className={`md:hidden group relative overflow-hidden rounded-[2.5rem] aspect-[4/5] block focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none shadow-xl shadow-black/10 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+              className={`md:hidden group relative w-full overflow-hidden rounded-[2.5rem] aspect-[4/5] block focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none shadow-xl shadow-black/10 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
                 }`}
               style={{ transitionDelay: `${index * 150}ms` }}
             >
@@ -174,7 +174,7 @@ export default function CategorySection() {
                 src={category.image}
                 alt={category.alt}
                 fill
-                priority={index === 0}
+                // No priority: one of the two layouts is display:none, and an eager load there measures height 0
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105"
                 onError={(e) => handleImageError(e as any)}
@@ -199,7 +199,7 @@ export default function CategorySection() {
             <Link
               href={`/products?category=${category.id}`}
               aria-label={`Browse ${category.label}`}
-              className={`hidden md:block group relative overflow-hidden aspect-[4/5] focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none rounded-[2rem] shadow-md ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+              className={`hidden md:block group relative w-full overflow-hidden aspect-[4/5] focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none rounded-[2rem] shadow-md ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
                 }`}
               style={{ transitionDelay: `${index * 150}ms` }}
             >
@@ -207,7 +207,6 @@ export default function CategorySection() {
                 src={category.image}
                 alt={category.alt}
                 fill
-                priority={index === 0}
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-110"
                 onError={(e) => handleImageError(e as any)}

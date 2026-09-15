@@ -239,6 +239,7 @@ export default function CheckoutPage() {
           name: guestAddress.city?.toLowerCase() || 'Address',
           line1: `${guestAddress.street ? guestAddress.street + ", " : ""}${guestAddress.state?.toLowerCase() || ''}`,
           line2: guestAddress.zipCode,
+          fullAddress: guestAddress,
         };
         
         setAddresses([...addresses, mappedAddress]);
@@ -272,8 +273,11 @@ export default function CheckoutPage() {
   };
 
   const handleCheckout = async () => {
-    if (!selectedAddressId) {
-      showToast("Please select a shipping address.", "warning");
+    // Must resolve to a real address with the fields the order needs, before any payment call
+    const selectedAddress = addresses.find(a => a.id === selectedAddressId);
+    const addr = selectedAddress?.fullAddress;
+    if (!addr?.city?.trim() || !addr?.state?.trim() || !addr?.zipCode?.trim()) {
+      showToast("Please select or add a shipping address", "warning");
       return;
     }
 
@@ -292,8 +296,6 @@ export default function CheckoutPage() {
 
       const API_URL = getAPIURL();
 
-      const selectedAddress = addresses.find(a => a.id === selectedAddressId);
-
       // Format items for backend
       const orderItems = cartItems.map(item => ({
         product: item.id,
@@ -305,18 +307,20 @@ export default function CheckoutPage() {
         subtotal: item.price * item.quantity,
       }));
 
+      // Use the stored fields directly (splitting the display string broke when street was empty or had commas)
       const orderShippingAddress = {
-        street: selectedAddress?.line1.split(", ")[0] || '',
-        city: selectedAddress?.name || '',
-        state: selectedAddress?.line1.split(", ")[1] || '',
-        zipCode: selectedAddress?.line2 || '',
-        country: "India"
+        street: addr.street || '',
+        city: addr.city,
+        state: addr.state,
+        zipCode: addr.zipCode,
+        country: addr.country || "India"
       };
 
       // Call backend to create Razorpay order only (no DB save yet)
       const createOrderRes = await axios.post(`${API_URL}/payments/create-order`, {
         total,
         items: orderItems,
+        shippingAddress: orderShippingAddress,
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });

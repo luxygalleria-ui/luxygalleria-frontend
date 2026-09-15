@@ -455,6 +455,11 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  // Collections default to the order curated in admin (Gifting / New Arrivals pages)
+  const defaultSort = collection ? "featured" : "newest";
+  // Filter sidebar exists only on the main Shop page; collection pages use a full-width grid
+  const showFilters = !collection;
+  const gridCols = showFilters ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
 
   // State populated from URL via searchParams
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
@@ -467,7 +472,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeBrand, setActiveBrand] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
+  const [sortBy, setSortBy] = useState(defaultSort);
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(PRICE_MAX);
 
@@ -477,6 +482,25 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
+
+  // Collection pages take their heading from admin (Settings); shown only once loaded so stale copy never flashes
+  const [heading, setHeading] = useState<{ title: string; subtitle: string } | null>(
+    collection ? null : { title: title || "", subtitle: subtitle || "" }
+  );
+  useEffect(() => {
+    if (!collection) return;
+    const [titleKey, subtitleKey] = collection === "gifting"
+      ? ["giftingTitle", "giftingSubtitle"]
+      : ["newArrivalsTitle", "newArrivalsSubtitle"];
+    const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+    axios
+      .get(`${apiURL}/settings`)
+      .then((res) => res.data?.data || {})
+      .catch(() => ({}))
+      .then((s: Record<string, string>) =>
+        setHeading({ title: s[titleKey] || title || "", subtitle: s[subtitleKey] || subtitle || "" })
+      );
+  }, [collection, title, subtitle]);
 
   // Fetch filter facets — only the categories/brands that actually occur in
   // this collection, so the sidebar never offers an option that yields nothing.
@@ -489,12 +513,8 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
     const fetchFacets = async () => {
       try {
         const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-        const params: any = { facets: true };
-        if (collection === "gifting") {
-          params.gifting = true;
-        } else if (collection === "newArrival") {
-          params.newArrival = true;
-        }
+        // Facets are only used by the Shop sidebar, so they're scoped to general products
+        const params = { facets: true, general: true };
 
         const res = await axios.get(`${apiURL}/products`, { params });
         if (res.data.success && res.data.data) {
@@ -506,15 +526,15 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
         console.error("Failed to fetch filter facets:", err);
       }
     };
-    fetchFacets();
-  }, [collection]);
+    if (showFilters) fetchFacets();
+  }, [showFilters]);
 
   // Sync state from URL search params
   useEffect(() => {
     const category = searchParams.get("category") || "all";
     const brand = searchParams.get("brand") || "all";
     const search = searchParams.get("search") || "";
-    const sort = searchParams.get("sort") || "newest";
+    const sort = searchParams.get("sort") || defaultSort;
     const min = Number(searchParams.get("minPrice")) || 0;
     const max = Number(searchParams.get("maxPrice")) || PRICE_MAX;
     const page = Number(searchParams.get("page")) || 1;
@@ -533,7 +553,8 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
   // Unified router push to sync states to URL query params
   const updateUrlFilters = useCallback((newParams: Record<string, unknown>) => {
     const params = buildFilterParams(searchParams.toString(), newParams);
-    router.push(`${pathname}?${params.toString()}`);
+    // scroll: false — filter clicks must not yank the page back to the top
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, router, pathname]);
 
   // Keep the latest pusher in a ref so the debounce below is not re-armed every
@@ -558,7 +579,10 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
   }, [pendingMin, pendingMax, minPrice, maxPrice]);
 
   // Fetch Products based on URL query state
+  // Rapid filter clicks fire overlapping requests; only the latest may update state
+  const latestRequest = useRef(0);
   const fetchProducts = useCallback(async () => {
+    const requestId = ++latestRequest.current;
     try {
       setLoading(true);
       const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
@@ -588,9 +612,13 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
         params.gifting = true;
       } else if (collection === "newArrival") {
         params.newArrival = true;
+      } else {
+        // Main Shop: exclude Gifting / New Arrival products (they live only on their own pages)
+        params.general = true;
       }
 
       const res = await axios.get(`${apiURL}/products`, { params });
+      if (requestId !== latestRequest.current) return;
       if (res.data.success && res.data.data) {
         const prodData = res.data.data;
         const mapped = prodData.map((p: any) => {
@@ -632,7 +660,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
     } catch (error) {
       console.error("Failed to fetch products:", error);
     } finally {
-      setLoading(false);
+      if (requestId === latestRequest.current) setLoading(false);
     }
   }, [currentPage, activeCategory, activeBrand, minPrice, maxPrice, searchTerm, sortBy, collection]);
 
@@ -657,13 +685,13 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
     setActiveCategory("all");
     setActiveBrand("all");
     setSearchTerm("");
-    setSortBy("newest");
+    setSortBy(defaultSort);
     setMinPrice(0);
     setMaxPrice(PRICE_MAX);
     setPendingMin(0);
     setPendingMax(PRICE_MAX);
     setCurrentPage(1);
-    router.push(pathname);
+    router.push(pathname, { scroll: false });
     setDrawerOpen(false);
   };
 
@@ -735,25 +763,27 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
     activeBrand,
     pendingMin,
     pendingMax,
-    onCategoryChange: (id) => updateUrlFilters({ category: id }),
-    onBrandChange: (id) => updateUrlFilters({ brand: id }),
+    // Close the mobile drawer so the updated results (and page scroll) are available immediately
+    onCategoryChange: (id) => { updateUrlFilters({ category: id }); setDrawerOpen(false); },
+    onBrandChange: (id) => { updateUrlFilters({ brand: id }); setDrawerOpen(false); },
     onMinChange: setPendingMin,
     onMaxChange: setPendingMax,
   };
 
   return (
     <div className="min-h-screen bg-white pt-8">
-      <div className="flex min-h-[calc(100vh-5rem)]">
+      {/* Explicit row on desktop: sidebar left, catalog right */}
+      <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-5rem)]">
 
         {/* ── Desktop Sidebar ─────────────────────────────────────── */}
-        <aside className="hidden lg:block w-80 xl:w-88 bg-[#fbf9f6] border-r border-slate-100 sticky top-30 h-[calc(100vh-120px)] overflow-y-auto shrink-0 p-6">
+        {showFilters && <aside className="hidden lg:block w-80 xl:w-88 bg-[#fbf9f6] border-r border-slate-100 sticky top-30 h-[calc(100vh-120px)] overflow-y-auto shrink-0 p-6">
           <div className="bg-white rounded-[2rem] border border-slate-100/80 shadow-sm overflow-hidden">
             <FilterSidebar {...sidebarProps} />
           </div>
-        </aside>
+        </aside>}
 
         {/* ── Mobile Drawer ────────────────────────────────────────── */}
-        {drawerOpen && (
+        {showFilters && drawerOpen && (
           <>
             <div
               className="fixed inset-0 z-40 bg-black/40 lg:hidden"
@@ -777,7 +807,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
         )}
 
         {/* ── Main Content ─────────────────────────────────────────── */}
-        <main className="flex-1 p-5 md:p-8 overflow-hidden">
+        <main className={`flex-1 w-full min-w-0 p-5 md:p-8 ${showFilters ? "" : "max-w-7xl mx-auto"}`}>
           {/* Mobile Back to Home */}
           <Link
             href="/"
@@ -787,14 +817,15 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
             Back to Home
           </Link>
 
-          {title && (
+          {heading?.title && (
             <div className="mb-6">
-              <h1 className="font-serif text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">{title}</h1>
-              {subtitle && <p className="font-sans text-base text-slate-500 mt-2">{subtitle}</p>}
+              <h1 className="font-serif text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">{heading.title}</h1>
+              {heading.subtitle && <p className="font-sans text-base text-slate-500 mt-2">{heading.subtitle}</p>}
             </div>
           )}
 
-          {/* Results Bar + Mobile Filter Toggle */}
+          {/* Results Bar + Mobile Filter Toggle — Shop only; collection pages go straight from heading to grid */}
+          {showFilters && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white border border-slate-100 rounded-xl px-5 py-4 mb-6 gap-4">
             <div>
               <p className="font-sans text-base text-slate-600">
@@ -822,21 +853,25 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
                   onChange={(e) => updateUrlFilters({ sort: e.target.value })}
                   className="bg-white border border-slate-200 rounded-xl px-3 py-2 font-sans text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 cursor-pointer"
                 >
+                  {collection && <option value="featured">Featured</option>}
                   <option value="newest">Newest</option>
                   <option value="priceAsc">Price: Low to High</option>
                   <option value="priceDesc">Price: High to Low</option>
                   <option value="rating">Top Rated</option>
                 </select>
               </div>
-              <button
-                onClick={() => setDrawerOpen(true)}
-                className="lg:hidden flex items-center gap-2 font-sans font-bold text-sm text-slate-700 border border-slate-200 rounded-xl px-4 py-2 hover:bg-slate-50 transition-colors"
-              >
-                <SlidersHorizontal size={16} />
-                Filters
-              </button>
+              {showFilters && (
+                <button
+                  onClick={() => setDrawerOpen(true)}
+                  className="lg:hidden flex items-center gap-2 font-sans font-bold text-sm text-slate-700 border border-slate-200 rounded-xl px-4 py-2 hover:bg-slate-50 transition-colors"
+                >
+                  <SlidersHorizontal size={16} />
+                  Filters
+                </button>
+              )}
             </div>
           </div>
+          )}
 
           {/* Active Filter Chips */}
           {activeChips.length > 0 && (
@@ -867,15 +902,16 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
           )}
 
           {/* Product Grid / Skeleton / Empty State */}
-          {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 md:gap-7">
+          {/* Skeleton only on first load; on refetch keep current cards so the page height doesn't collapse and jump */}
+          {loading && products.length === 0 ? (
+            <div className={`grid ${gridCols} gap-3 sm:gap-5 md:gap-7`}>
               {Array.from({ length: 8 }).map((_, i) => (
                 <SkeletonCard key={`sk-${i}`} />
               ))}
             </div>
           ) : products.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 md:gap-7">
+              <div className={`grid ${gridCols} gap-3 sm:gap-5 md:gap-7 transition-opacity ${loading ? "opacity-50 pointer-events-none" : ""}`}>
                 {products.map((product, index) => (
                   <ProductCard key={product.id} product={product} index={index} />
                 ))}
@@ -893,15 +929,21 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <p className="text-4xl mb-4">🔍</p>
               <h3 className="font-serif text-2xl text-slate-900 mb-2">No products found</h3>
-              <p className="font-sans text-base text-slate-500 mb-6">
-                Try adjusting your filters or clearing them to see all premium treats.
-              </p>
-              <button
-                onClick={handleClearAll}
-                className="bg-slate-900 text-white font-bold text-sm uppercase tracking-widest px-8 py-3 rounded-full hover:bg-slate-800 transition-colors"
-              >
-                CLEAR FILTERS
-              </button>
+              {showFilters ? (
+                <>
+                  <p className="font-sans text-base text-slate-500 mb-6">
+                    Try adjusting your filters or clearing them to see all premium treats.
+                  </p>
+                  <button
+                    onClick={handleClearAll}
+                    className="bg-slate-900 text-white font-bold text-sm uppercase tracking-widest px-8 py-3 rounded-full hover:bg-slate-800 transition-colors"
+                  >
+                    CLEAR FILTERS
+                  </button>
+                </>
+              ) : (
+                <p className="font-sans text-base text-slate-500">New picks are on the way — check back soon.</p>
+              )}
             </div>
           )}
         </main>
