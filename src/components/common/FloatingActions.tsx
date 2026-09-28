@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { ArrowUp, MessageCircle } from "lucide-react";
 import axios from "axios";
+import { CONTACT } from "../../lib/contact";
 
 export default function FloatingActions() {
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState("917736989068");
+  // Admin "settings" can override this; see CONTACT for the default.
+  const [whatsappNumber, setWhatsappNumber] = useState(CONTACT.whatsapp);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
@@ -21,7 +23,7 @@ export default function FloatingActions() {
       try {
         const res = await axios.get(`${baseUrl}/settings`);
         if (res.data.success && res.data.data?.whatsappNumber) {
-          setWhatsappNumber(res.data.data.whatsappNumber);
+          setWhatsappNumber(String(res.data.data.whatsappNumber).replace(/\D/g, ""));
         }
       } catch (error) {
         console.error('Error fetching settings for floating actions:', error);

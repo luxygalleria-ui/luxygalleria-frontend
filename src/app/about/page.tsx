@@ -2,7 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Globe, Gem, Heart, Store, Gift, Truck } from "lucide-react";
+
+const WHY = [
+  { Icon: Globe, title: "A World of Flavours", text: "Discover chocolates, snacks, drinks, and food products from different parts of the world." },
+  { Icon: Gem, title: "Rare Finds", text: "Explore interesting, unusual, and hard-to-find international products." },
+  { Icon: Heart, title: "Flavours With Memories", text: "Rediscover childhood favourites and products that remind you of travel, family, and life abroad." },
+  { Icon: Store, title: "Shop In-Store or Online", text: "Visit our physical store in Thalassery, Kerala, or shop online from wherever you are in India." },
+  { Icon: Gift, title: "Made for Gifting", text: "Discover premium chocolates, curated snack hampers, and thoughtful gifts for special occasions." },
+  { Icon: Truck, title: "Delivery Across Kerala", text: "Order your favourite imported snacks from anywhere in Kerala." },
+];
+
+const h2Cls = "font-serif font-normal text-3xl md:text-4xl text-slate-900 leading-tight mb-6";
 
 export default function AboutPage() {
   const [visible, setVisible] = useState(false);
@@ -13,11 +24,11 @@ export default function AboutPage() {
 
   return (
     <>
-      <title>About Us – LUXY GALLERIA</title>
-      <meta name="description" content="Learn about Luxy Galleria — India's premium destination for imported chocolates, drinks & global treats." />
+      <title>About Us – Luxy Galleria</title>
+      <meta name="description" content="Luxy Galleria is an imported snacks, chocolates, and drinks store in Thalassery, Kerala. Discover flavours from around the world, in-store and online." />
 
       <main className="min-h-screen bg-slate-50">
-        {/* Hero */}
+        {/* 1. About Luxy Galleria */}
         <section
           className="relative w-full pt-32 md:pt-40 pb-36 md:pb-48"
           style={{ background: "linear-gradient(135deg, #2C1A10 0%, #422812 50%, #6B5344 100%)" }}
@@ -35,92 +46,114 @@ export default function AboutPage() {
               className="font-sans font-bold text-4xl md:text-5xl lg:text-6xl text-white leading-tight mb-6"
               style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(1rem)", transition: "opacity 0.6s ease 200ms, transform 0.6s ease 200ms" }}
             >
-              About Us
+              About Luxy Galleria
             </h1>
             <p
-              className="text-slate-400 text-base md:text-lg leading-relaxed max-w-2xl mx-auto"
+              className="text-slate-300 text-base md:text-lg leading-relaxed max-w-2xl mx-auto"
               style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(1rem)", transition: "opacity 0.6s ease 300ms, transform 0.6s ease 300ms" }}
             >
-              India's premium destination for imported chocolates, drinks & global treats.
+              Imported chocolates, snacks, drinks, and food products from around the world — in our store in Thalassery, Kerala, and online.
             </p>
           </div>
         </section>
 
-        {/* Content */}
-        <section className="relative z-10 px-6 md:px-12 lg:px-20 max-w-4xl mx-auto -mt-20 md:-mt-24 mb-20">
-          <div className="bg-white rounded-3xl shadow-sm p-8 md:p-12 lg:p-16 border border-slate-100 space-y-10 text-slate-700 leading-relaxed font-sans">
-
-            <section>
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Who We Are</h2>
-              <p>
-                Luxy Galleria is a premium online store dedicated to bringing the world's finest imported snacks, beverages, and specialty food products directly to your doorstep across India. We believe that great taste knows no borders, and everyone deserves access to quality global products.
+        {/* 2 + 3. Story & philosophy */}
+        <section className="relative z-10 px-6 md:px-12 max-w-4xl mx-auto -mt-20 md:-mt-24">
+          <div className="bg-white rounded-3xl shadow-sm p-8 md:p-12 lg:p-16 border border-slate-100 space-y-14 text-slate-600 text-base md:text-lg leading-relaxed font-sans">
+            <div>
+              <h2 className={h2Cls}>It Started With a Love for Discovery</h2>
+              <p className="mb-6">
+                Long before Luxy Galleria became a store, there was simply the excitement of discovering something different.
               </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Our Story</h2>
-              <p>
-                Founded with a passion for global flavours, Luxy Galleria started as a small curated collection of hard-to-find international products. Today, we serve thousands of happy customers across India, offering a carefully selected range of imported chips, chocolates, energy drinks, exotic snacks, and more — all sourced from trusted international suppliers.
-              </p>
-            </section>
-
-            <section className="bg-[#8B5E34]/10 p-6 md:p-8 rounded-2xl text-center">
-              <h2 className="text-2xl font-bold text-[#8B5E34] mb-3">Luxy Snack Station</h2>
-              <p className="text-lg text-slate-800 font-medium italic">
-                Watch, unbox, and experience<br/>
-                Luxy Galleria.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">What We Offer</h2>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Premium imported snacks from across the globe</li>
-                <li>International beverages and energy drinks</li>
-                <li>Exotic chocolates and confectioneries</li>
-                <li>Specialty food products unavailable locally</li>
-                <li>Fast, reliable delivery across India</li>
+              <ul className="border-l-2 border-[#A68B5B]/40 pl-5 space-y-2 mb-6 font-serif italic text-slate-800">
+                <li>A chocolate you had never seen before.</li>
+                <li>A drink from another country.</li>
+                <li>A snack you remembered from a trip abroad.</li>
+                <li>A familiar flavour that instantly took you back to a different time.</li>
               </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Our Promise</h2>
-              <p>
-                Every product on Luxy Galleria is handpicked for quality and authenticity. We are committed to providing a seamless shopping experience — from browsing to delivery — with transparent pricing, secure payments, and responsive customer support.
+              <p className="mb-4">
+                That feeling stayed with us as we missed many of the treats we grew up with while living in Saudi Arabia.
               </p>
-            </section>
+              <p>
+                Luxy Galleria was built around that same excitement: creating a place where people can discover international products, share them with the people they love, and experience flavours from around the world.
+              </p>
+            </div>
 
-            <section>
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Find Us On Social Media</h2>
-              <div className="flex flex-wrap items-center gap-y-2 gap-x-4">
-                <a href="https://www.facebook.com/share/1BLZJWnKyP/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="text-[#8B5E34] hover:text-[#5A3A1E] font-medium transition-colors">
-                  Facebook
-                </a>
-                <span className="text-slate-300">|</span>
-                <a href="https://www.instagram.com/luxygalleria?igsh=aDhpM2Zoc3FvejQw" target="_blank" rel="noopener noreferrer" className="text-[#8B5E34] hover:text-[#5A3A1E] font-medium transition-colors">
-                  Instagram (@luxygalleria)
-                </a>
-                <span className="text-slate-300">|</span>
-                <a href="https://www.instagram.com/luxysnackstation?igsh=MXAyNWQwZmZtaHoydQ==" target="_blank" rel="noopener noreferrer" className="text-[#8B5E34] hover:text-[#5A3A1E] font-medium transition-colors">
-                  Instagram (@luxysnackstation)
-                </a>
-                <span className="text-slate-300">|</span>
-                <a href="https://www.snapchat.com/add/luxygalleria" target="_blank" rel="noopener noreferrer" className="text-[#8B5E34] hover:text-[#5A3A1E] font-medium transition-colors">
-                  Snapchat
-                </a>
-                <span className="text-slate-300">|</span>
-                <a href="https://youtube.com/@luxysnackstation?si=oqzX6swsa1f5hYBz" target="_blank" rel="noopener noreferrer" className="text-[#8B5E34] hover:text-[#5A3A1E] font-medium transition-colors">
-                  YouTube
-                </a>
+            <div className="bg-[#8B5E34]/5 rounded-2xl p-6 md:p-10">
+              <h2 className={h2Cls}>More Than Just Snacks</h2>
+              <p className="mb-4">For us, snacks can carry memories.</p>
+              <p className="mb-4">
+                A particular chocolate can remind you of childhood. A drink can take you back to a holiday. A familiar snack can remind you of living abroad, family, friends, or a place you once called home.
+              </p>
+              <p className="mb-4">
+                For the Malayali and NRI community, imported products can be especially meaningful — sometimes they are simply something new to try, and sometimes they are a small taste of a familiar world.
+              </p>
+              <p className="mb-6">That is what makes Luxy Galleria different.</p>
+              <p className="font-serif text-xl md:text-2xl text-[#5A3A1E]">
+                We don&apos;t just want you to find a snack. We want you to find something you&apos;ll remember.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. Why Luxy Galleria? */}
+        <section className="px-6 md:px-12 max-w-6xl mx-auto py-16 md:py-24">
+          <h2 className={`${h2Cls} text-center`}>Why Luxy Galleria?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+            {WHY.map(({ Icon, title, text }) => (
+              <div key={title} className="bg-white rounded-2xl border border-slate-100 p-6 md:p-8 shadow-sm">
+                <div className="w-12 h-12 rounded-xl bg-[#8B5E34] flex items-center justify-center mb-5">
+                  <Icon size={22} className="text-white" />
+                </div>
+                <h3 className="font-sans font-bold text-lg text-slate-900 mb-2">{title}</h3>
+                <p className="text-slate-500 text-sm md:text-base leading-relaxed">{text}</p>
               </div>
-            </section>
+            ))}
+          </div>
+        </section>
 
-            <section>
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Contact Us</h2>
-              <p className="mb-2">Email: <a href="mailto:infoluxygalleria@gmail.com" className="text-[#8B5E34] hover:text-[#5A3A1E] transition-colors">infoluxygalleria@gmail.com</a></p>
-              <p>Phone: <a href="tel:+919074881551" className="text-[#8B5E34] hover:text-[#5A3A1E] transition-colors">+91 9074881551</a></p>
-            </section>
+        {/* 5. Our Mission */}
+        <section
+          className="w-full px-6 py-16 md:py-24 text-center"
+          style={{ background: "linear-gradient(135deg, #2C1A10 0%, #422812 50%, #6B5344 100%)" }}
+        >
+          <div className="max-w-3xl mx-auto">
+            <h2 className="font-serif font-normal text-3xl md:text-4xl text-white leading-tight mb-6">Our Mission</h2>
+            <p className="text-slate-300 text-base md:text-lg mb-2">Our mission is simple:</p>
+            <p className="font-serif text-xl md:text-2xl text-white leading-snug mb-6">
+              To make discovering international food more exciting, accessible, and memorable.
+            </p>
+            <p className="text-slate-300 text-base md:text-lg leading-relaxed mb-10">
+              Whether you&apos;re looking for a childhood favourite, searching for a taste from abroad, hunting for a rare snack, looking for the perfect gift, or simply curious to try something you&apos;ve never had before, Luxy Galleria is here to bring the world of snacks closer to you.
+            </p>
+            <p className="font-sans font-semibold text-sm md:text-base tracking-wide text-[#D9C2A0]">
+              Discover something new. Rediscover something familiar. Bring home a little taste of the world.
+            </p>
+          </div>
+        </section>
 
+        {/* 6. Shop Online or Visit Us */}
+        <section className="px-6 py-16 md:py-20 text-center">
+          <div className="max-w-2xl mx-auto">
+            <h2 className={h2Cls}>Shop Online or Visit Us</h2>
+            <p className="text-slate-500 text-base md:text-lg leading-relaxed mb-8">
+              Explore our collection online or visit our physical store in Thalassery, Kerala, to discover your favourite international snacks and treats.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/products"
+                className="px-8 py-3.5 bg-[#8B5E34] text-white font-bold text-sm uppercase tracking-[0.15em] rounded-full hover:bg-[#6B4423] transition-colors"
+              >
+                Shop Now
+              </Link>
+              {/* ponytail: "Get Directions" omitted until a verified store address / Maps link exists */}
+              <Link
+                href="/contact-us"
+                className="px-8 py-3.5 border border-[#8B5E34] text-[#8B5E34] font-bold text-sm uppercase tracking-[0.15em] rounded-full hover:bg-[#8B5E34] hover:text-white transition-colors"
+              >
+                Contact Us
+              </Link>
+            </div>
           </div>
         </section>
       </main>

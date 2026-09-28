@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CONTACT } from "../../lib/contact";
 
 const socials = [
   {
@@ -45,7 +46,16 @@ const socials = [
       </svg>
     )
   },
-
+  {
+    label: "YouTube (Luxy Snack Station)",
+    href: "https://youtube.com/@luxysnackstation?si=oqzX6swsa1f5hYBz",
+    hoverClass: "",
+    svg: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+      </svg>
+    )
+  },
 ];
 
 const footerLinks = [
@@ -142,14 +152,17 @@ export default function Footer() {
               <h3 className="text-[clamp(11px,1vw,12px)] font-bold uppercase tracking-[0.2em] text-[#8B5E34] mb-5 md:mb-6 leading-none">Contact</h3>
               <ul className="space-y-3 w-full">
                 <li>
-                  <a href="tel:+919074881551" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1">
-                    +91 907 4881 551
+                  <a href={`tel:${CONTACT.phone}`} className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1">
+                    {CONTACT.phoneDisplay}
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:infoluxygalleria@gmail.com" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 break-all">
-                    infoluxygalleria@gmail.com
+                  <a href={`mailto:${CONTACT.email}`} className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 break-all">
+                    {CONTACT.email}
                   </a>
+                </li>
+                <li className="text-[clamp(13px,1.5vw,14px)] text-slate-500 font-medium py-1">
+                  {CONTACT.location}
                 </li>
                 <li>
                   <Link href="/contact-us" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1">

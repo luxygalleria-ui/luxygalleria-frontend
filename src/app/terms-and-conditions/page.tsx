@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { CONTACT } from "../../lib/contact";
 
 export default function TermsAndConditionsPage() {
   const [heroVisible, setHeroVisible] = useState(false);
@@ -154,8 +155,8 @@ export default function TermsAndConditionsPage() {
 
               <section>
                 <h2 className="text-2xl font-bold text-slate-900 mb-4">10. Contact Us</h2>
-                <p className="mb-2">Email: <a href="mailto:infoluxygalleria@gmail.com" className="text-[#8B5E34] hover:text-[#5A3A1E] transition-colors">infoluxygalleria@gmail.com</a></p>
-                <p>Phone: <a href="tel:+919074881551" className="text-[#8B5E34] hover:text-[#5A3A1E] transition-colors">9074881551</a></p>
+                <p className="mb-2">Email: <a href={`mailto:${CONTACT.email}`} className="text-[#8B5E34] hover:text-[#5A3A1E] transition-colors">{CONTACT.email}</a></p>
+                <p>Phone: <a href={`tel:${CONTACT.phone}`} className="text-[#8B5E34] hover:text-[#5A3A1E] transition-colors">{CONTACT.phoneDisplay}</a></p>
               </section>
             </div>
           </div>

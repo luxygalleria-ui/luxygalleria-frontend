@@ -6,29 +6,24 @@ import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { getImageUrl, handleImageError } from "../../lib/imageUtils";
 
-const DEFAULT_CATEGORIES = [
-  {
-    id: 'skin-care',
-    label: 'Skin Care',
-    image: '/images/skin-care.jpg',
-    alt: 'Skin Care category featuring moisturizing brightening sunscreen'
-  },
-  {
-    id: 'lip-care',
-    label: 'Lip Care',
-    image: '/images/lip-care.jpg',
-    alt: 'Lip Care category featuring nourished glossy lips'
-  },
-  {
-    id: 'body-care',
-    label: 'Body Care',
-    image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=600&auto=format&fit=crop',
-    alt: 'Body Care category featuring luxurious body cream application'
-  }
+type CategoryCard = { id: string; label: string; image: string; alt: string };
+
+const HIGHLIGHTS = [
+  "Imported chocolates",
+  "International snacks & chips",
+  "Korean ramen & instant noodles",
+  "Imported soft drinks & beverages",
+  "Energy drinks",
+  "Candies, gummies, gums & mints",
+  "Imported biscuits & wafers",
+  "International instant coffee",
+  "Spreads & speciality foods",
+  "Premium chocolate & snack hampers",
+  "Rare & hard-to-find products",
 ];
 
 export default function CategorySection() {
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<CategoryCard[]>([]);
   const [isVisible, setIsVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -44,10 +39,10 @@ export default function CategorySection() {
           const activeCats = res.data.data.filter((c: any) => c.status === 'ACTIVE').slice(0, 6);
 
           if (activeCats.length > 0) {
-            const formatted = activeCats.map((c: any, index: number) => ({
+            const formatted = activeCats.map((c: any) => ({
               id: c.name.toLowerCase().replace(/\s+/g, '-'),
               label: c.name,
-              image: c.image ? getImageUrl(c.image) : DEFAULT_CATEGORIES[index % 3].image,
+              image: getImageUrl(c.image),
               alt: `${c.name} category`
             }));
             setCategories(formatted);
@@ -145,14 +140,25 @@ export default function CategorySection() {
           className={`font-serif font-normal text-3xl md:text-4xl lg:text-5xl text-slate-900 leading-tight mb-4 transition-all duration-700 delay-100 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
         >
-          A World of Premium Treats
+          Discover Flavours From Around the World
         </h2>
         <p
           className={`font-sans font-normal text-lg md:text-xl text-slate-500 leading-relaxed max-w-3xl mx-auto transition-all duration-700 delay-200 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
         >
-          Explore our curated selection of premium imported drinks, gourmet snacks, and luxury delicacies.
+          Our collection includes products from different countries and regions, giving you the chance to explore international flavours without having to travel thousands of kilometres.
         </p>
+        <ul
+          className={`flex flex-wrap justify-center gap-2 md:gap-3 mt-6 transition-all duration-700 delay-300 motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            }`}
+          aria-label="What you'll find at Luxy Galleria"
+        >
+          {HIGHLIGHTS.map((h) => (
+            <li key={h} className="px-4 py-2 rounded-full bg-white border border-[#A68B5B]/25 text-[#5A3A1E] text-xs md:text-sm font-medium">
+              {h}
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* Category Slider */}

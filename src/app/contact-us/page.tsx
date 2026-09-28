@@ -9,12 +9,13 @@ import {
   MessageCircle,
   Phone,
   Mail,
-  Clock,
+  MapPin,
   Send,
   CheckCircle2,
   ChevronLeft,
 } from "lucide-react";
 import axios from "axios";
+import { CONTACT } from "../../lib/contact";
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
@@ -48,26 +49,25 @@ const CONTACT_CARDS: ContactCardData[] = [
     id: "call",
     Icon: Phone,
     title: "Call Us",
-    primary: "+91 907 4881 551",
-    // secondary: "Mon – Sat: 9AM – 7PM",
-    href: "tel:+919074881551",
-    ariaLabel: "Call us at +91 907 4881 551",
+    primary: CONTACT.phoneDisplay,
+    href: `tel:${CONTACT.phone}`,
+    ariaLabel: `Call us at ${CONTACT.phoneDisplay}`,
   },
   {
     id: "email",
     Icon: Mail,
     title: "Email Us",
-    primary: "infoluxygalleria@gmail.com",
-    href: "mailto:infoluxygalleria@gmail.com",
-    ariaLabel: "Email us at infoluxygalleria@gmail.com",
+    primary: CONTACT.email,
+    href: `mailto:${CONTACT.email}`,
+    ariaLabel: `Email us at ${CONTACT.email}`,
   },
   {
-    id: "hours",
-    Icon: Clock,
-    title: "Working Hours",
-    primary: "Monday – Friday: 9AM – 8PM",
-    additional: ["Saturday: 10AM – 6PM", "Sunday: Closed"],
-    ariaLabel: "Working hours: Monday to Friday 9AM to 8PM",
+    id: "store",
+    Icon: MapPin,
+    title: "Visit Our Store",
+    primary: CONTACT.location,
+    secondary: "Shop in-store or online",
+    ariaLabel: `Our store is in ${CONTACT.location}`,
   },
 ];
 
@@ -221,6 +221,8 @@ function ContactForm() {
       const response = await axios.post(`${apiURL}/contacts`, data);
       if (response.data.success) {
         setSubmitted(true);
+      } else {
+        setSubmitError(response.data.message || "Something went wrong. Please try again.");
       }
     } catch (error: any) {
       console.error("Failed to submit form:", error);
@@ -346,7 +348,7 @@ function ContactForm() {
                     <input
                       id="contact-phone"
                       type="tel"
-                      placeholder="+91 98765 43210"
+                      placeholder="Enter your phone number"
                       autoComplete="tel"
                       {...register("phone")}
                       className={inputCls}
@@ -438,10 +440,10 @@ export default function ContactUsPage() {
 
   return (
     <>
-      <title>Contact Us – LUXY GALLERIA | We&apos;d Love to Hear From You</title>
+      <title>Contact Us – Luxy Galleria</title>
       <meta
         name="description"
-        content="Get in touch with the LUXY GALLERIA team. Call, email, or send us a message — we're here to help with all your skincare needs."
+        content="Get in touch with Luxy Galleria, the imported snacks and chocolates store in Thalassery, Kerala. Call, email, or send us a message."
       />
 
       <main id="top" className="min-h-screen bg-slate-50">
@@ -512,7 +514,7 @@ export default function ContactUsPage() {
               }}
             >
               Have questions about our products or your order? Our team is here
-              to help you with everything skincare.
+              to help.
             </p>
           </div>
         </section>

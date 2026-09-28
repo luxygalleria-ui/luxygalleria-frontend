@@ -35,7 +35,7 @@ const API_ORIGIN = (() => {
 
 export const metadata: Metadata = {
   title: "Luxy Galleria",
-  description: "Fulfill your global cravings - Premium imported drinks, snacks & more.",
+  description: "Imported chocolates, snacks, drinks, and food products from around the world. Shop online or visit our store in Thalassery, Kerala.",
   icons: {
     icon: "/luxy_logo.png",
   },
