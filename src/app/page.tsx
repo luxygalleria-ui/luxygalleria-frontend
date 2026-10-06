@@ -6,6 +6,7 @@ import BrandIntroSection from "../components/landingPage/BrandIntroSection";
 import CategorySection from "../components/landingPage/CategorySection";
 import BrandSection from "../components/landingPage/BrandSection";
 import ProductSection from "../components/landingPage/ProductSection";
+import FAQSection from "../components/landingPage/FAQSection";
 
 // Below-the-fold, JS-heavy (video modal + animations). Defer its bundle so it
 // doesn't block the initial page load / mobile performance.
@@ -23,6 +24,7 @@ export default function Home() {
       <BrandSection />
       <ProductSection />
       <VideoTestimonialsSection />
+      <FAQSection />
     </main>
   );
 }
