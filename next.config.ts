@@ -44,6 +44,17 @@ const nextConfig: NextConfig = {
         destination: "/products",
         permanent: true,
       },
+      // Short aliases for existing pages (not permanent, so browsers don't cache them)
+      {
+        source: "/refund-policy",
+        destination: "/refund-replacement-policy",
+        permanent: false,
+      },
+      {
+        source: "/contact",
+        destination: "/contact-us",
+        permanent: false,
+      },
     ];
   },
   async headers() {

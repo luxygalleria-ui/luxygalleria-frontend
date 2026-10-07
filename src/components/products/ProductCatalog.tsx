@@ -771,9 +771,9 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white pt-8">
+    <div className="bg-white pt-8">
       {/* Explicit row on desktop: sidebar left, catalog right */}
-      <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-5rem)]">
+      <div className="flex flex-col lg:flex-row w-full">
 
         {/* ── Desktop Sidebar ─────────────────────────────────────── */}
         {showFilters && <aside className="hidden lg:block w-80 xl:w-88 bg-[#fbf9f6] border-r border-slate-100 sticky top-30 h-[calc(100vh-120px)] overflow-y-auto shrink-0 p-6">
@@ -846,12 +846,12 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
             </div>
 
             <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <span className="font-sans text-sm text-slate-500 whitespace-nowrap">Sort By</span>
                 <select
                   value={sortBy}
                   onChange={(e) => updateUrlFilters({ sort: e.target.value })}
-                  className="bg-white border border-slate-200 rounded-xl px-3 py-2 font-sans text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 cursor-pointer"
+                  className="min-w-0 bg-white border border-slate-200 rounded-xl px-3 py-2 font-sans text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 cursor-pointer"
                 >
                   {collection && <option value="featured">Featured</option>}
                   <option value="newest">Newest</option>
@@ -863,7 +863,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
               {showFilters && (
                 <button
                   onClick={() => setDrawerOpen(true)}
-                  className="lg:hidden flex items-center gap-2 font-sans font-bold text-sm text-slate-700 border border-slate-200 rounded-xl px-4 py-2 hover:bg-slate-50 transition-colors"
+                  className="lg:hidden shrink-0 flex items-center gap-2 font-sans font-bold text-sm text-slate-700 border border-slate-200 rounded-xl px-4 py-2 hover:bg-slate-50 transition-colors"
                 >
                   <SlidersHorizontal size={16} />
                   Filters

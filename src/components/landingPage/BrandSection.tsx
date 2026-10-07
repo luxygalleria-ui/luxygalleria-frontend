@@ -16,8 +16,6 @@ export default function BrandSection() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const currentIndexRef = useRef(0);
 
   useEffect(() => {
     const fetchBrands = async () => {
@@ -58,18 +56,19 @@ export default function BrandSection() {
 
   if (brands.length === 0) return null;
 
-  // Split the exact brands into two rows without ANY duplicates
-  const row1Brands = brands.filter((_, index) => index % 2 === 0);
-  const row2Brands = brands.filter((_, index) => index % 2 !== 0);
-
-  // Only animate if there are enough brands to overflow the screen nicely
-  const shouldAnimate = brands.length >= 8;
+  // Two rows: first half scrolls left, second half scrolls right.
+  const half = Math.ceil(brands.length / 2);
+  const rows = [brands.slice(0, half), brands.slice(half)].filter((r) => r.length > 0);
+  // Repeat each row until one copy is wide enough to fill a large screen, then render it twice:
+  // the CSS marquee shifts by exactly -50%, so the second copy makes the loop seamless.
+  const MIN_ITEMS = 10;
+  const fill = (row: Brand[]) => Array.from({ length: Math.ceil(MIN_ITEMS / row.length) }, () => row).flat();
 
   return (
     <section ref={sectionRef} className="bg-background py-8 md:py-12 w-full overflow-hidden">
-      <div className="text-center px-6 mb-8 md:mb-10">
+      <div className="text-center px-6 mb-6 md:mb-8">
         <h2
-          className={`font-sans font-black text-2xl md:text-3xl tracking-[0.15em] uppercase text-slate-900 mb-2 transition-all duration-600 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
+          className={`font-sans font-black text-2xl md:text-3xl tracking-[0.15em] uppercase text-slate-900 mb-3 transition-all duration-600 ease-out motion-reduce:transition-none motion-reduce:transform-none ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >
@@ -82,54 +81,41 @@ export default function BrandSection() {
         />
       </div>
 
-      <div className="w-full flex flex-col gap-6 md:gap-8 pb-4">
-        {/* Row 1 - Moves Left */}
-        {row1Brands.length > 0 && (
-          <div className={`flex w-max gap-6 md:gap-8 px-6 ${shouldAnimate ? 'animate-marquee-left hover:[animation-play-state:paused]' : 'mx-auto justify-center'}`}>
-            {row1Brands.map((brand, index) => (
-              <div
-                key={`${brand._id}-r1-${index}`}
-                className={`w-[120px] md:w-[150px] h-[120px] md:h-[150px] flex-shrink-0 flex items-center justify-center p-4 bg-white border border-slate-100 rounded-2xl shadow-sm transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none hover:shadow-md hover:-translate-y-1 hover:border-[#A68B5B]/30 ${
-                  isVisible ? "opacity-100" : "opacity-0"
-                }`}
+      {/* Edge fade so logos enter/leave softly */}
+      <div className="flex flex-col gap-4 md:gap-6 [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]">
+        {rows.map((row, r) => {
+          const copy = fill(row);
+          return (
+            <div key={r} className="overflow-hidden">
+              <ul
+                className={`flex w-max ${r === 0 ? "animate-marquee-left" : "animate-marquee-right"} hover:[animation-play-state:paused] motion-reduce:animate-none`}
+                style={{ animationDuration: `${copy.length * 3.5}s` }}
               >
-                <div className="relative w-full h-full">
-                  <Image
-                    src={getImageUrl(brand.logo)}
-                    alt={brand.name}
-                    fill
-                    className="object-contain"
-                    onError={(e) => handleImageError(e as any)}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Row 2 - Moves Right */}
-        {row2Brands.length > 0 && (
-          <div className={`flex w-max gap-6 md:gap-8 px-6 ${shouldAnimate ? 'animate-marquee-right hover:[animation-play-state:paused] ml-[-100px]' : 'mx-auto justify-center'}`}>
-            {row2Brands.map((brand, index) => (
-              <div
-                key={`${brand._id}-r2-${index}`}
-                className={`w-[120px] md:w-[150px] h-[120px] md:h-[150px] flex-shrink-0 flex items-center justify-center p-4 bg-white border border-slate-100 rounded-2xl shadow-sm transition-all duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none hover:shadow-md hover:-translate-y-1 hover:border-[#A68B5B]/30 ${
-                  isVisible ? "opacity-100" : "opacity-0"
-                }`}
-              >
-                <div className="relative w-full h-full">
-                  <Image
-                    src={getImageUrl(brand.logo)}
-                    alt={brand.name}
-                    fill
-                    className="object-contain"
-                    onError={(e) => handleImageError(e as any)}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                {[...copy, ...copy].map((brand, i) => (
+                  // padding (not gap) keeps both halves exactly equal width for the -50% loop
+                  <li key={`${brand._id}-${i}`} aria-hidden={i >= row.length} className="shrink-0 pr-4 md:pr-6">
+                    <div
+                      className={`w-32 h-20 sm:w-40 sm:h-24 md:w-48 md:h-32 lg:w-52 lg:h-36 flex items-center justify-center bg-white border border-slate-100 rounded-2xl shadow-sm transition-all duration-700 ease-out motion-reduce:transition-none hover:shadow-md hover:border-[#A68B5B]/30 ${
+                        isVisible ? "opacity-100" : "opacity-0"
+                      }`}
+                    >
+                      <div className="relative w-[75%] h-[70%]">
+                        <Image
+                          src={getImageUrl(brand.logo)}
+                          alt={i >= row.length ? "" : brand.name}
+                          fill
+                          sizes="(max-width: 767px) 128px, 208px"
+                          className="object-contain"
+                          onError={(e) => handleImageError(e as any)}
+                        />
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
     </section>
   );

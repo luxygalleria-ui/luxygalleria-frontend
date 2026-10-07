@@ -61,6 +61,7 @@ const socials = [
 const footerLinks = [
   { label: "About", href: "/about" },
   { label: "Featured Products", href: "/products" },
+  { label: "Refund & Replacement Policy", href: "/refund-replacement-policy" },
 ];
 
 const deliveryCities = [
@@ -82,14 +83,14 @@ export default function Footer() {
     <footer className="bg-slate-100 text-slate-900 w-full border-t border-slate-200 overflow-hidden">
       <div 
         className="mx-auto w-full max-w-[1400px]" 
-        style={{ paddingLeft: 'clamp(16px, 4vw, 60px)', paddingRight: 'clamp(16px, 4vw, 60px)' }}
+        style={{ paddingLeft: 'clamp(20px, 4vw, 60px)', paddingRight: 'clamp(20px, 4vw, 60px)' }}
       >
-        <div className="py-12 md:py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12">
+        <div className="py-8 md:py-10 lg:py-16">
+          <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-5 gap-y-8 lg:gap-12">
   
             {/* Brand column */}
-            <div className="md:col-span-2 lg:col-span-6 flex flex-col items-center md:items-start text-center md:text-left">
-              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-5 sm:gap-6 mb-6 w-full justify-center md:justify-start">
+            <div className="col-span-2 lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-6 mb-4 lg:mb-6 w-full justify-center lg:justify-start">
                 <Link href="/" className="inline-flex shrink-0 items-center group" aria-label="Luxy Galleria home">
                   <img
                     src="/luxy_logo_footer.png"
@@ -101,25 +102,25 @@ export default function Footer() {
                 </Link>
     
                 {/* Tagline */}
-                <p className="max-w-[280px] text-[clamp(13px,1.5vw,15px)] leading-relaxed text-slate-500 mt-3 sm:mt-0">
+                <p className="w-[92%] sm:w-auto sm:max-w-sm text-[clamp(13px,1.5vw,15px)] leading-relaxed text-slate-500 sm:mt-0">
                   More than a snack store, a destination for worldwide treats and everyday cravings.
                 </p>
               </div>
   
               {/* Delivery Cities */}
-              <p className="max-w-full lg:max-w-xl text-[clamp(12px,1.2vw,14px)] leading-relaxed text-slate-500 mb-8 w-full">
+              <p className="max-w-[72rem] text-[clamp(12px,1.2vw,14px)] leading-[1.6] text-slate-500 mb-5 lg:mb-8 w-full">
                 Delivered To: {leadingCities}, and {lastCity}.
               </p>
   
               {/* Socials */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 md:gap-4 w-full">
+              <div className="flex items-center justify-center lg:justify-start gap-2.5 sm:gap-3 md:gap-4 w-full">
                 {socials.map(({ svg, label, href }) => (
                   <a
                     key={label + href}
                     href={href}
                     aria-label={label}
                     rel="noopener noreferrer"
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-white border border-slate-200 transition-all duration-300 text-[#8B5E34] hover:text-white hover:bg-[#8B5E34] hover:border-[#8B5E34] shadow-sm hover:shadow-md hover:-translate-y-1"
+                    className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-white border border-slate-200 transition-all duration-300 text-[#8B5E34] hover:text-white hover:bg-[#8B5E34] hover:border-[#8B5E34] shadow-sm hover:shadow-md hover:-translate-y-1"
                     target="_blank"
                     referrerPolicy="no-referrer"
                     title={label}
@@ -131,14 +132,14 @@ export default function Footer() {
             </div>
   
             {/* Quick Links column */}
-            <div className="md:col-span-1 lg:col-span-3 flex flex-col items-center md:items-start text-center md:text-left">
-              <h3 className="text-[clamp(11px,1vw,12px)] font-bold uppercase tracking-[0.2em] text-[#8B5E34] mb-5 md:mb-6 leading-none">Company</h3>
-              <ul className="space-y-3">
+            <div className="col-span-1 lg:col-span-2 flex flex-col items-start text-left min-w-0">
+              <h3 className="text-[clamp(11px,1vw,12px)] font-bold uppercase tracking-[0.2em] text-[#8B5E34] mb-4 lg:mb-6 leading-none">Company</h3>
+              <ul className="space-y-2.5 lg:space-y-3">
                 {footerLinks.map(({ label, href }) => (
                   <li key={href}>
                     <Link
                       href={href}
-                      className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1"
+                      className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 -my-1 lg:my-0"
                     >
                       {label}
                     </Link>
@@ -148,24 +149,25 @@ export default function Footer() {
             </div>
   
             {/* Contact column */}
-            <div className="md:col-span-1 lg:col-span-3 flex flex-col items-center md:items-start text-center md:text-left">
-              <h3 className="text-[clamp(11px,1vw,12px)] font-bold uppercase tracking-[0.2em] text-[#8B5E34] mb-5 md:mb-6 leading-none">Contact</h3>
-              <ul className="space-y-3 w-full">
+            <div className="col-span-1 lg:col-span-3 flex flex-col items-start text-left min-w-0">
+              <h3 className="text-[clamp(11px,1vw,12px)] font-bold uppercase tracking-[0.2em] text-[#8B5E34] mb-4 lg:mb-6 leading-none">Contact</h3>
+              <ul className="space-y-2.5 lg:space-y-3 w-full">
                 <li>
-                  <a href={`tel:${CONTACT.phone}`} className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1">
+                  <a href={`tel:${CONTACT.phone}`} className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 -my-1 lg:my-0">
                     {CONTACT.phoneDisplay}
                   </a>
                 </li>
                 <li>
-                  <a href={`mailto:${CONTACT.email}`} className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 break-all">
-                    {CONTACT.email}
+                  <a href={`mailto:${CONTACT.email}`} className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 -my-1 lg:my-0">
+                    {/* wbr: on narrow columns wrap before "@" instead of mid-word */}
+                    {CONTACT.email.split("@")[0]}<wbr />@{CONTACT.email.split("@")[1]}
                   </a>
                 </li>
-                <li className="text-[clamp(13px,1.5vw,14px)] text-slate-500 font-medium py-1">
+                <li className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 font-medium lg:py-1">
                   {CONTACT.location}
                 </li>
                 <li>
-                  <Link href="/contact-us" className="text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1">
+                  <Link href="/contact-us" className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 -my-1 lg:my-0">
                     Contact Us
                   </Link>
                 </li>
@@ -175,8 +177,8 @@ export default function Footer() {
         </div>
   
         {/* Bottom bar */}
-        <div className="py-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-center md:justify-between gap-4">
-          <p className="text-[clamp(11px,1vw,12px)] text-slate-500 text-center md:text-left w-full">
+        <div className="py-4 lg:py-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-center md:justify-between gap-4">
+          <p className="text-[clamp(11px,1vw,12px)] text-slate-500 text-center lg:text-left w-full">
             © {new Date().getFullYear()} <span className="font-bold text-[#8B5E34]">Luxy Galleria</span>. All rights reserved.
           </p>
         </div>

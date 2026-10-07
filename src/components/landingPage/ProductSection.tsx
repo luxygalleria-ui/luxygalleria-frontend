@@ -108,7 +108,7 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
 
         {/* Content Area */}
         <div className="px-3 md:px-4 pt-3 md:pt-4 pb-2 md:pb-3 flex flex-col flex-grow">
-          <h3 className="font-sans font-bold text-sm md:text-lg text-slate-900 leading-tight text-center mb-2 md:mb-3 line-clamp-2 min-h-[2.5em]">
+          <h3 className="font-sans font-bold text-sm md:text-lg text-slate-900 leading-tight text-center mb-2 md:mb-3 line-clamp-2">
             {product.name}
           </h3>
 

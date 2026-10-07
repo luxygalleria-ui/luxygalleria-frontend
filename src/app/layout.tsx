@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "../components/common/Navbar";
 import FloatingActions from "../components/common/FloatingActions";
 import Footer from "../components/common/Footer";
+import ScrollToTop from "../components/common/ScrollToTop";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,6 +63,7 @@ export default function RootLayout({
         <ToastProvider>
           <CartProvider>
             <GoogleOAuthWrapper>
+              <ScrollToTop />
               <Navbar />
               {/* pt accounts for fixed navbar (64px mobile / 80px desktop) + promo banner (~36px) */}
               <div className="pt-20 lg:pt-28">

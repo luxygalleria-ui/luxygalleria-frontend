@@ -2,18 +2,18 @@ import Link from "next/link";
 
 export default function BrandIntroSection() {
   return (
-    <section className="bg-background pt-12 md:pt-20 pb-4 md:pb-8 w-full">
-      <div className="text-center px-6 md:px-12 max-w-3xl mx-auto">
-        <p className="font-sans font-semibold text-xs tracking-[0.3em] uppercase text-[#5A3A1E] mb-4">
+    <section className="bg-background pt-10 md:pt-14 w-full">
+      <div className="text-center px-5 sm:px-6 max-w-[1200px] mx-auto">
+        <p className="font-sans font-semibold text-xs tracking-[0.3em] uppercase text-[#5A3A1E] mb-5">
           Welcome to Luxy Galleria
         </p>
-        <h2 className="font-serif font-normal text-3xl md:text-4xl lg:text-5xl text-slate-900 leading-tight mb-6">
+        <h2 className="font-serif font-normal text-3xl md:text-[clamp(1.875rem,4vw,3rem)] text-slate-900 leading-[1.15] text-balance mb-6">
           Bringing the World of Snacks Closer to You
         </h2>
-        <div className="space-y-4 font-sans text-base md:text-lg text-slate-500 leading-relaxed">
-          <p>
-            Your destination for imported chocolates, snacks, drinks, and food products from around the world.
-          </p>
+        <p className="max-w-[52rem] mx-auto mb-7 font-sans text-base md:text-lg text-slate-600 leading-[1.7] text-pretty">
+          Your destination for imported chocolates, snacks, drinks, and food products from around the world.
+        </p>
+        <div className="max-w-[62rem] mx-auto space-y-5 font-sans text-base md:text-lg text-slate-500 leading-[1.7] text-pretty">
           <p>
             Based in Thalassery, Kerala, we bring together international flavours, rare finds, and familiar
             favourites under one roof, making it easier for snack lovers to discover something new or

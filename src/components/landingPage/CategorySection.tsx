@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { Candy, Coffee, Cookie, CupSoda, Gem, Gift, Lollipop, Popcorn, Sandwich, Soup, Zap, type LucideIcon } from "lucide-react";
 import { getImageUrl, handleImageError } from "../../lib/imageUtils";
 
 type CategoryCard = { id: string; label: string; image: string; alt: string };
@@ -21,6 +22,20 @@ const HIGHLIGHTS = [
   "Premium chocolate & snack hampers",
   "Rare & hard-to-find products",
 ];
+
+const HIGHLIGHT_ICONS: Record<string, LucideIcon> = {
+  "Imported chocolates": Candy,
+  "International snacks & chips": Popcorn,
+  "Korean ramen & instant noodles": Soup,
+  "Imported soft drinks & beverages": CupSoda,
+  "Energy drinks": Zap,
+  "Candies, gummies, gums & mints": Lollipop,
+  "Imported biscuits & wafers": Cookie,
+  "International instant coffee": Coffee,
+  "Spreads & speciality foods": Sandwich,
+  "Premium chocolate & snack hampers": Gift,
+  "Rare & hard-to-find products": Gem,
+};
 
 export default function CategorySection() {
   const [categories, setCategories] = useState<CategoryCard[]>([]);
@@ -127,37 +142,48 @@ export default function CategorySection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="bg-background pt-8 md:pt-12 w-full">
+    <section ref={sectionRef} className="bg-background pt-10 md:pt-12 w-full">
       {/* Section Header */}
-      <div className="text-center px-6 md:px-12 max-w-4xl mx-auto mb-6 md:mb-8">
+      <div className="text-center px-5 sm:px-6 max-w-[1200px] mx-auto mb-5 md:mb-6">
         <p
-          className={`font-sans font-semibold text-xs tracking-[0.3em] uppercase text-[#5A3A1E] mb-4 transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          className={`font-sans font-semibold text-xs tracking-[0.3em] uppercase text-[#5A3A1E] mb-5 transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
         >
           THE CURATED SELECTION
         </p>
         <h2
-          className={`font-serif font-normal text-3xl md:text-4xl lg:text-5xl text-slate-900 leading-tight mb-4 transition-all duration-700 delay-100 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          className={`font-serif font-normal text-3xl md:text-4xl lg:text-5xl text-slate-900 leading-[1.15] text-balance max-w-[1000px] mx-auto mb-4 md:mb-5 transition-all duration-700 delay-100 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
         >
           Discover Flavours From Around the World
         </h2>
         <p
-          className={`font-sans font-normal text-lg md:text-xl text-slate-500 leading-relaxed max-w-3xl mx-auto transition-all duration-700 delay-200 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          className={`font-sans font-normal text-base md:text-[17px] text-slate-500 leading-[1.7] text-pretty max-w-[56rem] mx-auto transition-all duration-700 delay-200 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
         >
           Our collection includes products from different countries and regions, giving you the chance to explore international flavours without having to travel thousands of kilometres.
         </p>
         <ul
-          className={`flex flex-wrap justify-center gap-2 md:gap-3 mt-6 transition-all duration-700 delay-300 motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          className={`flex flex-wrap justify-center gap-1.5 md:gap-2 lg:gap-1.5 xl:gap-2 max-w-[50rem] lg:max-w-[64rem] lg:grid lg:grid-cols-12 mx-auto mt-6 md:mt-7 transition-all duration-700 delay-300 motion-reduce:transition-none motion-reduce:transform-none ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
           aria-label="What you'll find at Luxy Galleria"
         >
-          {HIGHLIGHTS.map((h) => (
-            <li key={h} className="px-4 py-2 rounded-full bg-white border border-[#A68B5B]/25 text-[#5A3A1E] text-xs md:text-sm font-medium">
-              {h}
-            </li>
-          ))}
+          {/* <lg: centered flex wrap (2 cols mobile, 4 tablet). lg: 12-col grid, 2 cols per chip = 6 per row; 7th starts at col 2 so the row of 5 is centered. Labels may wrap to 2 lines. */}
+          {HIGHLIGHTS.map((h) => {
+            const Icon = HIGHLIGHT_ICONS[h];
+            return (
+              <li
+                key={h}
+                className="basis-[calc((100%-0.375rem)/2)] md:basis-[calc((100%-1.5rem)/4)] lg:col-span-2 lg:[&:nth-child(7)]:col-start-2 flex items-center gap-2 lg:gap-1 xl:gap-1.5 text-left leading-tight min-h-11 lg:min-h-12 px-2 md:px-2.5 lg:px-1.5 xl:px-2 py-1.5 rounded-lg md:rounded-xl bg-white border border-[#A68B5B]/20 text-[#5A3A1E] text-xs xl:text-[13px] font-medium cursor-pointer transition-all duration-300 hover:border-[#A68B5B]/50 hover:bg-[#FAF6F0] hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              >
+                {/* icon hidden below 375px so 2-line labels still fit 2 columns */}
+                <span className="max-[374px]:hidden shrink-0 flex items-center justify-center w-6 h-6 md:w-7 md:h-7 lg:w-[26px] lg:h-[26px] xl:w-7 xl:h-7 rounded-full bg-[#F5F1E8] text-[#8B5E34]" aria-hidden="true">
+                  <Icon size={13} strokeWidth={1.5} />
+                </span>
+                <span className="max-[374px]:w-full max-[374px]:text-center">{h}</span>
+              </li>
+            );
+          })}
         </ul>
       </div>
 
@@ -191,7 +217,7 @@ export default function CategorySection() {
 
               {/* Content Box */}
               <div className="absolute inset-x-0 bottom-0 p-8 flex flex-col items-center justify-end gap-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                <h3 className="font-serif font-normal text-4xl text-white tracking-wide text-center drop-shadow-sm">
+                <h3 className="w-full font-serif font-normal text-3xl sm:text-4xl text-white tracking-wide text-center drop-shadow-sm truncate">
                   {category.label}
                 </h3>
 
@@ -219,9 +245,9 @@ export default function CategorySection() {
               />
               <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors duration-500 motion-reduce:transition-none" />
 
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative overflow-hidden py-2">
-                  <h3 className="font-serif font-normal text-3xl md:text-4xl lg:text-5xl text-white tracking-wide">
+              <div className="absolute inset-0 flex items-center justify-center px-2">
+                <div className="relative overflow-hidden py-2 max-w-full">
+                  <h3 className="font-serif font-normal text-3xl md:text-4xl lg:text-5xl text-white tracking-wide text-center truncate">
                     {category.label}
                   </h3>
                   <span className="absolute bottom-0 left-1/2 w-0 h-[1px] bg-white transition-all duration-500 ease-out group-hover:w-full group-hover:left-0" />

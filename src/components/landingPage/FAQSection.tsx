@@ -94,7 +94,7 @@ const FAQ_CATEGORIES: Category[] = [
       },
       {
         q: "Do you deliver outside Kerala?",
-        a: "Delivery availability outside Kerala depends on the destination, product type and courier service. Check the available delivery options during checkout or contact us before placing your order.\n\n**Contact:**\n\n- [[tel:7736989069]]\n- [[tel:9947478098]]",
+        a: "Delivery availability outside Kerala depends on the destination, product type and courier service. Check the available delivery options during checkout or contact us before placing your order.\n\n**Contact:**\n\n- [[tel:9847978098]]",
       },
       {
         q: "How long does delivery take?",
@@ -116,11 +116,11 @@ const FAQ_CATEGORIES: Category[] = [
     faqs: [
       {
         q: "How can I order from Luxy Galleria?",
-        a: "You can shop through our website or contact Luxy Galleria through WhatsApp for assistance with your order.\n\n**WhatsApp:** [[wa:7736989068]]",
+        a: "You can shop through our website or contact Luxy Galleria through WhatsApp for assistance with your order.\n\n**WhatsApp:** [[wa:9847978098]]",
       },
       {
         q: "Can I order imported snacks through WhatsApp?",
-        a: "Yes. Customers can contact Luxy Galleria through WhatsApp to enquire about products, availability and orders.\n\n**WhatsApp:**\n\n- [[wa:7736989068]]\n- [[wa:9947478098]]",
+        a: "Yes. Customers can contact Luxy Galleria through WhatsApp to enquire about products, availability and orders.\n\n**WhatsApp:**\n\n- [[wa:9847978098]]",
       },
       {
         q: "Can I request a product that is currently out of stock?",
@@ -139,40 +139,6 @@ const FAQ_CATEGORIES: Category[] = [
       {
         q: "How should I store my products after delivery?",
         a: "**Chocolates:** Store in a cool, dry place away from direct sunlight and heat. During hot weather, refrigeration may be recommended depending on the product. Allow refrigerated chocolates to return to room temperature before opening to reduce condensation.\n\n**Chips & snacks:** Keep sealed and store in a cool, dry place. Once opened, consume promptly to maintain freshness.\n\n**Ramen, biscuits, wafers & candies:** Store in a cool, dry place and keep the packaging tightly sealed after opening.\n\n**Drinks:** Follow the storage instructions printed on the product packaging. Refrigerate after opening where indicated.\n\nAlways follow the product's own storage instructions and expiry/best-before date, as requirements can vary between products.\n\n**Important:** Avoid storing food products in direct sunlight, near heat sources or in hot/humid areas.",
-      },
-    ],
-  },
-  {
-    id: "refund",
-    label: "Refund & Replacement",
-    faqs: [
-      {
-        q: "What is Luxy Galleria's refund policy?",
-        a: "At Luxy Galleria, we carefully pack every order to ensure your products reach you safely.",
-      },
-      {
-        q: "Do you offer cash refunds?",
-        a: "**No Cash Refunds**\n\nWe do not offer cash or monetary refunds. For eligible issues, we may provide a replacement or store credit after verification.",
-      },
-      {
-        q: "What happens if my order arrives damaged, missing or incorrect?",
-        a: "If your order arrives damaged, incomplete or incorrect, contact us within **24 hours of delivery** with your order number and clear photos/videos of the package and products.",
-      },
-      {
-        q: "What happens if chocolate melts during delivery?",
-        a: "Chocolate may soften or melt during transit due to Kerala's heat. We take reasonable precautions to minimise this risk, but minor melting or softening due to temperature is **not eligible for replacement or store credit**.",
-      },
-      {
-        q: "Do you accept returns or exchanges?",
-        a: "As we sell food products, we do not accept returns or exchanges for:\n\n- Change of mind\n- Incorrect product selection\n- Personal preference",
-      },
-      {
-        q: "Can I cancel my order?",
-        a: "Orders can be cancelled only **before dispatch**.\n\nOnce an order has been dispatched, cancellation is not possible.",
-      },
-      {
-        q: "Are all claims automatically approved?",
-        a: "No. All claims are subject to verification by Luxy Galleria.\n\n**Jurisdiction:** Thalassery Courts, Kerala.",
       },
     ],
   },

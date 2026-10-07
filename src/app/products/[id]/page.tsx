@@ -6,7 +6,7 @@ import Link from "next/link";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ShoppingBag, ChevronRight, Plus, Minus, Check,
+  ShoppingBag, ChevronRight, Plus, Minus, Check, ShieldCheck,
 } from "lucide-react";
 import { useToast } from "../../../context/ToastContext";
 import CartAnimation from "../../../components/CartAnimation";
@@ -634,6 +634,13 @@ export default function ProductDetailPage() {
               >
                 Proceed to Checkout
               </Link>
+            </div>
+
+            {/* Trust item */}
+            <div className="flex flex-col items-center text-center gap-1.5 py-4 border-y border-slate-200">
+              <ShieldCheck size={22} strokeWidth={1.5} className="text-[#8B5E34]" aria-hidden="true" />
+              <span className="font-sans font-semibold text-xs sm:text-sm text-slate-900">100% Authentic</span>
+              <span className="font-sans text-[11px] sm:text-xs text-slate-500 leading-snug">Genuine products only</span>
             </div>
 
           </div>

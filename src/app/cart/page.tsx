@@ -59,7 +59,7 @@ export default function CartPage() {
   const total = shippingDetails ? shippingDetails.grandTotal : subtotal;
 
   return (
-    <div className="min-h-screen bg-white pt-24 pb-16">
+    <div className="bg-white pt-24 pb-16">
       {/* ── Breadcrumb ── */}
       <nav
         className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-4 flex items-center gap-2 text-xs font-sans text-slate-400"
