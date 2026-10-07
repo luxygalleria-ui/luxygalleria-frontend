@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ChevronLeft, Globe, Gem, Heart, Store, Gift, Truck, MapPin, MessageCircle, Mail } from "lucide-react";
+import { ChevronLeft, Globe, Gem, Heart, Store, Gift, Truck, MapPin, MessageCircle, AtSign } from "lucide-react";
 import { CONTACT } from "../../lib/contact";
 
 const WHY = [
@@ -14,20 +14,37 @@ const WHY = [
   { Icon: Truck, title: "Delivered Across Kerala", text: "Get your favourite imported snacks delivered to your doorstep." },
 ];
 
+const FLAVOURS = [
+  ["🍫", "Imported chocolates"],
+  ["🍿", "International snacks and chips"],
+  ["🍜", "Korean ramen and instant noodles"],
+  ["🥤", "Imported soft drinks and beverages"],
+  ["⚡", "Energy drinks"],
+  ["🍬", "Candies, gummies, gums and mints"],
+  ["🍪", "Imported biscuits and wafers"],
+  ["☕", "International instant coffee"],
+  ["🥜", "Spreads and speciality food products"],
+  ["🎁", "Premium chocolate and snack hampers"],
+  ["🌎", "Rare and hard-to-find international products"],
+];
+
 // Same official account as the footer.
 const INSTAGRAM = "https://www.instagram.com/luxygalleria";
+const DARK_BG = "linear-gradient(135deg, #2C1A10 0%, #422812 50%, #6B5344 100%)";
 const linkCls = "font-semibold text-[#8B5E34] hover:text-[#5A3A1E] underline decoration-[#8B5E34]/30 underline-offset-4 transition-colors";
 const wrapCls = "max-w-[1200px] mx-auto px-5 md:px-10";
 const eyebrowCls = "font-sans font-semibold text-[11px] md:text-xs tracking-[0.3em] uppercase text-[#8B5E34]";
-const h2Cls = "font-serif font-normal text-[28px] sm:text-3xl md:text-4xl lg:text-[44px] text-slate-900 leading-[1.15]";
-const bodyCls = "font-sans text-base md:text-[17px] leading-[1.75] text-slate-600";
+const h2Cls = "font-serif font-medium text-[28px] sm:text-3xl md:text-4xl lg:text-[44px] text-slate-900 leading-[1.15]";
+const bodyCls = "font-sans text-base md:text-[17px] leading-[1.85] text-slate-600";
+// Long-form reading column: ~46rem (736px) on desktop, full width with page padding on mobile.
+const proseCls = `w-full max-w-[46rem] space-y-5 md:space-y-6 ${bodyCls}`;
 
-// Eyebrow + serif heading + short gold rule, used for the editorial split sections.
-function SectionHead({ eyebrow, title, center = false }: { eyebrow: string; title: ReactNode; center?: boolean }) {
+// Serif heading + optional subheading + short gold rule, used for the editorial split sections.
+function SectionHead({ title, sub, center = false }: { title: ReactNode; sub?: string; center?: boolean }) {
   return (
     <div className={center ? "text-center" : undefined}>
-      <p className={`${eyebrowCls} mb-3`}>{eyebrow}</p>
       <h2 className={h2Cls}>{title}</h2>
+      {sub && <p className="font-serif italic text-lg md:text-xl text-[#8B5E34] mt-3">{sub}</p>}
       <span aria-hidden="true" className={`block w-12 h-px bg-[#A68B5B] mt-5 ${center ? "mx-auto" : ""}`} />
     </div>
   );
@@ -51,46 +68,22 @@ export default function AboutPage() {
       <meta name="description" content="Luxy Galleria is an imported snacks, chocolates, and drinks store in Thalassery, Kerala. Discover flavours from around the world, in-store and online." />
 
       <main className="bg-background">
-        {/* 1. Hero */}
-        <section
-          className="w-full pt-10 md:pt-16 lg:pt-20 pb-12 md:pb-16 lg:pb-20"
-          style={{ background: "linear-gradient(135deg, #2C1A10 0%, #422812 50%, #6B5344 100%)" }}
-        >
+        {/* About Luxy Galleria — compact intro above the Our Story hero */}
+        <section className="pt-6 md:pt-12 lg:pt-14 pb-10 md:pb-14 lg:pb-16">
           <div className={wrapCls}>
-            <div className="md:hidden mb-8" style={fade(50)}>
-              <Link href="/" className="inline-flex items-center gap-2 text-white/80 hover:text-white text-sm font-semibold bg-white/10 px-5 py-2.5 rounded-full border border-white/20">
+            <div className="md:hidden mb-5" style={fade(50)}>
+              <Link href="/" className="inline-flex items-center gap-2 text-[#5A3A1E] hover:text-[#8B5E34] text-sm font-semibold bg-white px-4 py-2 rounded-full border border-[#A68B5B]/25">
                 <ChevronLeft size={16} /> Back to Home
               </Link>
             </div>
-            <div className="grid lg:grid-cols-12 gap-6 lg:gap-12 lg:items-end">
-              <div className="lg:col-span-7" style={fade(150)}>
-                <p className={`${eyebrowCls} text-[#D9C2A0] mb-4`}>About Luxy Galleria</p>
-                <h1 className="font-serif font-normal text-[34px] sm:text-5xl lg:text-6xl text-white leading-[1.05]">
-                  About Luxy Galleria
-                </h1>
-              </div>
-              <p
-                className="lg:col-span-5 lg:border-l lg:border-white/15 lg:pl-10 text-slate-300 text-base md:text-lg leading-relaxed max-w-xl"
-                style={fade(300)}
-              >
-                Imported chocolates, snacks, drinks, and food products from around the world — in our store in Thalassery, Kerala, and online.
-              </p>
+            <div className="max-w-[46rem] mx-auto text-center" style={fade(150)}>
+              <p className={`${eyebrowCls} mb-4`}>About Luxy Galleria</p>
+              <h1 className={`${h2Cls} text-balance`}>Bringing the World of Snacks Closer to You</h1>
+              <span aria-hidden="true" className="block w-12 h-px bg-[#A68B5B] mx-auto mt-4 mb-6 md:mt-5 md:mb-7" />
             </div>
-          </div>
-        </section>
-
-        {/* 2. Who We Are — editorial split */}
-        <section className="py-14 md:py-20 lg:py-24">
-          <div className={`${wrapCls} grid lg:grid-cols-12 gap-8 lg:gap-16`}>
-            <div className="lg:col-span-5">
-              <SectionHead eyebrow="Who We Are" title="Who We Are" />
-            </div>
-            <div className={`lg:col-span-7 space-y-5 max-w-2xl ${bodyCls}`}>
+            <div className={`${proseCls} space-y-4! md:space-y-5! mx-auto text-center text-pretty`} style={fade(300)}>
               <p className="font-serif text-xl md:text-2xl leading-snug text-slate-900">
-                Luxy Galleria is a premium <strong className="font-semibold text-[#5A3A1E]">online and offline store</strong>{" "}dedicated to bringing the world&apos;s finest imported snacks, beverages, and specialty food products directly to customers across India.
-              </p>
-              <p>
-                We believe that great taste knows no borders, and everyone deserves access to quality global products.
+                Welcome to Luxy Galleria, a destination for imported chocolates, snacks, drinks and food products from around the world.
               </p>
               <p>
                 Based in Thalassery, Kerala, we bring together international flavours, rare finds and familiar favourites under one roof, making it easier for snack lovers to discover something new or rediscover something they already love.
@@ -102,60 +95,134 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* 3. Our Story — editorial split with a vertical rule */}
-        <section className="bg-white border-y border-[#A68B5B]/10 py-14 md:py-20 lg:py-24">
-          <div className={`${wrapCls} grid lg:grid-cols-12 gap-8 lg:gap-0`}>
-            <div className="lg:col-span-5 lg:pr-16">
-              <div className="lg:sticky lg:top-36">
-                <SectionHead eyebrow="Our Story" title="Our Story" />
+        {/* Our Story — dark editorial hero, story continues below */}
+        <section className="w-full py-12 md:py-16 lg:py-20" style={{ background: DARK_BG }}>
+          <div className={wrapCls}>
+            <div className="grid lg:grid-cols-12 gap-6 lg:gap-12 lg:items-end">
+              <div className="lg:col-span-5" style={fade(150)}>
+                <p className={`${eyebrowCls} text-[#D9C2A0] mb-4`}>Luxy Galleria</p>
+                <h2 className="font-serif font-normal text-[34px] sm:text-5xl lg:text-6xl text-white leading-[1.05] uppercase tracking-wide">
+                  Our Story
+                </h2>
               </div>
+              <p
+                className="lg:col-span-7 lg:border-l lg:border-white/15 lg:pl-10 font-serif text-xl md:text-2xl text-[#F5F1E8] leading-snug max-w-2xl"
+                style={fade(300)}
+              >
+                Luxy Galleria started with two brothers and a love for the flavours we grew up with.
+              </p>
             </div>
-            <div className={`lg:col-span-7 lg:border-l lg:border-[#A68B5B]/20 lg:pl-16 space-y-5 max-w-3xl ${bodyCls}`}>
-              <p>
-                Luxy Galleria started with two brothers and a love for the flavours we grew up with. We spent part of our lives in Saudi Arabia, where we were surrounded by snacks, chocolates and drinks from different parts of the world.
-              </p>
-              <p>
-                After coming back to Kerala, we often found ourselves looking for those same products and flavours.{" "}
-                <span className="font-serif italic text-slate-900">Sometimes we found them. Sometimes we didn&apos;t.</span>
-              </p>
-              <p>
-                That is where the idea for Luxy Galleria began. In 2022, we started with a simple thought. We wanted to create a place where people in Kerala could find authentic treats from around the world, all in one place.
-              </p>
-              <p>
-                What started between two brothers has slowly grown into something much bigger than we imagined. Today, we bring products from more than 18 countries to people across Kerala.
-              </p>
-              <p>But honestly, the products are only one part of what makes this place special to us.</p>
-              <ul className="border-l-2 border-[#A68B5B]/40 pl-5 space-y-2 font-serif italic text-slate-800">
+          </div>
+        </section>
+        <section className="bg-white border-b border-[#A68B5B]/10 py-12 md:py-20 lg:py-24">
+          <div className={wrapCls}>
+            <div className="max-w-[46rem] mx-auto space-y-8 md:space-y-12">
+              <div className={proseCls}>
+                <p>
+                  We spent part of our lives in Saudi Arabia, where we were surrounded by snacks, chocolates and drinks from different parts of the world.
+                </p>
+                <p>After coming back to Kerala, we often found ourselves looking for those same products and flavours.</p>
+                <p className="font-serif italic text-xl md:text-2xl text-slate-900">Sometimes we found them. Sometimes we didn&apos;t.</p>
+              </div>
+              <div className={proseCls}>
+                <p>That is where the idea for Luxy Galleria began.</p>
+                <p>In 2022, we started with a simple thought.</p>
+                <p>
+                  We wanted to create a place where people in Kerala could find authentic treats from around the world, all in one place.
+                </p>
+              </div>
+              <div className={proseCls}>
+                <p>What started between two brothers has slowly grown into something much bigger than we imagined.</p>
+                <p>
+                  Today, we bring products from{" "}
+                  <strong className="font-semibold text-[#5A3A1E]">more than 18 countries</strong> to people across Kerala.
+                </p>
+                <p>But honestly, the products are only one part of what makes this place special to us.</p>
+              </div>
+              <ul className="border-l-2 border-[#A68B5B]/40 pl-5 md:pl-7 space-y-3 font-serif italic text-lg md:text-xl leading-snug text-slate-800">
                 <li>We love seeing someone find a chocolate they remember from years ago.</li>
                 <li>We love watching people discover something they have never tried before.</li>
                 <li>We love when customers come back and tell us about something they bought last time.</li>
                 <li>And we especially love seeing people walk in with friends or family and introduce them to something they found here.</li>
               </ul>
-              <p className="font-serif text-xl md:text-2xl leading-snug text-[#5A3A1E] pt-2">
-                For us, Luxy Galleria is a place to discover something new, find an old favourite and sometimes take home a little memory.
-              </p>
+              <div>
+                <span aria-hidden="true" className="block w-12 h-px bg-[#A68B5B] mb-6" />
+                <p className="font-serif text-2xl md:text-3xl leading-snug text-[#5A3A1E] text-balance">
+                  For us, Luxy Galleria is a place to discover something new, find an old favourite and sometimes take home a little memory.
+                </p>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* 4. Why Luxy Galleria? — phones: 1 col, icon beside text; 2 cols from sm; 3 cols from lg */}
+        {/* 3. More Than Just Snacks — editorial split with a vertical rule */}
+        <section className="bg-white border-y border-[#A68B5B]/10 py-14 md:py-20 lg:py-24">
+          <div className={`${wrapCls} grid lg:grid-cols-12 gap-8 lg:gap-0`}>
+            <div className="lg:col-span-5 lg:pr-16">
+              <div className="lg:sticky lg:top-36">
+                <SectionHead title="More Than Just Snacks" />
+              </div>
+            </div>
+            <div className={`lg:col-span-7 lg:border-l lg:border-[#A68B5B]/20 lg:pl-16 ${proseCls}`}>
+              <p className="font-serif text-xl md:text-2xl leading-snug text-slate-900">For us, snacks can carry memories.</p>
+              <p>
+                A particular chocolate can remind you of childhood. A drink can take you back to a holiday. A familiar snack can remind you of living abroad, family, friends or a place you once called home.
+              </p>
+              <p>
+                For the Malayali and NRI community, imported products can be especially meaningful — sometimes they are simply something new to try, and sometimes they are a small taste of a familiar world.
+              </p>
+              <p>That is what makes Luxy Galleria different.</p>
+              <div className="border-l-2 border-[#A68B5B]/40 pl-5 space-y-1 font-serif text-lg md:text-xl text-[#5A3A1E]">
+                <p>We don&apos;t just want you to find a snack.</p>
+                <p className="italic">We want you to find something you&apos;ll remember.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. Discover Flavours — scannable pill list */}
         <section className="py-14 md:py-20 lg:py-24">
           <div className={wrapCls}>
+            <SectionHead title="Discover Flavours From Around the World" center />
+            <p className={`${bodyCls} text-center max-w-[42rem] mx-auto mt-6 md:mt-8 text-pretty`}>
+              Our collection includes products from different countries and regions, giving you the chance to explore international flavours without having to travel thousands of kilometres.
+            </p>
+            <p className={`${eyebrowCls} text-center mt-8 md:mt-10 mb-4`}>You will find:</p>
+            <ul className="flex flex-wrap justify-center gap-1.5 md:gap-3 max-w-4xl mx-auto">
+              {FLAVOURS.map(([emoji, label]) => (
+                <li
+                  key={label}
+                  className="inline-flex items-center gap-1.5 bg-white border border-[#A68B5B]/20 rounded-full px-3 py-1 md:px-4 md:py-2 text-[14px] md:text-[15px] leading-snug text-slate-700"
+                >
+                  <span aria-hidden="true">{emoji}</span>
+                  {label}
+                </li>
+              ))}
+            </ul>
+            <p className={`${bodyCls} text-center max-w-[46rem] mx-auto mt-8 md:mt-10 text-pretty`}>
+              Whether you&apos;re searching for imported chocolates in Kannur, Calicut, Kochi, Thrissur, Trivandrum or anywhere in Kerala, whether you want to buy Korean ramen, international snacks, imported drinks or unique gift hampers, there&apos;s always something new to discover at Luxy Galleria.
+            </p>
+          </div>
+        </section>
+
+        {/* 5. Why Luxy Galleria? — phones: 1 col, icon beside text; 2 cols from sm; 3 cols from lg */}
+        <section className="bg-white border-y border-[#A68B5B]/10 py-14 md:py-20 lg:py-24">
+          <div className={wrapCls}>
             <div className="mb-8 md:mb-12">
-              <SectionHead eyebrow="Why Luxy Galleria" title="Why Luxy Galleria?" center />
+              <SectionHead title="Why Luxy Galleria?" center />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
               {WHY.map(({ Icon, title, text }) => (
                 <div
                   key={title}
-                  className="group flex sm:block gap-4 bg-white rounded-lg border border-[#A68B5B]/15 p-4 md:p-6 lg:p-7 transition-all duration-300 hover:border-[#A68B5B]/45 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(90,58,30,0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                  className="group flex sm:block gap-4 bg-background rounded-lg border border-[#A68B5B]/15 p-4 md:p-6 lg:p-7 transition-all duration-300 hover:border-[#A68B5B]/45 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(90,58,30,0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                 >
-                  <div className="shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#F5F1E8] text-[#8B5E34] flex items-center justify-center sm:mb-4 transition-colors group-hover:bg-[#8B5E34] group-hover:text-white">
+                  <div className="shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-full bg-white text-[#8B5E34] flex items-center justify-center sm:mb-4 transition-colors group-hover:bg-[#8B5E34] group-hover:text-white">
                     <Icon size={18} strokeWidth={1.5} />
                   </div>
                   <div>
                     <h3 className="font-serif text-lg md:text-xl text-slate-900 leading-snug mb-1 md:mb-2">{title}</h3>
-                    <p className="font-sans text-sm md:text-[15px] text-slate-500 leading-relaxed">{text}</p>
+                    <p className="font-sans text-[15px] text-slate-500 leading-relaxed">{text}</p>
                   </div>
                 </div>
               ))}
@@ -163,19 +230,16 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* 5. Our Mission */}
-        <section
-          className="w-full px-5 py-14 md:py-20 lg:py-24 text-center"
-          style={{ background: "linear-gradient(135deg, #2C1A10 0%, #422812 50%, #6B5344 100%)" }}
-        >
+        {/* 6. Our Mission */}
+        <section className="w-full px-5 py-14 md:py-20 lg:py-24 text-center" style={{ background: DARK_BG }}>
           <div className="max-w-[56rem] mx-auto">
-            <h2 className={`${eyebrowCls} text-[#D9C2A0] mb-6`}>Our Mission</h2>
-            <p className="text-slate-300 text-sm md:text-base mb-3">Our mission is simple:</p>
-            <p className="font-serif text-[26px] sm:text-3xl md:text-4xl lg:text-5xl text-white leading-[1.2] text-balance mb-8">
+            <h2 className={`${h2Cls} text-white`}>Our Mission</h2>
+            <span aria-hidden="true" className="block w-12 h-px bg-[#D9C2A0]/60 mx-auto mt-5 mb-8 md:mb-10" />
+            <p className="text-[#D9C2A0] text-sm md:text-base tracking-wide mb-3">Our mission is simple:</p>
+            <p className="font-serif italic text-2xl sm:text-[28px] md:text-3xl lg:text-[34px] text-white leading-[1.3] text-balance max-w-[44rem] mx-auto mb-8">
               To make discovering international food more exciting, accessible and memorable.
             </p>
-            <span aria-hidden="true" className="block w-12 h-px bg-[#D9C2A0]/60 mx-auto mb-8" />
-            <p className="text-slate-300 text-base md:text-lg leading-[1.75] max-w-3xl mx-auto mb-8 text-pretty">
+            <p className="text-slate-300 text-[16.5px] md:text-lg leading-[1.8] max-w-[44rem] mx-auto mb-8 text-pretty">
               Whether you&apos;re looking for a childhood favourite, searching for a taste from abroad, hunting for a rare snack, looking for the perfect gift or simply curious to try something you&apos;ve never had before — Luxy Galleria is here to bring the world of snacks closer to you.
             </p>
             <p className="text-slate-300 text-base md:text-lg mb-1">Because sometimes, it&apos;s not just about what you&apos;re eating.</p>
@@ -183,17 +247,17 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* 6. Welcome — compact closing statement */}
+        {/* 7. Welcome — compact closing statement */}
         <section className="py-12 md:py-16 lg:py-20">
           <div className={`${wrapCls} text-center`}>
-            <h2 className={`${eyebrowCls} mb-4`}>Welcome to Luxy Galleria</h2>
-            <p className="font-serif text-2xl md:text-3xl lg:text-4xl text-slate-900 leading-snug">
+            <SectionHead title="Welcome to Luxy Galleria" center />
+            <p className="font-serif text-xl md:text-2xl text-slate-800 leading-snug mt-6 md:mt-8">
               Discover something new.{" "}
               <span className="block sm:inline">Rediscover something familiar.</span>{" "}
               <span className="block text-[#8B5E34]">Bring home a little taste of the world.</span>
             </p>
 
-            <ul className="mt-8 md:mt-10 flex flex-col sm:flex-row sm:flex-wrap justify-center gap-x-8 gap-y-3 text-sm md:text-base text-slate-600">
+            <ul className="mt-8 md:mt-10 flex flex-col sm:flex-row sm:flex-wrap justify-center gap-x-8 gap-y-3 text-[15px] md:text-base text-slate-600">
               <li className="flex items-center justify-center gap-2">
                 <MapPin size={16} strokeWidth={1.5} className="text-[#8B5E34] shrink-0" aria-hidden="true" />
                 Luxy Galleria — {CONTACT.location}
@@ -202,28 +266,20 @@ export default function AboutPage() {
                 <MessageCircle size={16} strokeWidth={1.5} className="text-[#8B5E34] shrink-0" aria-hidden="true" />
                 <span>
                   For Bulk Orders WhatsApp:{" "}
-                  <a href={`https://wa.me/${CONTACT.whatsapp}`} target="_blank" rel="noopener noreferrer" className={linkCls}>
-                    {CONTACT.phoneDisplay}
-                  </a>
-                </span>
-              </li>
-              <li className="flex items-center justify-center gap-2">
-                <Mail size={16} strokeWidth={1.5} className="text-[#8B5E34] shrink-0" aria-hidden="true" />
-                <span>
-                  Email:{" "}
-                  <a href={`mailto:${CONTACT.email}`} className={linkCls}>
-                    {CONTACT.email}
+                  <a href={`https://wa.me/${CONTACT.bulkWhatsapp}`} target="_blank" rel="noopener noreferrer" className={linkCls}>
+                    {CONTACT.bulkWhatsappDisplay}
                   </a>
                 </span>
               </li>
             </ul>
 
-            <p className="mt-6 pt-6 border-t border-[#A68B5B]/15 max-w-2xl mx-auto text-sm md:text-base text-slate-500 leading-relaxed text-pretty">
+            <p className="mt-6 pt-6 border-t border-[#A68B5B]/15 max-w-2xl mx-auto text-[15px] md:text-base text-slate-500 leading-relaxed text-pretty">
+              <AtSign size={16} strokeWidth={1.5} className="inline -mt-0.5 mr-1.5 text-[#8B5E34]" aria-hidden="true" />
               Follow{" "}
               <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" className={linkCls}>
                 @luxygalleria
               </a>{" "}
-              on Instagram for new arrivals, rare finds, unboxings, offers and the latest imported snacks.
+              in Instagram for new arrivals, rare finds, unboxings, offers and the latest imported snacks.
             </p>
           </div>
         </section>
