@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,6 +24,7 @@ interface ISlide {
 }
 
 const SLIDE_DELAY_MS = 6000;
+const BANNER_CACHE_KEY = "luxy:banners";
 
 export default function HeroSection() {
   // null = still fetching; render a skeleton instead of placeholder content
@@ -51,38 +50,55 @@ export default function HeroSection() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+    const abs = (u: string) => (u.startsWith("/") ? `${baseUrl}${u}` : u);
+
     const fetchBanners = async () => {
-      let slides: ISlide[] = [];
+      // Show the last good banners instantly (stale-while-revalidate), then refresh from the API.
       try {
-        const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-        const res = await axios.get(`${apiURL}/banners`);
-        if (res.data.success && res.data.data && res.data.data.length > 0) {
-          const activeBanners: IBanner[] = res.data.data.filter(
-            (b: IBanner) => b.status === "ACTIVE"
-          );
-          if (activeBanners.length > 0) {
-            const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
-            slides = activeBanners.map((b) => ({
+        const cached = localStorage.getItem(BANNER_CACHE_KEY);
+        if (cached) setAllSlides(JSON.parse(cached));
+      } catch {}
+      // The backend can cold-start (Render), so a single failed/slow request must not drop the hero.
+      for (let attempt = 0; attempt < 3 && !cancelled; attempt++) {
+        try {
+          const res = await axios.get(`${apiURL}/banners`, { timeout: 20000 });
+          const slides: ISlide[] = (res.data?.data ?? [])
+            .filter((b: IBanner) => b.status === "ACTIVE" && b.image)
+            .map((b: IBanner) => ({
               id: b._id,
-              image: b.image.startsWith("/")
-                ? `${baseUrl}${b.image}`
-                : b.image,
-              mobileImage: b.mobileImage
-                ? (b.mobileImage.startsWith("/") ? `${baseUrl}${b.mobileImage}` : b.mobileImage)
-                : null,
-              alt: b.title,
+              image: abs(b.image),
+              mobileImage: b.mobileImage ? abs(b.mobileImage) : null,
+              alt: b.title || "Luxy Galleria",
               headline: b.title,
               subheadline: b.description,
             }));
-          }
+          if (cancelled) return;
+          setAllSlides(slides);
+          try { localStorage.setItem(BANNER_CACHE_KEY, JSON.stringify(slides)); } catch {}
+          return;
+        } catch (err) {
+          console.error("Failed to fetch banners", err);
+          await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
         }
-      } catch (err) {
-        console.error("Failed to fetch banners", err);
       }
-      setAllSlides(slides);
+      // All attempts failed: keep cached slides if we have them, otherwise hide the hero.
+      if (!cancelled) setAllSlides((prev) => prev ?? []);
     };
     fetchBanners();
+    return () => { cancelled = true; };
   }, []);
+
+  // Warm the browser cache with every slide's image so crossfades never reveal an empty frame.
+  useEffect(() => {
+    if (!allSlides) return;
+    allSlides.forEach((s) => {
+      const img = new window.Image();
+      img.src = isMobile ? s.mobileImage || s.image : s.image;
+    });
+  }, [allSlides, isMobile]);
 
   // Preloader timer
   useEffect(() => {
@@ -98,11 +114,8 @@ export default function HeroSection() {
   const mobileSlides = slides.filter((slide) => !!slide.mobileImage);
   const finalSlides = isMobile && mobileSlides.length > 0 ? mobileSlides : slides;
 
-  useEffect(() => {
-    if (currentSlide >= finalSlides.length) {
-      setCurrentSlide(0);
-    }
-  }, [finalSlides.length, currentSlide]);
+  // Clamp in render: the slide list can shrink (e.g. switching to mobile-only slides)
+  const activeSlide = finalSlides.length ? currentSlide % finalSlides.length : 0;
 
   // Timeout keyed on currentSlide: every slide (including after manual nav/swipe) gets the full delay
   useEffect(() => {
@@ -189,7 +202,7 @@ export default function HeroSection() {
       {/* Background & Content Layer */}
       <AnimatePresence mode="sync">
         {finalSlides.map((slide, index) =>
-          index === currentSlide ? (
+          index === activeSlide ? (
             <motion.div
               key={slide.id}
               initial={{ opacity: 0 }}
@@ -199,26 +212,17 @@ export default function HeroSection() {
               className="absolute inset-0 overflow-hidden"
               style={{ willChange: "opacity" }}
             >
-              <div className="hidden md:block absolute inset-0 w-full h-full">
-                <img
-                  src={slide.image}
-                  alt={slide.alt}
-                  className="w-full h-full object-cover block"
-                  loading={index === 0 ? "eager" : "lazy"}
-                  fetchPriority={index === 0 ? "high" : "auto"}
-                  decoding="async"
-                />
-              </div>
-              <div className="block md:hidden absolute inset-0 w-full h-full">
+              {/* <picture> downloads only the variant that matches the viewport (display:none imgs still download) */}
+              <picture>
+                <source media="(min-width: 768px)" srcSet={slide.image} />
                 <img
                   src={slide.mobileImage || slide.image}
                   alt={slide.alt}
-                  className="w-full h-full object-cover block"
-                  loading={index === 0 ? "eager" : "lazy"}
+                  className="absolute inset-0 w-full h-full object-cover block"
                   fetchPriority={index === 0 ? "high" : "auto"}
                   decoding="async"
                 />
-              </div>
+              </picture>
               <div className="absolute inset-0 bg-black/20 z-20 pointer-events-none" /> {/* overlay */}
 
               {/* Content specific to this slide */}
@@ -264,10 +268,10 @@ export default function HeroSection() {
               <button
                 key={slide.id}
                 role="tab"
-                aria-selected={currentSlide === index}
+                aria-selected={activeSlide === index}
                 aria-label={`Go to slide ${index + 1}`}
                 onClick={() => goToSlide(index)}
-                className={`transition-colors duration-300 motion-reduce:transition-none focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 focus:ring-offset-black ${currentSlide === index
+                className={`transition-colors duration-300 motion-reduce:transition-none focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 focus:ring-offset-black ${activeSlide === index
                     ? "w-2.5 h-2.5 rounded-full bg-[#A68B5B]/50"
                     : "w-2.5 h-2.5 rounded-full bg-white/50"
                   }`}
