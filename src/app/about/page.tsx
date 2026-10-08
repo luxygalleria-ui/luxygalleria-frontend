@@ -2,8 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ChevronLeft, Globe, Gem, Heart, Store, Gift, Truck, MapPin, MessageCircle, AtSign } from "lucide-react";
-import { CONTACT } from "../../lib/contact";
+import { ChevronLeft, Globe, Gem, Heart, Store, Gift, Truck } from "lucide-react";
 
 const WHY = [
   { Icon: Globe, title: "A World of Flavours", text: "Discover chocolates, snacks, drinks and food products from different parts of the world." },
@@ -28,10 +27,7 @@ const FLAVOURS = [
   ["🌎", "Rare and hard-to-find international products"],
 ];
 
-// Same official account as the footer.
-const INSTAGRAM = "https://www.instagram.com/luxygalleria";
 const DARK_BG = "linear-gradient(135deg, #2C1A10 0%, #422812 50%, #6B5344 100%)";
-const linkCls = "font-semibold text-[#8B5E34] hover:text-[#5A3A1E] underline decoration-[#8B5E34]/30 underline-offset-4 transition-colors";
 const wrapCls = "max-w-[1200px] mx-auto px-5 md:px-10";
 const eyebrowCls = "font-sans font-semibold text-[11px] md:text-xs tracking-[0.3em] uppercase text-[#8B5E34]";
 const h2Cls = "font-serif font-medium text-[28px] sm:text-3xl md:text-4xl lg:text-[44px] text-slate-900 leading-[1.15]";
@@ -227,60 +223,6 @@ export default function AboutPage() {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* 6. Our Mission */}
-        <section className="w-full px-5 py-14 md:py-20 lg:py-24 text-center" style={{ background: DARK_BG }}>
-          <div className="max-w-[56rem] mx-auto">
-            <h2 className={`${h2Cls} text-white`}>Our Mission</h2>
-            <span aria-hidden="true" className="block w-12 h-px bg-[#D9C2A0]/60 mx-auto mt-5 mb-8 md:mb-10" />
-            <p className="text-[#D9C2A0] text-sm md:text-base tracking-wide mb-3">Our mission is simple:</p>
-            <p className="font-serif italic text-2xl sm:text-[28px] md:text-3xl lg:text-[34px] text-white leading-[1.3] text-balance max-w-[44rem] mx-auto mb-8">
-              To make discovering international food more exciting, accessible and memorable.
-            </p>
-            <p className="text-slate-300 text-[16.5px] md:text-lg leading-[1.8] max-w-[44rem] mx-auto mb-8 text-pretty">
-              Whether you&apos;re looking for a childhood favourite, searching for a taste from abroad, hunting for a rare snack, looking for the perfect gift or simply curious to try something you&apos;ve never had before — Luxy Galleria is here to bring the world of snacks closer to you.
-            </p>
-            <p className="text-slate-300 text-base md:text-lg mb-1">Because sometimes, it&apos;s not just about what you&apos;re eating.</p>
-            <p className="font-serif italic text-xl md:text-2xl text-[#D9C2A0] leading-snug">It&apos;s about where that flavour takes you.</p>
-          </div>
-        </section>
-
-        {/* 7. Welcome — compact closing statement */}
-        <section className="py-12 md:py-16 lg:py-20">
-          <div className={`${wrapCls} text-center`}>
-            <SectionHead title="Welcome to Luxy Galleria" center />
-            <p className="font-serif text-xl md:text-2xl text-slate-800 leading-snug mt-6 md:mt-8">
-              Discover something new.{" "}
-              <span className="block sm:inline">Rediscover something familiar.</span>{" "}
-              <span className="block text-[#8B5E34]">Bring home a little taste of the world.</span>
-            </p>
-
-            <ul className="mt-8 md:mt-10 flex flex-col sm:flex-row sm:flex-wrap justify-center gap-x-8 gap-y-3 text-[15px] md:text-base text-slate-600">
-              <li className="flex items-center justify-center gap-2">
-                <MapPin size={16} strokeWidth={1.5} className="text-[#8B5E34] shrink-0" aria-hidden="true" />
-                Luxy Galleria — {CONTACT.location}
-              </li>
-              <li className="flex items-center justify-center gap-2">
-                <MessageCircle size={16} strokeWidth={1.5} className="text-[#8B5E34] shrink-0" aria-hidden="true" />
-                <span>
-                  For Bulk Orders WhatsApp:{" "}
-                  <a href={`https://wa.me/${CONTACT.bulkWhatsapp}`} target="_blank" rel="noopener noreferrer" className={linkCls}>
-                    {CONTACT.bulkWhatsappDisplay}
-                  </a>
-                </span>
-              </li>
-            </ul>
-
-            <p className="mt-6 pt-6 border-t border-[#A68B5B]/15 max-w-2xl mx-auto text-[15px] md:text-base text-slate-500 leading-relaxed text-pretty">
-              <AtSign size={16} strokeWidth={1.5} className="inline -mt-0.5 mr-1.5 text-[#8B5E34]" aria-hidden="true" />
-              Follow{" "}
-              <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" className={linkCls}>
-                @luxygalleria
-              </a>{" "}
-              in Instagram for new arrivals, rare finds, unboxings, offers and the latest imported snacks.
-            </p>
           </div>
         </section>
       </main>
