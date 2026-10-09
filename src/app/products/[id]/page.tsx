@@ -33,6 +33,7 @@ interface Product {
   sizes: string[];
   weight?: number;
   variants?: any[];
+  inCollection?: boolean;
 }
 
 // Data will be fetched dynamically from backend
@@ -82,16 +83,17 @@ export default function ProductDetailPage() {
         const prodJson = prodRes.data;
         const catJson = catRes.data;
 
-        let activeCatNames: string[] = [];
+        // Hide products of deactivated categories; custom (free-text) categories have no record and stay visible
+        let inactiveCatNames: string[] = [];
         if (catJson.success && catJson.data) {
-          activeCatNames = catJson.data
-            .filter((c: any) => c.status === 'ACTIVE')
+          inactiveCatNames = catJson.data
+            .filter((c: any) => c.status !== 'ACTIVE')
             .map((c: any) => c.name.toLowerCase());
         }
 
         if (prodJson.success && prodJson.data) {
           const activeProducts = prodJson.data.filter((p: any) =>
-            activeCatNames.includes((p.category || "").toLowerCase())
+            !inactiveCatNames.includes((p.category || "").toLowerCase())
           );
 
           const mapped = activeProducts.map((p: any) => ({
@@ -112,6 +114,7 @@ export default function ProductDetailPage() {
             howToUse: "Follow instructions on packaging",
             sizes: p.variants && p.variants.length > 0 ? p.variants.map((v: any) => v.volume) : ["Standard"],
             variants: p.variants || [],
+            inCollection: !!(p.isGifting || p.isNewArrival),
           }));
           setProducts(mapped);
           const found = mapped.find((p: any) => p.id === id) || null;
@@ -688,7 +691,8 @@ export default function ProductDetailPage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {products.filter((p) => p.id !== product.id).slice(0, 4).map((p) => (
+            {/* Gifting / New Arrival products live only on their own pages */}
+            {products.filter((p) => p.id !== product.id && !p.inCollection).slice(0, 4).map((p) => (
               <Link
                 key={p.id}
                 href={`/products/${p.id}`}
