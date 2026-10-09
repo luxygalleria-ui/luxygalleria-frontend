@@ -168,7 +168,8 @@ export default function ProductSection() {
     const fetchLandingProducts = async () => {
       try {
         const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-        const res = await axios.get(`${apiURL}/products`);
+        // Only general products: Gifting / New Arrivals live exclusively on their own pages
+        const res = await axios.get(`${apiURL}/products`, { params: { general: true } });
         if (res.data.success && res.data.data) {
           const mappedProds = res.data.data.map((p: any) => ({
             id: p._id,

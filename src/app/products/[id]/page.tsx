@@ -587,6 +587,9 @@ export default function ProductDetailPage() {
                 <p className="font-sans font-semibold text-sm text-slate-700 uppercase tracking-[0.1em]">
                   Quantity
                 </p>
+                <span className={`text-xs font-bold uppercase tracking-widest ${selectedStock > 0 ? "text-green-600" : "text-red-500"}`}>
+                  {selectedStock > 0 ? "In Stock" : "Out of Stock"}
+                </span>
               </div>
               <div className="inline-flex items-center border-2 border-slate-200 rounded-xl overflow-hidden">
                 <button
@@ -623,7 +626,7 @@ export default function ProductDetailPage() {
                   {added ? (
                     <><Check size={18} /> Added</>
                   ) : (
-                    <><ShoppingBag size={18} /> Add to Cart</>
+                    <><ShoppingBag size={18} /> {selectedStock > 0 ? "Add to Cart" : "Out of Stock"}</>
                   )}
                 </button>
               </CartAnimation>

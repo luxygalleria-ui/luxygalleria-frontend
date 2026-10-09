@@ -151,6 +151,9 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
           </div>
           <p className="font-bold text-[10px] uppercase tracking-wider text-red-600 mb-1">{product.dealBadge}</p>
           <p className="text-xs text-slate-500 line-clamp-1 mb-2">{product.benefit}</p>
+          <p className={`text-[10px] font-bold uppercase tracking-wider ${isOutOfStock ? "text-red-500" : "text-green-600"}`}>
+            {isOutOfStock ? "Out of Stock" : `In Stock (${product.stock})`}
+          </p>
         </div>
       </Link>
       <div className="px-4 pb-6">
