@@ -33,7 +33,7 @@ interface Product {
   sizes: string[];
   weight?: number;
   variants?: any[];
-  inCollection?: boolean;
+  isGifting?: boolean;
 }
 
 // Data will be fetched dynamically from backend
@@ -114,7 +114,7 @@ export default function ProductDetailPage() {
             howToUse: "Follow instructions on packaging",
             sizes: p.variants && p.variants.length > 0 ? p.variants.map((v: any) => v.volume) : ["Standard"],
             variants: p.variants || [],
-            inCollection: !!(p.isGifting || p.isNewArrival),
+            isGifting: !!p.isGifting,
           }));
           setProducts(mapped);
           const found = mapped.find((p: any) => p.id === id) || null;
@@ -691,8 +691,8 @@ export default function ProductDetailPage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {/* Gifting / New Arrival products live only on their own pages */}
-            {products.filter((p) => p.id !== product.id && !p.inCollection).slice(0, 4).map((p) => (
+            {/* Gifting products live only on the Gifting page */}
+            {products.filter((p) => p.id !== product.id && !p.isGifting).slice(0, 4).map((p) => (
               <Link
                 key={p.id}
                 href={`/products/${p.id}`}

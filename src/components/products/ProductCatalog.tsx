@@ -616,7 +616,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
       } else if (collection === "newArrival") {
         params.newArrival = true;
       } else {
-        // Main Shop: exclude Gifting / New Arrival products (they live only on their own pages)
+        // Main Shop: everything except Gifting (New Arrivals show here too)
         params.general = true;
       }
 
