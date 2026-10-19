@@ -55,6 +55,11 @@ const nextConfig: NextConfig = {
         destination: "/contact-us",
         permanent: false,
       },
+      {
+        source: "/login",
+        destination: "/sign-in",
+        permanent: false,
+      },
     ];
   },
   async headers() {
