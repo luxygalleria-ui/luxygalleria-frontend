@@ -162,6 +162,7 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
 export default function ProductSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [products, setProducts] = useState<Product[]>(DEFAULT_PRODUCTS);
+  const [status, setStatus] = useState<"loading" | "error" | "ready">("loading");
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -192,8 +193,10 @@ export default function ProductSection() {
           }));
           setProducts(mappedProds);
         }
+        setStatus("ready");
       } catch (err) {
         console.error("Failed to fetch landing products", err);
+        setStatus("error");
       }
     };
     fetchLandingProducts();
@@ -234,6 +237,11 @@ export default function ProductSection() {
       </div>
 
       {/* Product Grid */}
+      {products.length === 0 && (
+        <p className="text-center text-slate-500 text-sm px-6 py-8" role="status">
+          {status === "loading" ? "Loading products…" : status === "error" ? "Products could not be loaded. Please refresh the page." : "No products available right now."}
+        </p>
+      )}
       <div className="w-full px-4 md:px-8 lg:px-12">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {products.map((product, index) => (

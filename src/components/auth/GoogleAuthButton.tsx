@@ -29,7 +29,6 @@ function GoogleAuthButtonConfigured({ mode = "signin" }: GoogleAuthButtonProps) 
     : "http://localhost:5000";
   const apiURL = `${baseUrl}/api/v1`;
 
-  console.log("Google button rendered");
   const googleLogin = useGoogleLogin({
     flow: "implicit",
     onSuccess: async (tokenResponse: any) => {
@@ -46,13 +45,11 @@ function GoogleAuthButtonConfigured({ mode = "signin" }: GoogleAuthButtonProps) 
         const { sub: googleId, email, name, picture } = userInfo.data;
 
         // Send to our backend
-        const res = await axios.post(`${apiURL}/auth/google`, {
-          credential: tokenResponse.access_token,
-          googleId,
-          email,
-          name,
-          picture,
-        });
+        const res = await axios.post(
+          `${apiURL}/auth/google`,
+          { credential: tokenResponse.access_token, googleId, email, name, picture },
+          { timeout: 15000 }
+        );
 
         if (res.data.data) {
           localStorage.setItem("luxygalleria_user", JSON.stringify(res.data.data));
@@ -65,17 +62,33 @@ function GoogleAuthButtonConfigured({ mode = "signin" }: GoogleAuthButtonProps) 
           router.push("/");
         }
       } catch (err: any) {
-        console.error("Google auth error:", err);
+        // Log status/message only: the axios error object carries the access token in config.data
+        console.error("Google auth error:", err.response?.status, err.message);
         setError(
-          err.response?.data?.message || "Google sign-in failed. Please try again."
+          err.response?.data?.message ||
+            (err.code === "ECONNABORTED" || !err.response
+              ? "Could not reach the server. Please check your connection and try again."
+              : "Google sign-in failed. Please try again.")
         );
       } finally {
         setLoading(false);
       }
     },
     onError: (error: any) => {
-      console.error("Google login error:", error);
-      setError("Google sign-in was cancelled or failed. Please try again.");
+      // OAuth errors from Google, e.g. access_denied, invalid_client / origin not authorized
+      console.error("Google login error:", error?.error);
+      setError(
+        error?.error === "access_denied"
+          ? "Google sign-in was cancelled."
+          : "Google sign-in is not available right now. Please use email sign-in."
+      );
+    },
+    onNonOAuthError: (error: { type?: string }) => {
+      setError(
+        error?.type === "popup_failed_to_open"
+          ? "The Google sign-in popup was blocked. Please allow popups for this site and try again."
+          : "Google sign-in was cancelled."
+      );
     },
   });
 
@@ -86,7 +99,7 @@ function GoogleAuthButtonConfigured({ mode = "signin" }: GoogleAuthButtonProps) 
       mode={mode}
       disabled={false}
       onClick={() => {
-        console.log("clicked");
+        setError(null);
         googleLogin();
       }}
     />

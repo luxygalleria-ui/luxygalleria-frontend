@@ -61,31 +61,26 @@ export default function HeroSection() {
         const cached = localStorage.getItem(BANNER_CACHE_KEY);
         if (cached) setAllSlides(JSON.parse(cached));
       } catch {}
-      // The backend can cold-start (Render), so a single failed/slow request must not drop the hero.
-      for (let attempt = 0; attempt < 3 && !cancelled; attempt++) {
-        try {
-          const res = await axios.get(`${apiURL}/banners`, { timeout: 20000 });
-          const slides: ISlide[] = (res.data?.data ?? [])
-            .filter((b: IBanner) => b.status === "ACTIVE" && b.image)
-            .map((b: IBanner) => ({
-              id: b._id,
-              image: abs(b.image),
-              mobileImage: b.mobileImage ? abs(b.mobileImage) : null,
-              alt: b.title || "Luxy Galleria",
-              headline: b.title,
-              subheadline: b.description,
-            }));
-          if (cancelled) return;
-          setAllSlides(slides);
-          try { localStorage.setItem(BANNER_CACHE_KEY, JSON.stringify(slides)); } catch {}
-          return;
-        } catch (err) {
-          console.error("Failed to fetch banners", err);
-          await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-        }
+      try {
+        const res = await axios.get(`${apiURL}/banners`, { timeout: 10000 });
+        const slides: ISlide[] = (res.data?.data ?? [])
+          .filter((b: IBanner) => b.status === "ACTIVE" && b.image)
+          .map((b: IBanner) => ({
+            id: b._id,
+            image: abs(b.image),
+            mobileImage: b.mobileImage ? abs(b.mobileImage) : null,
+            alt: b.title || "Luxy Galleria",
+            headline: b.title,
+            subheadline: b.description,
+          }));
+        if (cancelled) return;
+        setAllSlides(slides);
+        try { localStorage.setItem(BANNER_CACHE_KEY, JSON.stringify(slides)); } catch {}
+      } catch (err) {
+        console.error("Failed to fetch banners", axios.isAxiosError(err) ? err.message : err);
+        // Keep cached slides if we have them, otherwise collapse the hero instead of a long skeleton.
+        if (!cancelled) setAllSlides((prev) => prev ?? []);
       }
-      // All attempts failed: keep cached slides if we have them, otherwise hide the hero.
-      if (!cancelled) setAllSlides((prev) => prev ?? []);
     };
     fetchBanners();
     return () => { cancelled = true; };
