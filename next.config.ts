@@ -24,6 +24,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
+      {
+        protocol: "https",
+        hostname: "api.luxygalleria.com",
+      },
+      {
+        protocol: "https",
+        hostname: "luxygalleria-backend.onrender.com",
+      },
       // Allow images served from the local backend during development
       {
         protocol: "http",

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { getPlaceholderUrl } from "../../lib/imageUtils";
 
 interface IBanner {
   _id: string;
@@ -25,6 +26,45 @@ interface ISlide {
 
 const SLIDE_DELAY_MS = 6000;
 const BANNER_CACHE_KEY = "luxy:banners";
+const HERO_IMAGE_TIMEOUT_MS = 12000;
+
+function BannerImage({ slide, isMobile, priority }: { slide: ISlide; isMobile: boolean; priority: boolean }) {
+  const preferred = isMobile ? slide.mobileImage || slide.image : slide.image || slide.mobileImage || "";
+  const alternate = preferred === slide.image ? slide.mobileImage : slide.image;
+  const fallback = getPlaceholderUrl("Luxury Collection");
+  const [src, setSrc] = useState(preferred || fallback);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (src === fallback) return;
+    timeoutRef.current = setTimeout(() => setSrc(fallback), HERO_IMAGE_TIMEOUT_MS);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [src, fallback]);
+
+  return (
+    <img
+      src={src}
+      alt={slide.alt}
+      className="absolute inset-0 block h-full w-full object-cover"
+      fetchPriority={priority ? "high" : "auto"}
+      decoding="async"
+      onLoad={() => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      }}
+      onError={(event) => {
+        const image = event.currentTarget;
+        image.onerror = null;
+        if (alternate && src === preferred && alternate !== preferred) {
+          setSrc(alternate);
+          return;
+        }
+        setSrc(fallback);
+      }}
+    />
+  );
+}
 
 export default function HeroSection() {
   // null = still fetching; render a skeleton instead of placeholder content
@@ -86,12 +126,15 @@ export default function HeroSection() {
     return () => { cancelled = true; };
   }, []);
 
-  // Warm the browser cache with every slide's image so crossfades never reveal an empty frame.
+  // Warm the browser cache with valid slide images
   useEffect(() => {
     if (!allSlides) return;
     allSlides.forEach((s) => {
+      const targetSrc = isMobile ? s.mobileImage || s.image : s.image;
+      if (!targetSrc || targetSrc.startsWith('data:')) return;
       const img = new window.Image();
-      img.src = isMobile ? s.mobileImage || s.image : s.image;
+      img.onerror = () => {};
+      img.src = targetSrc;
     });
   }, [allSlides, isMobile]);
 
@@ -103,11 +146,9 @@ export default function HeroSection() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Filter slides dynamically based on screen size
-  // On mobile prefer banners that have a mobile image; if none do, show all (desktop image is used)
+  // Keep every active slide on mobile; each slide uses its mobile asset when set and desktop otherwise.
   const slides = allSlides ?? [];
-  const mobileSlides = slides.filter((slide) => !!slide.mobileImage);
-  const finalSlides = isMobile && mobileSlides.length > 0 ? mobileSlides : slides;
+  const finalSlides = slides;
 
   // Clamp in render: the slide list can shrink (e.g. switching to mobile-only slides)
   const activeSlide = finalSlides.length ? currentSlide % finalSlides.length : 0;
@@ -162,7 +203,7 @@ export default function HeroSection() {
   return (
     <section
       // Aspect ratios match the uploaded banners (desktop 2048x768, mobile 1:1); object-cover fills edge to edge
-      className={`relative w-full max-w-none overflow-hidden touch-pan-y aspect-square md:aspect-[8/3] ${allSlides === null ? "bg-slate-100 animate-pulse" : "bg-black"}`}
+      className={`relative w-full max-w-none overflow-hidden touch-pan-y aspect-square md:aspect-[8/3] ${allSlides === null ? "bg-slate-100 animate-pulse" : "bg-slate-50"}`}
       aria-label="Hero section"
       aria-busy={allSlides === null}
       onTouchStart={onTouchStart}
@@ -207,17 +248,7 @@ export default function HeroSection() {
               className="absolute inset-0 overflow-hidden"
               style={{ willChange: "opacity" }}
             >
-              {/* <picture> downloads only the variant that matches the viewport (display:none imgs still download) */}
-              <picture>
-                <source media="(min-width: 768px)" srcSet={slide.image} />
-                <img
-                  src={slide.mobileImage || slide.image}
-                  alt={slide.alt}
-                  className="absolute inset-0 w-full h-full object-cover block"
-                  fetchPriority={index === 0 ? "high" : "auto"}
-                  decoding="async"
-                />
-              </picture>
+              <BannerImage key={`${slide.id}-${isMobile ? "mobile" : "desktop"}`} slide={slide} isMobile={isMobile} priority={index === 0} />
               <div className="absolute inset-0 bg-black/20 z-20 pointer-events-none" /> {/* overlay */}
 
               {/* Content specific to this slide */}

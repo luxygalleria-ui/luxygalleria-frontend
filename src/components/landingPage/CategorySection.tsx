@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { getImageUrl, handleImageError } from "../../lib/imageUtils";
+import { getImageUrl } from "../../lib/imageUtils";
+import ResilientImage from "../common/ResilientImage";
 
 type CategoryCard = { id: string; label: string; image: string; alt: string };
 
@@ -129,14 +129,13 @@ export default function CategorySection() {
                 }`}
               style={{ transitionDelay: `${index * 150}ms` }}
             >
-              <Image
+              <ResilientImage
                 src={category.image}
                 alt={category.alt}
                 fill
                 // No priority: one of the two layouts is display:none, and an eager load there measures height 0
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105"
-                onError={(e) => handleImageError(e as any)}
               />
 
               {/* Gradient Overlay */}
@@ -162,13 +161,12 @@ export default function CategorySection() {
                 }`}
               style={{ transitionDelay: `${index * 150}ms` }}
             >
-              <Image
+              <ResilientImage
                 src={category.image}
                 alt={category.alt}
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-110"
-                onError={(e) => handleImageError(e as any)}
               />
               <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors duration-500 motion-reduce:transition-none" />
 

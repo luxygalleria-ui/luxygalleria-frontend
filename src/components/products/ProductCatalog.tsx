@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, Suspense, useCallback, useMemo, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import axios from "axios";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -9,7 +8,8 @@ import { useCart, parseWeightFromVolume } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import CartAnimation from "../CartAnimation";
 import { SlidersHorizontal, X, ChevronLeft, ChevronUp, ChevronDown } from "lucide-react";
-import { getImageUrl, handleImageError } from "../../lib/imageUtils";
+import { getImageUrl, getPlaceholderUrl } from "../../lib/imageUtils";
+import ResilientImage from "../common/ResilientImage";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -67,6 +67,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
   const { showToast } = useToast();
 
   const isOutOfStock = (product.stock ?? 0) <= 0;
+  const cardImages = product.images.length ? product.images : [getPlaceholderUrl("Product image unavailable")];
 
   const handleAddToCart = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
@@ -77,7 +78,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
     addToCart({
       id: product.id,
       name: product.name,
-      image: getImageUrl(product.images && product.images.length > 0 ? product.images[0] : (product.variants?.find((v: any) => v.image)?.image || "")),
+      image: cardImages[0],
       price: product.currentPrice,
       currency: product.currency,
       weight: parseWeightFromVolume(product.size || '') || product.weight || 0,
@@ -109,13 +110,13 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       <Link href={`/products/${product.id}`} className="flex flex-col flex-grow focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50">
         {/* Image */}
         <div className="relative aspect-[3/4] overflow-hidden bg-slate-50">
-          {(product.images && product.images.length > 0 ? product.images : [(product.variants?.find((v: any) => v.image)?.image || "")]).map((src, i) => (
-            <img
+          {cardImages.map((src, i) => (
+            <ResilientImage
               key={`${product.id}-img-${i}`}
               src={getImageUrl(src)}
               alt={`${product.name} image ${i + 1}`}
+              fill
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 group-hover:scale-105 group-hover:transition-transform motion-reduce:transition-none ${i === imgIdx ? "opacity-100" : "opacity-0"}`}
-              onError={handleImageError}
               loading="lazy"
             />
           ))}
@@ -128,9 +129,9 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             </div>
           )}
           {/* Dots */}
-          {product.images && product.images.length > 1 && (
+          {cardImages.length > 1 && (
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-              {product.images.map((_, i) => (
+              {cardImages.map((_, i) => (
                 <div key={`${product.id}-dot-${i}`} className={`w-2 h-2 rounded-full transition-colors ${i === imgIdx ? "bg-white" : "bg-white/50"}`} />
               ))}
             </div>
@@ -632,11 +633,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
             id: p._id,
             name: p.name,
             stock: totalStock,
-            images: p.images && p.images.length > 0 
-              ? p.images.map(getImageUrl) 
-              : (p.variants?.find((v: any) => v.image)?.image 
-                  ? [getImageUrl(p.variants.find((v: any) => v.image).image)] 
-                  : [getImageUrl("/products/suncream-1.jpg")]),
+            images: [...new Set([...(Array.isArray(p.images) ? p.images : []), ...(p.variants || []).map((v: any) => v.image)].filter(Boolean))].map(getImageUrl),
             rating: p.starRating || 0,
             reviewCount: p.reviewsCount || 0,
             currentPrice: p.variants?.[0]?.price || 0,

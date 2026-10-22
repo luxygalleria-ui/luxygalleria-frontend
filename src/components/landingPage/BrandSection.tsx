@@ -1,15 +1,44 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { getImageUrl, handleImageError } from "../../lib/imageUtils";
+import { getImageUrl } from "../../lib/imageUtils";
+import ResilientImage from "../common/ResilientImage";
 
 interface Brand {
   _id: string;
   name: string;
   logo: string;
   status: string;
+}
+
+function BrandLogoItem({ brand, isDuplicate }: { brand: Brand; isDuplicate: boolean }) {
+  const [hasError, setHasError] = useState(false);
+  const logoUrl = getImageUrl(brand.logo);
+  const isPlaceholder = !brand.logo || logoUrl.startsWith("data:");
+
+  if (hasError || isPlaceholder) {
+    return (
+      <div className="flex items-center justify-center w-full h-full px-3 text-center select-none">
+        <span className="font-sans font-bold text-xs sm:text-sm tracking-wider text-slate-800 uppercase line-clamp-2">
+          {brand.name}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-[75%] h-[70%]">
+      <ResilientImage
+        src={logoUrl}
+        alt={isDuplicate ? "" : brand.name}
+        fill
+        sizes="(max-width: 767px) 128px, 208px"
+        className="object-contain"
+        onError={() => setHasError(true)}
+      />
+    </div>
+  );
 }
 
 export default function BrandSection() {
@@ -32,7 +61,6 @@ export default function BrandSection() {
     };
     fetchBrands();
   }, []);
-
 
   useEffect(() => {
     if (brands.length === 0) return;
@@ -99,16 +127,7 @@ export default function BrandSection() {
                         isVisible ? "opacity-100" : "opacity-0"
                       }`}
                     >
-                      <div className="relative w-[75%] h-[70%]">
-                        <Image
-                          src={getImageUrl(brand.logo)}
-                          alt={i >= row.length ? "" : brand.name}
-                          fill
-                          sizes="(max-width: 767px) 128px, 208px"
-                          className="object-contain"
-                          onError={(e) => handleImageError(e as any)}
-                        />
-                      </div>
+                      <BrandLogoItem brand={brand} isDuplicate={i >= row.length} />
                     </div>
                   </li>
                 ))}

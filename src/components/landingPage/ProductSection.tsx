@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -8,7 +7,7 @@ import axios from "axios";
 import { useCart, parseWeightFromVolume } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import CartAnimation from "../CartAnimation";
-import { getImageUrl, handleImageError } from "../../lib/imageUtils";
+import { getImageUrl, getPlaceholderUrl, handleImageError } from "../../lib/imageUtils";
 
 interface Product {
   id: string;
@@ -40,6 +39,7 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
   const router = useRouter();
 
   const isOutOfStock = (product.stock ?? 0) <= 0;
+  const cardImages = product.images.length ? product.images : [getPlaceholderUrl("Product image unavailable")];
 
   const handleAddToCart = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
@@ -51,7 +51,7 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
     addToCart({
       id: product.id,
       name: product.name,
-      image: product.images && product.images.length > 0 ? product.images[0] : (product.variants?.find((v: any) => v.image)?.image || ""),
+      image: cardImages[0],
       price: product.currentPrice,
       currency: product.currency,
       weight: parseWeightFromVolume(product.size || '') || product.weight || 0,
@@ -74,13 +74,8 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
       <Link href={`/products/${product.id}`} className="flex flex-col flex-grow outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 rounded-2xl overflow-hidden">
         {/* Image Area */}
         <div className="relative overflow-hidden aspect-[3/4] bg-slate-50 flex-shrink-0">
-          {((product.images && product.images.length > 0 && product.images[0] !== "/products/suncream-1.jpg") 
-            ? product.images 
-            : (product.variants?.find((v: any) => v.image)?.image 
-                ? [product.variants.find((v: any) => v.image).image] 
-                : ["/products/suncream-1.jpg"])
-          ).slice(0, 2).map((img, i) => {
-            const hasMultipleImages = ((product.images && product.images.length > 0 && product.images[0] !== "/products/suncream-1.jpg") ? product.images : []).length > 1;
+          {cardImages.slice(0, 2).map((img, i) => {
+            const hasMultipleImages = cardImages.length > 1;
             return (
               <img
                 key={`${product.id}-landing-${i}`}
@@ -178,7 +173,7 @@ export default function ProductSection() {
             stock: (p.variants && p.variants.length > 0)
               ? p.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0)
               : (Number(p.stock) || 0),
-            images: p.images && p.images.length > 0 ? p.images.map(getImageUrl) : ["/products/suncream-1.jpg"],
+            images: [...new Set([...(Array.isArray(p.images) ? p.images : []), ...(p.variants || []).map((v: any) => v.image)].filter(Boolean))].map(getImageUrl),
             rating: p.starRating || 0,
             reviewCount: p.reviewsCount || 0,
             currentPrice: p.variants?.[0]?.price || 0,

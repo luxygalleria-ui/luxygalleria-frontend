@@ -11,7 +11,8 @@ import {
 import { useToast } from "../../../context/ToastContext";
 import CartAnimation from "../../../components/CartAnimation";
 import { useCart, parseWeightFromVolume } from "../../../context/CartContext";
-import { getImageUrl, handleImageError } from "../../../lib/imageUtils";
+import { getImageUrl, getPlaceholderUrl } from "../../../lib/imageUtils";
+import ResilientImage from "../../../components/common/ResilientImage";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ export default function ProductDetailPage() {
             id: p._id,
             name: p.name,
             tagline: p.description || "",
-            images: p.images && p.images.length > 0 ? p.images.map(getImageUrl) : [getImageUrl("/products/suncream-1.jpg")],
+            images: (Array.isArray(p.images) ? p.images : []).map(getImageUrl),
             rating: p.starRating || 0,
             reviewCount: p.reviewsCount || 0,
             currentPrice: p.variants?.[0]?.offerPrice || p.variants?.[0]?.price || 0,
@@ -194,7 +195,7 @@ export default function ProductDetailPage() {
         }
       });
     }
-    return list;
+    return list.length ? list : [getPlaceholderUrl("Product image unavailable")];
   };
 
   const galleryImages = getGalleryImages();
@@ -417,20 +418,20 @@ export default function ProductDetailPage() {
             {/* Main Image */}
             <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center min-h-[28rem]">
               {showVariantImage && selectedVariant?.image ? (
-                <img
+                <ResilientImage
                   src={getImageUrl(selectedVariant.image)}
                   alt={`${product.name} - ${selectedVariant.flavor}`}
-                  onError={handleImageError}
+                  fill
                   className="absolute inset-0 w-full h-full object-contain"
                 />
               ) : (
                 galleryImages.map((src, i) => (
-                  <img
+                  <ResilientImage
                     key={`${product.id}-main-${i}`}
                     src={src}
                     alt={`${product.name} view ${i + 1}`}
+                    fill
                     loading={i === 0 ? "eager" : "lazy"}
-                    onError={handleImageError}
                     className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${i === activeImage ? "opacity-100" : "opacity-0"}`}
                   />
                 ))
@@ -452,10 +453,10 @@ export default function ProductDetailPage() {
                     aria-label={`View image ${i + 1}`}
                     className={`relative w-24 h-24 rounded-3xl overflow-hidden border-2 transition-all duration-200 flex-shrink-0 ${i === activeImage ? "border-[#A68B5B] shadow-lg scale-105" : "border-slate-200 hover:border-slate-400"}`}
                   >
-                    <img
+                    <ResilientImage
                       src={src}
                       alt={`Thumbnail ${i + 1}`}
-                      onError={handleImageError}
+                      fill
                       className="w-full h-full object-contain"
                     />
                   </button>
@@ -699,11 +700,11 @@ export default function ProductDetailPage() {
                 className="group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-lg transition-shadow duration-300 flex flex-col"
               >
                 <div className="relative aspect-square overflow-hidden bg-slate-50">
-                  <img
+                  <ResilientImage
                     src={getImageUrl(p.images && p.images.length > 0 ? p.images[0] : (p.variants?.find((v: any) => v.image)?.image || ""))}
                     alt={p.name}
+                    fill
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={handleImageError}
                   />
                 </div>
                 <div className="p-4 text-center">

@@ -21,9 +21,10 @@ export const getImageUrl = (imagePath: string | undefined | null): string => {
 
   // Backend uploads path
   if (imagePath.startsWith('/uploads/')) {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/api\/?$/, '') ||
-      'http://localhost:5000';
+    const rawUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    const baseUrl = rawUrl
+      ? rawUrl.replace(/\/api(\/v1)?\/?$/i, '').replace(/\/+$/, '')
+      : 'http://localhost:5000';
     return `${baseUrl}${imagePath}`;
   }
 
@@ -104,13 +105,14 @@ export const handleImageError = (
   fallbackUrl?: string
 ): void => {
   const img = event.currentTarget;
+  const fallback = fallbackUrl || getPlaceholderUrl('Image unavailable');
+  if (img.src === fallback || img.src.startsWith('data:image/svg+xml')) return;
 
-  // Already showing the inline placeholder — stop here to avoid an error loop
-  if (img.src.startsWith('data:image/svg+xml')) {
-    return;
-  }
-
-  img.src = fallbackUrl || getPlaceholderUrl('No image');
+  // Next Image's srcset can keep selecting a failed optimizer URL unless removed.
+  img.removeAttribute('srcset');
+  img.removeAttribute('sizes');
+  img.onerror = null;
+  img.src = fallback;
 };
 
 /**
@@ -141,7 +143,7 @@ export const getFirstAccessibleImage = async (
     try {
       await preloadImage(url);
       return url;
-    } catch (err) {
+    } catch {
       // Try next URL
       continue;
     }
@@ -228,7 +230,7 @@ export const getImageDimensions = (
 };
 
 // Export all utilities
-export default {
+const imageUtils = {
   getImageUrl,
   getPlaceholderUrl,
   getImageUrls,
@@ -241,3 +243,5 @@ export default {
   cleanImageUrl,
   getImageDimensions,
 };
+
+export default imageUtils;
