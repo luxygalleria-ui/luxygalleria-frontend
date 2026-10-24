@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { getPlaceholderUrl } from "../../lib/imageUtils";
+import { getImageUrl, getPlaceholderUrl, reportImageError } from "../../lib/imageUtils";
 
 interface IBanner {
   _id: string;
@@ -56,6 +56,7 @@ function BannerImage({ slide, isMobile, priority }: { slide: ISlide; isMobile: b
       onError={(event) => {
         const image = event.currentTarget;
         image.onerror = null;
+        reportImageError(src);
         if (alternate && src === preferred && alternate !== preferred) {
           setSrc(alternate);
           return;
@@ -92,8 +93,8 @@ export default function HeroSection() {
   useEffect(() => {
     let cancelled = false;
     const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
-    const abs = (u: string) => (u.startsWith("/") ? `${baseUrl}${u}` : u);
+    // Same resolver as every other image: /uploads/ paths go to the backend origin, whatever form NEXT_PUBLIC_BACKEND_URL takes
+    const abs = getImageUrl;
 
     const fetchBanners = async () => {
       // Show the last good banners instantly (stale-while-revalidate), then refresh from the API.

@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Check, ShieldCheck, MapPin, X, Lock, ArrowRight } from "lucide-react";
-import { useCart, calculateLocalShipping } from "../../context/CartContext";
+import { Check, ShieldCheck, MapPin, X, Lock, ArrowRight, Store, Truck } from "lucide-react";
+import { useCart } from "../../context/CartContext";
+import { useQuote, Fulfillment, METHOD_LABEL, rupees, money, pricedLine } from "../../lib/checkoutQuote";
 import { useToast } from "../../context/ToastContext";
 import { getAPIURL } from "../../lib/apiClient";
+import { fixCloudinaryCloud, getImageUrl } from '../../lib/imageUtils';
 
 export default function CheckoutPage() {
   const { cartItems, clearCart } = useCart();
@@ -30,50 +32,18 @@ export default function CheckoutPage() {
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
-  const [shippingDetails, setShippingDetails] = useState<{
-    subtotal: number;
-    totalWeight: number;
-    baseShipping: number;
-    extraWeightCharge: number;
-    shipping: number;
-    grandTotal: number;
-  } | null>(null);
-  const [isLoadingShipping, setIsLoadingShipping] = useState(false);
+  // Delivery or store pickup; the server prices the choice and says which options this cart allows
+  const [fulfillment, setFulfillment] = useState<Fulfillment>({ method: "delivery" });
+  const selectedState: string | undefined = addresses.find(a => a.id === selectedAddressId)?.fullAddress?.state;
+  const { quote, quoteError, errorOptions, isLoading: isLoadingShipping } =
+    useQuote(cartItems, fulfillment, fulfillment.method === "delivery" ? selectedState : undefined);
 
-  useEffect(() => {
-    const fetchShippingDetails = async () => {
-      if (cartItems.length === 0) {
-        setShippingDetails(null);
-        return;
-      }
-      setIsLoadingShipping(true);
-      try {
-        const apiURL = getAPIURL();
-        const items = cartItems.map(item => ({
-          product: item.id,
-          variantId: item.variantId,
-          quantity: item.quantity,
-          size: item.size === "Standard" ? undefined : item.size
-        }));
-        const res = await axios.post(`${apiURL}/payments/calculate-shipping`, { items });
-        if (res.data.success) {
-          setShippingDetails(res.data.data);
-        } else {
-          setShippingDetails(calculateLocalShipping(cartItems));
-        }
-      } catch (err) {
-        console.error("Failed to calculate shipping from backend, falling back to local calculation", err);
-        setShippingDetails(calculateLocalShipping(cartItems));
-      } finally {
-        setIsLoadingShipping(false);
-      }
-    };
-    fetchShippingDetails();
-  }, [cartItems]);
-
-  const subtotal = shippingDetails ? shippingDetails.subtotal : cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const shipping = shippingDetails ? shippingDetails.shipping : 0;
-  const total = shippingDetails ? shippingDetails.grandTotal : subtotal;
+  const options = quote?.options ?? errorOptions ?? [];
+  const deliveryOptions = options.filter(o => o.fulfillment === "delivery" && (o.offered || o.reason));
+  const pickupOption = options.find(o => o.fulfillment === "pickup" && o.offered);
+  const isPickup = fulfillment.method === "pickup";
+  const subtotal = quote ? quote.subtotal : money(cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0));
+  const total = quote ? quote.grandTotal : null;
 
   // Check login status on mount
   useEffect(() => {
@@ -273,13 +243,19 @@ export default function CheckoutPage() {
   };
 
   const handleCheckout = async () => {
-    // Must resolve to a real address with the fields the order needs, before any payment call
+    // Home delivery must resolve to a real address with the fields the order needs, before any payment call
     const selectedAddress = addresses.find(a => a.id === selectedAddressId);
     const addr = selectedAddress?.fullAddress;
-    if (!addr?.city?.trim() || !addr?.state?.trim() || !addr?.zipCode?.trim()) {
+    if (!isPickup && (!addr?.city?.trim() || !addr?.state?.trim() || !addr?.zipCode?.trim())) {
       showToast("Please select or add a shipping address", "warning");
       return;
     }
+    if (!quote || isLoadingShipping) {
+      showToast(quoteError || "Please wait while we calculate your charges.", "warning");
+      return;
+    }
+    // Exactly what the server priced: the payment amount and saved order use the same choice
+    const orderFulfillment: Fulfillment = { method: quote.fulfillmentMethod, ...(quote.shippingMethod ? { shippingMethod: quote.shippingMethod } : {}) };
 
     if (cartItems.length === 0) {
       showToast("Your cart is empty.", "warning");
@@ -303,12 +279,12 @@ export default function CheckoutPage() {
         quantity: item.quantity,
         price: item.price,
         size: item.size,
-        image: item.image,
+        image: fixCloudinaryCloud(item.image),
         subtotal: item.price * item.quantity,
       }));
 
       // Use the stored fields directly (splitting the display string broke when street was empty or had commas)
-      const orderShippingAddress = {
+      const orderShippingAddress = isPickup ? undefined : {
         street: addr.street || '',
         city: addr.city,
         state: addr.state,
@@ -321,6 +297,7 @@ export default function CheckoutPage() {
         total,
         items: orderItems,
         shippingAddress: orderShippingAddress,
+        fulfillment: orderFulfillment,
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -341,9 +318,7 @@ export default function CheckoutPage() {
           // Pass order details so backend saves to DB
           items: orderItems,
           shippingAddress: orderShippingAddress,
-          subtotal,
-          shippingFee: shipping,
-          total,
+          fulfillment: orderFulfillment,
         }, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -382,9 +357,7 @@ export default function CheckoutPage() {
               // Pass order details so backend saves to DB
               items: orderItems,
               shippingAddress: orderShippingAddress,
-              subtotal,
-              shippingFee: shipping,
-              total,
+              fulfillment: orderFulfillment,
             }, {
               headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -473,11 +446,66 @@ export default function CheckoutPage() {
           {/* ── Left Column (Steps) ── */}
           <div className="lg:col-span-8 flex flex-col gap-12">
 
-            {/* Step 1: SHIPPING DESTINATION */}
+            {/* Step 1: HOW TO RECEIVE THE ORDER */}
+            <div className="flex flex-col gap-4">
+              <h2 className="font-sans font-bold text-xl text-[#0A192F]">How would you like to receive your order?</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className={`border rounded-2xl p-5 bg-white ${!isPickup ? "border-[#0A192F] ring-1 ring-[#0A192F]" : "border-slate-200"}`}>
+                  <button type="button" onClick={() => setFulfillment({ method: "delivery" })} className="w-full flex items-center gap-3 text-left">
+                    <Truck size={20} className="text-slate-600" />
+                    <span className="font-bold text-slate-900">Home delivery</span>
+                  </button>
+                  {!isPickup && deliveryOptions.length > 0 && (
+                    <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Delivery method">
+                      {deliveryOptions.map((o) => {
+                        const checked = quote?.fulfillmentMethod === "delivery" ? quote.shippingMethod === o.shippingMethod : fulfillment.shippingMethod === o.shippingMethod;
+                        return (
+                          <label key={o.shippingMethod} className={`flex items-start gap-3 p-3 rounded-xl border ${o.allowed ? "cursor-pointer border-slate-200" : "opacity-60 cursor-not-allowed border-slate-100"}`}>
+                            <input type="radio" name="shippingMethod" className="mt-1" disabled={!o.allowed} checked={checked}
+                              onChange={() => setFulfillment({ method: "delivery", shippingMethod: o.shippingMethod! })} />
+                            <span className="text-sm">
+                              <span className="block font-semibold text-slate-900">{METHOD_LABEL[o.shippingMethod!]}</span>
+                              {o.eta && <span className="block text-slate-500">{o.eta}</span>}
+                              {!o.allowed && <span className="block text-amber-700">{o.reason}</span>}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                {pickupOption && (
+                  <button type="button" disabled={!pickupOption.allowed} onClick={() => setFulfillment({ method: "pickup" })}
+                    className={`text-left border rounded-2xl p-5 bg-white disabled:opacity-60 ${isPickup ? "border-[#0A192F] ring-1 ring-[#0A192F]" : "border-slate-200"}`}>
+                    <span className="flex items-center gap-3">
+                      <Store size={20} className="text-slate-600" />
+                      <span className="font-bold text-slate-900">Store pickup</span>
+                    </span>
+                    <span className="block text-sm text-slate-500 mt-2">Collect in store. Pay now online; no delivery fee.</span>
+                    {pickupOption.eta && <span className="block text-sm text-slate-500">{pickupOption.eta}</span>}
+                  </button>
+                )}
+              </div>
+              {isPickup && quote?.pickupDetails && (
+                <div className="border border-slate-200 rounded-2xl p-5 bg-white text-sm text-slate-600 space-y-1">
+                  <p className="font-bold text-slate-900">{quote.pickupDetails.storeName}</p>
+                  <p className="whitespace-pre-line">{quote.pickupDetails.address}</p>
+                  {quote.pickupDetails.openingHours && <p>Hours: {quote.pickupDetails.openingHours}</p>}
+                  {quote.pickupDetails.phone && <p>Phone: {quote.pickupDetails.phone}</p>}
+                  {quote.pickupDetails.instructions && <p className="text-slate-500">{quote.pickupDetails.instructions}</p>}
+                </div>
+              )}
+              {quoteError && !isLoadingShipping && (
+                <p className="text-sm text-red-600" role="alert">{quoteError}</p>
+              )}
+            </div>
+
+            {/* Step 2: SHIPPING DESTINATION (home delivery only) */}
+            {!isPickup && (
             <div className="flex flex-col gap-6">
               <div className="flex items-start gap-4">
                 <div className="w-8 h-8 rounded-full bg-[#0A192F] text-white flex items-center justify-center text-sm font-bold flex-shrink-0 mt-1">
-                  1
+                  2
                 </div>
                 <h2 className="font-sans font-black text-4xl lg:text-5xl text-[#0A192F] uppercase tracking-tight text-left w-full leading-[1.1]">
                   Shipping<br />Destination
@@ -524,6 +552,8 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            )}
+
             <div className="h-px bg-slate-200 w-full ml-0 sm:ml-12" />
 
           </div>
@@ -541,7 +571,7 @@ export default function CheckoutPage() {
                   <div key={`${item.id}-${item.size || 'default'}-${index}`} className="flex gap-4">
                     <div className="relative w-16 h-20 bg-slate-50 rounded-lg overflow-hidden flex-shrink-0 border border-slate-100">
                       <Image
-                        src={item.image}
+                        src={getImageUrl(item.image)}
                         alt={item.name}
                         fill
                         sizes="64px"
@@ -563,7 +593,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="font-sans font-bold text-sm text-slate-900">
-                        {item.currency}{item.price * item.quantity}
+                        {item.currency}{pricedLine(quote, item, index).lineTotal}
                       </p>
                     </div>
                   </div>
@@ -576,33 +606,58 @@ export default function CheckoutPage() {
                 <span>Subtotal</span>
                 <span className="text-slate-900">₹{subtotal}</span>
               </div>
-              <div className="flex justify-between items-center text-slate-500 font-sans text-sm">
-                <span>Shipping</span>
-                <span>
-                  {shipping === 0 ? (
-                    <span className="text-green-600 font-bold tracking-wide">Free</span>
-                  ) : (
-                    <span>₹{shipping}</span>
-                  )}
-                </span>
-              </div>
-              {shippingDetails && shippingDetails.totalWeight > 0 && (
-                <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
-                  <span>Total Weight</span>
-                  <span>{shippingDetails.totalWeight.toFixed(2)} kg</span>
+              {quote && quote.discount > 0 && (
+                <div className="flex justify-between items-center text-slate-500 font-sans text-sm">
+                  <span>Discount</span>
+                  <span className="text-green-600">-₹{quote.discount}</span>
                 </div>
               )}
-              {shippingDetails && shippingDetails.extraWeightCharge > 0 && (
+              <div className="flex justify-between items-center text-slate-500 font-sans text-sm">
+                <span>{isPickup ? "Store pickup" : "Shipping"}{quote?.fulfillmentMethod === "delivery" && quote.shippingMethod ? ` · ${METHOD_LABEL[quote.shippingMethod]}` : ""}</span>
+                <span>
+                  {isLoadingShipping || !quote ? <span className="text-slate-400">{isLoadingShipping ? "Calculating…" : "—"}</span>
+                    : (isPickup ? quote.pickupFee : quote.shipping) === 0 ? <span className="text-green-600 font-bold tracking-wide">Free</span>
+                    : <span>{rupees(isPickup ? quote.pickupFee : quote.shipping)}</span>}
+                </span>
+              </div>
+              {quote && quote.specialPackagingFee > 0 && (
+                <div className="flex justify-between items-center text-slate-500 font-sans text-sm">
+                  <span>Special packaging (temperature-sensitive items)</span>
+                  <span>₹{quote.specialPackagingFee}</span>
+                </div>
+              )}
+              {quote?.tax.enabled && (
+                <div className="flex justify-between items-center text-slate-500 font-sans text-sm">
+                  <span>{quote.tax.pricesIncludeTax ? "GST (included in prices)" : "GST"}</span>
+                  <span>₹{quote.tax.taxAmount}</span>
+                </div>
+              )}
+              {quote?.tax.enabled && (
+                <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
+                  <span>Taxable value</span>
+                  <span>₹{quote.tax.taxableValue}</span>
+                </div>
+              )}
+              {quote && quote.totalWeight > 0 && (
+                <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
+                  <span>Total Weight</span>
+                  <span>{quote.totalWeight.toFixed(2)} kg</span>
+                </div>
+              )}
+              {quote && quote.extraWeightCharge > 0 && (
                 <>
                   <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
-                    <span>Base Shipping (first 1kg)</span>
-                    <span>₹{shippingDetails.baseShipping}</span>
+                    <span>Base Shipping</span>
+                    <span>₹{quote.baseShipping}</span>
                   </div>
                   <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
                     <span>Extra Weight Charge</span>
-                    <span>₹{shippingDetails.extraWeightCharge}</span>
+                    <span>₹{quote.extraWeightCharge}</span>
                   </div>
                 </>
+              )}
+              {quote?.specialPackaging.note && (
+                <p className="text-xs text-slate-500 bg-slate-50 rounded-lg p-3">{quote.specialPackaging.note}</p>
               )}
             </div>
 
@@ -610,14 +665,15 @@ export default function CheckoutPage() {
 
             <div className="flex justify-between items-end mb-8">
               <span className="font-sans font-bold text-lg text-slate-900">Total</span>
-              <span className="font-sans font-black text-2xl text-slate-900">₹{total}</span>
+              <span className="font-sans font-black text-2xl text-slate-900">{total === null ? "—" : `₹${total}`}</span>
             </div>
 
             <button
               onClick={handleCheckout}
-              className="w-full bg-[#111] text-white font-bold text-base py-4 sm:py-5 rounded-xl hover:bg-black transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 mb-4"
+              disabled={!quote || isLoadingShipping}
+              className="w-full bg-[#111] text-white font-bold text-base py-4 sm:py-5 rounded-xl hover:bg-black transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 mb-4 disabled:bg-slate-400 disabled:cursor-not-allowed"
             >
-              Secure Checkout
+              {isPickup ? "Pay Now & Collect in Store" : "Secure Checkout"}
             </button>
 
             <div className="flex items-center justify-center gap-2 text-slate-400">

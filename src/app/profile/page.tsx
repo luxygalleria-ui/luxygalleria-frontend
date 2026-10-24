@@ -6,7 +6,7 @@ import axios from "axios";
 import { User, Package, MapPin, LogOut, X } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
 import { useCart } from "../../context/CartContext";
-import { getImageUrl, handleImageError } from "../../lib/imageUtils";
+import { fixCloudinaryCloud, getImageUrl, handleImageError } from "../../lib/imageUtils";
 
 interface UserProfile {
   name: string;
@@ -297,7 +297,7 @@ export default function ProfilePage() {
           <div className="p-8 flex flex-col items-center border-b border-slate-100">
             {user.avatar ? (
               <img 
-                src={user.avatar} 
+                src={fixCloudinaryCloud(user.avatar)} 
                 alt={user.name} 
                 className="w-24 h-24 rounded-[32px] object-cover mb-4 shadow-lg shadow-[#8B5E34]/20"
                 referrerPolicy="no-referrer"
@@ -521,13 +521,24 @@ export default function ProfilePage() {
 
                           <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
-                              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Delivery Address</p>
-                              <p className="text-xs text-slate-600 leading-relaxed">
-                                {order.shippingAddress?.street ? `${order.shippingAddress.street}, ` : ''}
-                                {order.shippingAddress?.city ? `${order.shippingAddress.city}, ` : ''}
-                                {order.shippingAddress?.state ? `${order.shippingAddress.state} ` : ''}
-                                {order.shippingAddress?.zipCode || ''}
-                              </p>
+                              {order.fulfillmentMethod === 'pickup' ? (
+                                <>
+                                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Store Pickup</p>
+                                  <p className="text-xs text-slate-600 leading-relaxed">
+                                    {order.pickupDetails?.storeName}{order.pickupDetails?.address ? `, ${order.pickupDetails.address}` : ''}
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Delivery Address</p>
+                                  <p className="text-xs text-slate-600 leading-relaxed">
+                                    {order.shippingAddress?.street ? `${order.shippingAddress.street}, ` : ''}
+                                    {order.shippingAddress?.city ? `${order.shippingAddress.city}, ` : ''}
+                                    {order.shippingAddress?.state ? `${order.shippingAddress.state} ` : ''}
+                                    {order.shippingAddress?.zipCode || ''}
+                                  </p>
+                                </>
+                              )}
                             </div>
                             <div className="w-full sm:w-64 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col gap-2">
                               <div className="flex justify-between items-center text-xs text-slate-500 font-sans">
@@ -535,11 +546,25 @@ export default function ProfilePage() {
                                 <span className="font-semibold text-slate-700">₹{order.subtotal !== undefined ? order.subtotal : (order.total - (order.shippingFee || 0) + (order.discount || 0))}</span>
                               </div>
                               <div className="flex justify-between items-center text-xs text-slate-500 font-sans">
-                                <span>Shipping Fee</span>
+                                <span>{order.fulfillmentMethod === 'pickup' ? 'Store Pickup' : 'Shipping Fee'}</span>
                                 <span className="font-semibold text-slate-700">
-                                  {order.shippingFee !== undefined ? (order.shippingFee > 0 ? `₹${order.shippingFee}` : 'Free') : 'Free'}
+                                  {order.fulfillmentMethod === 'pickup'
+                                    ? (order.pickupFee > 0 ? `₹${order.pickupFee}` : 'Free')
+                                    : order.shippingFee !== undefined ? (order.shippingFee > 0 ? `₹${order.shippingFee}` : 'Free') : 'Free'}
                                 </span>
                               </div>
+                              {order.specialPackagingFee > 0 && (
+                                <div className="flex justify-between items-center text-xs text-slate-500 font-sans">
+                                  <span>Special Packaging</span>
+                                  <span className="font-semibold text-slate-700">₹{order.specialPackagingFee}</span>
+                                </div>
+                              )}
+                              {order.tax?.enabled && (
+                                <div className="flex justify-between items-center text-xs text-slate-500 font-sans">
+                                  <span>{order.tax.pricesIncludeTax ? 'GST (included)' : 'GST'}</span>
+                                  <span className="font-semibold text-slate-700">₹{order.tax.taxAmount}</span>
+                                </div>
+                              )}
                               {order.discount > 0 && (
                                 <div className="flex justify-between items-center text-xs text-slate-500 font-sans">
                                   <span>Discount</span>

@@ -11,6 +11,7 @@ import {
 import { useToast } from "../../../context/ToastContext";
 import CartAnimation from "../../../components/CartAnimation";
 import { useCart, parseWeightFromVolume } from "../../../context/CartContext";
+import TaxLabel from "../../../components/common/TaxLabel";
 import { getImageUrl, getPlaceholderUrl } from "../../../lib/imageUtils";
 import ResilientImage from "../../../components/common/ResilientImage";
 
@@ -422,6 +423,7 @@ export default function ProductDetailPage() {
                   src={getImageUrl(selectedVariant.image)}
                   alt={`${product.name} - ${selectedVariant.flavor}`}
                   fill
+                  sizes="(max-width: 1024px) 100vw, 600px"
                   className="absolute inset-0 w-full h-full object-contain"
                 />
               ) : (
@@ -431,7 +433,10 @@ export default function ProductDetailPage() {
                     src={src}
                     alt={`${product.name} view ${i + 1}`}
                     fill
+                    sizes="(max-width: 1024px) 100vw, 600px"
                     loading={i === 0 ? "eager" : "lazy"}
+                    // The first gallery image is this page's LCP element; the rest stay lazy
+                    fetchPriority={i === 0 ? "high" : "auto"}
                     className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${i === activeImage ? "opacity-100" : "opacity-0"}`}
                   />
                 ))
@@ -457,6 +462,7 @@ export default function ProductDetailPage() {
                       src={src}
                       alt={`Thumbnail ${i + 1}`}
                       fill
+                      sizes="96px"
                       className="w-full h-full object-contain"
                     />
                   </button>
@@ -519,6 +525,7 @@ export default function ProductDetailPage() {
                 </span>
               )}
             </div>
+            <TaxLabel className="block text-xs text-slate-500 mb-2" />
             {discount > 0 && (
               <p className="font-bold text-xs uppercase tracking-wider text-red-500 mb-6">
                 {product.dealBadge || `${discount}% OFF`} — You save {product.currency}{variantActualPrice - selectedPrice}

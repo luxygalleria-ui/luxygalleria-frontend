@@ -3,6 +3,14 @@
  * Handles image URL construction with proper backend path resolution
  */
 
+// ponytail: the Cloudinary cloud was renamed dlysz5wmo -> luxygalleria-staging; every catalogue asset was verified under the
+// new name (23 Oct 2026). Stored URLs are fixed by `npm run migrate:cloudinary-cloud` (luxy-backend); this keeps references
+// it does not touch (order history, avatars, saved carts) loading. Remove once nothing stores the old name.
+const OLD_CLOUDINARY_PREFIX = /^(https?:\/\/res\.cloudinary\.com\/)dlysz5wmo\//;
+
+/** Rewrites only the exact old Cloudinary cloud prefix; path, version, transformations and query string are unchanged. */
+export const fixCloudinaryCloud = (url: string): string => url.replace(OLD_CLOUDINARY_PREFIX, '$1luxygalleria-staging/');
+
 /**
  * Get full image URL from backend path or remote URL
  * @param imagePath - Image path or URL from API (e.g., "/uploads/image.jpg" or "https://...")
@@ -16,7 +24,7 @@ export const getImageUrl = (imagePath: string | undefined | null): string => {
 
   // Already a full URL (http/https)
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    return imagePath;
+    return fixCloudinaryCloud(imagePath);
   }
 
   // Backend uploads path
@@ -38,6 +46,11 @@ export const getImageUrl = (imagePath: string | undefined | null): string => {
     return imagePath;
   }
 
+  // Relative asset paths missing leading slash
+  if (/^(products|images|social|uploads)\//i.test(imagePath)) {
+    return getImageUrl(`/${imagePath}`);
+  }
+
   // Fallback to placeholder for unrecognized formats
   return getPlaceholderUrl('No image');
 };
@@ -49,6 +62,11 @@ export const getImageUrl = (imagePath: string | undefined | null): string => {
  * @param message - Optional message to display
  * @returns Placeholder image data URI
  */
+/** Development only: name the image that failed, so a fallback never hides a broken URL. Image URLs are public. */
+export const reportImageError = (src: unknown): void => {
+  if (process.env.NODE_ENV !== 'production') console.warn(`[image] failed to load: ${String(src)}`);
+};
+
 export const getPlaceholderUrl = (message: string = 'No image'): string => {
   const label = (message || 'No image').replace(/[<>&]/g, ' ').slice(0, 40);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">

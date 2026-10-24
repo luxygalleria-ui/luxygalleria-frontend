@@ -2,7 +2,7 @@
 
 import Image, { type ImageProps } from "next/image";
 import { useEffect, useState } from "react";
-import { getPlaceholderUrl } from "../../lib/imageUtils";
+import { getPlaceholderUrl, reportImageError } from "../../lib/imageUtils";
 
 const IMAGE_TIMEOUT_MS = 12000;
 
@@ -36,6 +36,7 @@ function ImageWithFallback({ onError, onLoad, ...props }: ImageProps) {
       }}
       onError={(event) => {
         onError?.(event);
+        if (!failed) reportImageError(props.src);
         if (!failed) setFailed(true);
       }}
     />

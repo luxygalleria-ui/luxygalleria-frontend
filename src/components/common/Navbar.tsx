@@ -8,7 +8,7 @@ import { Search, User, ShoppingBag, X, Menu, LogOut } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../../context/CartContext";
-import { getImageUrl, handleImageError } from "../../lib/imageUtils";
+import { fixCloudinaryCloud, getImageUrl, handleImageError } from "../../lib/imageUtils";
 import DynamicBanner from "./DynamicBanner";
 import { getAPIURL } from "../../lib/apiClient";
 
@@ -154,7 +154,7 @@ export default function Navbar() {
           >
             {user && user.avatar ? (
               <img
-                src={user.avatar}
+                src={fixCloudinaryCloud(user.avatar)}
                 alt={user.name}
                 className="w-6 h-6 rounded-full object-cover border border-slate-200"
                 referrerPolicy="no-referrer"
@@ -298,7 +298,7 @@ export default function Navbar() {
                   >
                     {user && user.avatar ? (
                       <img
-                        src={user.avatar}
+                        src={fixCloudinaryCloud(user.avatar)}
                         alt={user.name}
                         className="w-8 h-8 rounded-full object-cover border border-slate-200"
                         referrerPolicy="no-referrer"
@@ -454,7 +454,7 @@ export default function Navbar() {
                     >
                       {user && user.avatar ? (
                         <img
-                          src={user.avatar}
+                          src={fixCloudinaryCloud(user.avatar)}
                           alt={user.name}
                           className="w-8 h-8 rounded-full object-cover border border-slate-200"
                           referrerPolicy="no-referrer"

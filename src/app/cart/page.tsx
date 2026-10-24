@@ -1,62 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Minus, Plus, ShoppingBag, Trash2, ArrowRight } from "lucide-react";
-import axios from "axios";
 
-import { useCart, calculateLocalShipping } from "../../context/CartContext";
-import { getAPIURL } from "../../lib/apiClient";
+import { useCart } from "../../context/CartContext";
+import { useQuote, rupees, money, pricedLine } from "../../lib/checkoutQuote";
+import { getImageUrl } from '../../lib/imageUtils';
 
 // ─── Page Component ───────────────────────────────────────────────────────────
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeItem } = useCart();
-  const [shippingDetails, setShippingDetails] = useState<{
-    subtotal: number;
-    totalWeight: number;
-    baseShipping: number;
-    extraWeightCharge: number;
-    shipping: number;
-    grandTotal: number;
-  } | null>(null);
-  const [isLoadingShipping, setIsLoadingShipping] = useState(false);
+  // Estimate from the server (destination not known yet); never a locally computed charge
+  const { quote, quoteError, isLoading: isLoadingShipping } = useQuote(cartItems);
 
-  useEffect(() => {
-    const fetchShippingDetails = async () => {
-      if (cartItems.length === 0) {
-        setShippingDetails(null);
-        return;
-      }
-      setIsLoadingShipping(true);
-      try {
-        const apiURL = getAPIURL();
-        const items = cartItems.map(item => ({
-          product: item.id,
-          variantId: item.variantId,
-          quantity: item.quantity,
-          size: item.size === "Standard" ? undefined : item.size
-        }));
-        const res = await axios.post(`${apiURL}/payments/calculate-shipping`, { items });
-        if (res.data.success) {
-          setShippingDetails(res.data.data);
-        } else {
-          setShippingDetails(calculateLocalShipping(cartItems));
-        }
-      } catch (err) {
-        console.error("Failed to calculate shipping from backend, falling back to local calculation", err);
-        setShippingDetails(calculateLocalShipping(cartItems));
-      } finally {
-        setIsLoadingShipping(false);
-      }
-    };
-    fetchShippingDetails();
-  }, [cartItems]);
-
-  const subtotal = shippingDetails ? shippingDetails.subtotal : cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const shippingFee = shippingDetails ? shippingDetails.shipping : 0;
-  const total = shippingDetails ? shippingDetails.grandTotal : subtotal;
+  const subtotal = quote ? quote.subtotal : money(cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0));
+  const MAX_QTY_PER_LINE = 100; // the server's per-line limit
+  const total = quote ? quote.grandTotal : subtotal;
 
   return (
     <div className="bg-white pt-24 pb-16">
@@ -116,7 +77,7 @@ export default function CartPage() {
                   {/* Image */}
                   <div className="relative w-full sm:w-32 aspect-square rounded-xl overflow-hidden bg-slate-50 flex-shrink-0 border border-slate-100">
                     <Image
-                      src={item.image}
+                      src={getImageUrl(item.image)}
                       alt={item.name}
                       fill
                       sizes="(max-width: 640px) 100vw, 128px"
@@ -141,10 +102,10 @@ export default function CartPage() {
                       {/* Price & Subtotal */}
                       <div className="flex flex-col gap-0.5">
                         <p className="font-sans font-bold text-xl text-slate-900">
-                          {item.currency}{item.price * item.quantity}
+                          {item.currency}{pricedLine(quote, item, index).lineTotal}
                         </p>
                         <p className="text-[12px] text-slate-400 font-sans">
-                          {item.currency}{item.price} each
+                          {item.currency}{pricedLine(quote, item, index).unitPrice} each
                         </p>
                       </div>
 
@@ -164,6 +125,8 @@ export default function CartPage() {
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1, item.variantId, item.size)}
                           aria-label="Increase quantity"
+                          // Stop at the server's stock figure (from the quote) and per-line limit instead of failing later
+                          disabled={item.quantity >= Math.min(pricedLine(quote, item, index).stock ?? MAX_QTY_PER_LINE, MAX_QTY_PER_LINE)}
                           className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
                         >
                           <Plus size={14} />
@@ -184,40 +147,51 @@ export default function CartPage() {
                   <span>Subtotal</span>
                   <span className="font-semibold text-slate-900">₹{subtotal}</span>
                 </div>
-                <div className="flex justify-between items-center text-slate-600 font-sans">
-                  <span>Shipping</span>
-                  <span className="font-semibold text-slate-900">
-                    {shippingFee === 0 ? (
-                      <span className="text-green-600 uppercase text-xs font-bold tracking-wider">Free</span>
-                    ) : (
-                      <span>₹{shippingFee}</span>
+                {quote ? (
+                  <>
+                    <div className="flex justify-between items-center text-slate-600 font-sans">
+                      <span>{quote.fulfillmentMethod === "pickup" ? "Store pickup" : "Shipping (estimate)"}</span>
+                      <span className="font-semibold text-slate-900">
+                        {(quote.fulfillmentMethod === "pickup" ? quote.pickupFee : quote.shipping) === 0
+                          ? <span className="text-green-600 uppercase text-xs font-bold tracking-wider">Free</span>
+                          : <span>{rupees(quote.fulfillmentMethod === "pickup" ? quote.pickupFee : quote.shipping)}</span>}
+                      </span>
+                    </div>
+                    {quote.specialPackagingFee > 0 && (
+                      <div className="flex justify-between items-center text-slate-600 font-sans">
+                        <span>Special packaging</span>
+                        <span className="font-semibold text-slate-900">₹{quote.specialPackagingFee}</span>
+                      </div>
                     )}
-                  </span>
-                </div>
-                {shippingDetails && shippingDetails.totalWeight > 0 && (
-                  <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
-                    <span>Total Weight</span>
-                    <span>{shippingDetails.totalWeight.toFixed(2)} kg</span>
+                    {quote.tax.enabled && quote.tax.taxAmount > 0 && (
+                      <div className="flex justify-between items-center text-slate-500 font-sans text-sm">
+                        <span>{quote.tax.pricesIncludeTax ? "GST (included)" : "GST"}</span>
+                        <span>₹{quote.tax.taxAmount}</span>
+                      </div>
+                    )}
+                    {quote.totalWeight > 0 && (
+                      <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
+                        <span>Total Weight</span>
+                        <span>{quote.totalWeight.toFixed(2)} kg</span>
+                      </div>
+                    )}
+                    {quote.fulfillmentMethod === "delivery" && (
+                      <p className="text-xs text-slate-400">Final delivery charge depends on your address and delivery option at checkout.</p>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex justify-between items-center text-slate-600 font-sans">
+                    <span>Shipping</span>
+                    <span className="text-sm text-slate-500">{isLoadingShipping ? "Calculating…" : "Calculated at checkout"}</span>
                   </div>
                 )}
-                {shippingDetails && shippingDetails.extraWeightCharge > 0 && (
-                  <>
-                    <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
-                      <span>Base Shipping (first 1kg)</span>
-                      <span>₹{shippingDetails.baseShipping}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
-                      <span>Extra Weight Charge</span>
-                      <span>₹{shippingDetails.extraWeightCharge}</span>
-                    </div>
-                  </>
-                )}
+                {quoteError && !isLoadingShipping && <p className="text-xs text-amber-700">{quoteError}</p>}
               </div>
 
               <div className="h-px bg-slate-200 mb-6" />
 
               <div className="flex justify-between items-end mb-8">
-                <span className="font-sans font-bold text-lg text-slate-900">Total</span>
+                <span className="font-sans font-bold text-lg text-slate-900">{quote ? "Estimated total" : "Subtotal"}</span>
                 <span className="font-sans font-bold text-3xl text-slate-900">₹{total}</span>
               </div>
 

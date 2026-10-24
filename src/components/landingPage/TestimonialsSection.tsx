@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Star } from "lucide-react";
 import axios from "axios";
+import { getImageUrl } from '../../lib/imageUtils';
 
 interface Testimonial {
   id: string;
@@ -59,7 +60,7 @@ function TestimonialCard({ testimonial, isVisible, index }: { testimonial: Testi
         {/* Avatar */}
         {testimonial.imageUrl ? (
           <img
-            src={testimonial.imageUrl}
+            src={getImageUrl(testimonial.imageUrl)}
             alt={testimonial.name}
             className="w-12 h-12 rounded-full object-cover flex-shrink-0"
           />
