@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import ResilientImage from "../../components/common/ResilientImage";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Check, ShieldCheck, MapPin, X, Lock, ArrowRight, Store, Truck } from "lucide-react";
@@ -570,7 +570,7 @@ export default function CheckoutPage() {
                 cartItems.map((item, index) => (
                   <div key={`${item.id}-${item.size || 'default'}-${index}`} className="flex gap-4">
                     <div className="relative w-16 h-20 bg-slate-50 rounded-lg overflow-hidden flex-shrink-0 border border-slate-100">
-                      <Image
+                      <ResilientImage
                         src={getImageUrl(item.image)}
                         alt={item.name}
                         fill

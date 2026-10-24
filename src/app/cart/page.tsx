@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import ResilientImage from "../../components/common/ResilientImage";
 import Link from "next/link";
 import { ChevronRight, Minus, Plus, ShoppingBag, Trash2, ArrowRight } from "lucide-react";
 
@@ -76,7 +76,7 @@ export default function CartPage() {
 
                   {/* Image */}
                   <div className="relative w-full sm:w-32 aspect-square rounded-xl overflow-hidden bg-slate-50 flex-shrink-0 border border-slate-100">
-                    <Image
+                    <ResilientImage
                       src={getImageUrl(item.image)}
                       alt={item.name}
                       fill
