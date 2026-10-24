@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import axios from "axios";
+import { useCart } from "../../context/CartContext";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,6 +47,7 @@ export default function RegisterPage() {
   });
 
   const router = useRouter();
+  const { syncCartAfterLogin } = useCart();
   const [apiError, setApiError] = useState<string | null>(null);
 
   const onSubmit = async (data: RegisterValues) => {
@@ -70,6 +72,7 @@ export default function RegisterPage() {
       // Direct signup — account is created and logged in immediately
       if (response.data.data) {
         localStorage.setItem("luxygalleria_user", JSON.stringify(response.data.data));
+        await syncCartAfterLogin(); // carry the signed-out cart into the new account
       }
       router.push("/");
     } catch (err: any) {

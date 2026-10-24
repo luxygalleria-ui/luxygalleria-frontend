@@ -4,6 +4,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useToast } from "../../context/ToastContext";
+import { useCart } from "../../context/CartContext";
 
 interface GoogleAuthButtonProps {
   mode?: "signin" | "register";
@@ -19,6 +20,7 @@ function GoogleAuthButtonConfigured({ mode = "signin" }: GoogleAuthButtonProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { syncCartAfterLogin } = useCart();
   const { showToast } = useToast();
 
   // Dynamically import useGoogleLogin only when configured
@@ -53,6 +55,7 @@ function GoogleAuthButtonConfigured({ mode = "signin" }: GoogleAuthButtonProps) 
 
         if (res.data.data) {
           localStorage.setItem("luxygalleria_user", JSON.stringify(res.data.data));
+          await syncCartAfterLogin(); // carry the signed-out cart into the account
           showToast(
             mode === "signin"
               ? "Signed in with Google successfully!"

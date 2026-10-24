@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Eye, EyeOff, ShieldCheck, UserPlus, ArrowRight } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
+import { useCart } from "../../context/CartContext";
 import GoogleAuthButton from "../../components/auth/GoogleAuthButton";
 import { getAPIURL } from "../../lib/apiClient";
 
@@ -32,6 +33,7 @@ export default function SignInPage() {
   });
 
   const router = useRouter();
+  const { syncCartAfterLogin } = useCart();
   const { showToast } = useToast();
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -47,6 +49,7 @@ export default function SignInPage() {
       // Success! Save user and redirect to home page
       if (res.data.data) {
         localStorage.setItem('luxygalleria_user', JSON.stringify(res.data.data));
+        await syncCartAfterLogin(); // carry the signed-out cart into the account
       }
       showToast("Signed in successfully!", "success");
       router.push("/");
