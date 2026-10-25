@@ -72,8 +72,8 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
       style={{ transitionDelay: `${index * 100}ms` }}
     >
       <Link href={`/products/${product.id}`} className="flex flex-col flex-grow outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 rounded-2xl overflow-hidden">
-        {/* Image Area */}
-        <div className="relative overflow-hidden aspect-[3/4] bg-slate-50 flex-shrink-0">
+        {/* Image Area: square, like the product photos (mostly 1:1), so they fill it; wider packs stay whole (contain) */}
+        <div className="relative overflow-hidden aspect-square bg-slate-50 flex-shrink-0">
           {cardImages.slice(0, 2).map((img, i) => {
             const hasMultipleImages = cardImages.length > 1;
             return (
@@ -81,7 +81,7 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
                 key={`${product.id}-landing-${i}`}
                 src={getImageUrl(img)}
                 alt={`${product.name} product image ${i + 1}`}
-                className={`absolute inset-0 w-full h-full object-contain transition-all duration-500 ease-in-out group-hover:scale-105 ${hasMultipleImages
+                className={`absolute inset-0 w-full h-full object-contain object-center transition-all duration-500 ease-in-out group-hover:scale-105 ${hasMultipleImages
                   ? i === 0
                     ? "opacity-100 group-hover:opacity-0"
                     : "opacity-0 group-hover:opacity-100"
