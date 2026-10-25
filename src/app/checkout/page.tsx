@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import ResilientImage from "../../components/common/ResilientImage";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Check, ShieldCheck, MapPin, X, Lock, ArrowRight, Store, Truck } from "lucide-react";
 import { useCart } from "../../context/CartContext";
-import { useQuote, Fulfillment, METHOD_LABEL, rupees, money, pricedLine } from "../../lib/checkoutQuote";
+import { useQuote, Fulfillment, METHOD_LABEL, rupees, money, pricedLine, packagingSummary } from "../../lib/checkoutQuote";
 import { useToast } from "../../context/ToastContext";
 import { getAPIURL } from "../../lib/apiClient";
 import { fixCloudinaryCloud, getImageUrl } from '../../lib/imageUtils';
@@ -34,9 +35,16 @@ export default function CheckoutPage() {
 
   // Delivery or store pickup; the server prices the choice and says which options this cart allows
   const [fulfillment, setFulfillment] = useState<Fulfillment>({ method: "delivery" });
-  const selectedState: string | undefined = addresses.find(a => a.id === selectedAddressId)?.fullAddress?.state;
-  const { quote, quoteError, errorOptions, isLoading: isLoadingShipping } =
-    useQuote(cartItems, fulfillment, fulfillment.method === "delivery" ? selectedState : undefined);
+  const selectedAddress = addresses.find(a => a.id === selectedAddressId)?.fullAddress;
+  // Delivery is priced by destination: without a complete address there is no correct charge to show
+  const missingFields = ["city", "state", "zipCode"].filter((f) => !String(selectedAddress?.[f] ?? "").trim());
+  const addressProblem = fulfillment.method !== "delivery" ? ""
+    : !selectedAddress ? "Add or select a delivery address to see the delivery charge."
+    : missingFields.length ? `Your selected address is missing its ${missingFields.map((f) => (f === "zipCode" ? "PIN code" : f)).join(" and ")}. Add a complete address to continue.`
+    : "";
+  const { quote, quoteError, errorOptions, isLoading: isLoadingShipping, retry: retryQuote } =
+    useQuote(cartItems, fulfillment, fulfillment.method === "delivery" ? selectedAddress?.state : undefined,
+      fulfillment.method === "delivery" ? selectedAddress?.country : undefined, !addressProblem);
 
   const options = quote?.options ?? errorOptions ?? [];
   const deliveryOptions = options.filter(o => o.fulfillment === "delivery" && (o.offered || o.reason));
@@ -242,6 +250,23 @@ export default function CheckoutPage() {
     });
   };
 
+  /** Routes the customer after /payments/verify. Paid-but-not-placed outcomes never send them back to pay again. */
+  const finishVerification = async (status: number, data: { success?: boolean; code?: string } | undefined) => {
+    if (data?.success) {
+      await clearCart();
+      window.location.href = "/order-success";
+    } else if (data?.code === "PROCESSING") {
+      await clearCart(); // the order is being completed server-side (webhook/reconciliation)
+      window.location.href = "/order-failure?reason=processing";
+    } else if (data?.code === "PAID_OUT_OF_STOCK") {
+      await clearCart();
+      window.location.href = "/order-failure?reason=paid_out_of_stock";
+    } else {
+      setIsVerifyingPayment(false);
+      window.location.href = status >= 500 ? "/order-failure?reason=unconfirmed" : "/order-failure";
+    }
+  };
+
   const handleCheckout = async () => {
     // Home delivery must resolve to a real address with the fields the order needs, before any payment call
     const selectedAddress = addresses.find(a => a.id === selectedAddressId);
@@ -323,13 +348,7 @@ export default function CheckoutPage() {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (verifyRes.data.success) {
-          await clearCart();
-          window.location.href = "/order-success";
-        } else {
-          setIsVerifyingPayment(false);
-          window.location.href = "/order-failure";
-        }
+        await finishVerification(verifyRes.status, verifyRes.data);
         return;
       }
 
@@ -362,17 +381,13 @@ export default function CheckoutPage() {
               headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            if (verifyRes.data.success) {
-              await clearCart();
-              window.location.href = "/order-success";
-            } else {
-              setIsVerifyingPayment(false);
-              window.location.href = "/order-failure";
-            }
+            await finishVerification(verifyRes.status, verifyRes.data);
           } catch (err) {
             console.error(err);
-            setIsVerifyingPayment(false);
-            window.location.href = "/order-failure";
+            // Razorpay already took the payment here: a lost response must not look like a failed payment
+            const res = axios.isAxiosError(err) ? err.response : undefined;
+            if (res?.status) await finishVerification(res.status, res.data);
+            else { setIsVerifyingPayment(false); window.location.href = "/order-failure?reason=unconfirmed"; }
           }
         },
         prefill: {
@@ -575,7 +590,7 @@ export default function CheckoutPage() {
                         alt={item.name}
                         fill
                         sizes="64px"
-                        className="object-cover"
+                        className="object-contain"
                       />
                       <div className="absolute top-0 right-0 bg-[#0A192F] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-bl-lg">
                         {item.quantity}
@@ -615,14 +630,22 @@ export default function CheckoutPage() {
               <div className="flex justify-between items-center text-slate-500 font-sans text-sm">
                 <span>{isPickup ? "Store pickup" : "Shipping"}{quote?.fulfillmentMethod === "delivery" && quote.shippingMethod ? ` · ${METHOD_LABEL[quote.shippingMethod]}` : ""}</span>
                 <span>
-                  {isLoadingShipping || !quote ? <span className="text-slate-400">{isLoadingShipping ? "Calculating…" : "—"}</span>
+                  {!quote ? <span className="text-slate-400">{isLoadingShipping ? "Calculating…" : "Not available"}</span>
                     : (isPickup ? quote.pickupFee : quote.shipping) === 0 ? <span className="text-green-600 font-bold tracking-wide">Free</span>
                     : <span>{rupees(isPickup ? quote.pickupFee : quote.shipping)}</span>}
                 </span>
               </div>
+              {!quote && (addressProblem || (quoteError && !isLoadingShipping)) && (
+                <div className="text-sm bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 space-y-2" role="alert">
+                  <p>{addressProblem || quoteError}</p>
+                  {!addressProblem && (
+                    <button type="button" onClick={retryQuote} className="text-xs font-bold uppercase tracking-wider underline">Retry</button>
+                  )}
+                </div>
+              )}
               {quote && quote.specialPackagingFee > 0 && (
                 <div className="flex justify-between items-center text-slate-500 font-sans text-sm">
-                  <span>Special packaging (temperature-sensitive items)</span>
+                  <span>Chocolate &amp; temperature-sensitive packaging</span>
                   <span>₹{quote.specialPackagingFee}</span>
                 </div>
               )}
@@ -631,6 +654,9 @@ export default function CheckoutPage() {
                   <span>{quote.tax.pricesIncludeTax ? "GST (included in prices)" : "GST"}</span>
                   <span>₹{quote.tax.taxAmount}</span>
                 </div>
+              )}
+              {quote?.tax.enabled && quote.tax.missingRates.length > 0 && (
+                <p className="text-xs text-slate-500">GST breakdown not available for: {quote.tax.missingRates.join(", ")} (included in the price).</p>
               )}
               {quote?.tax.enabled && (
                 <div className="flex justify-between items-center text-slate-400 font-sans text-xs">
@@ -656,8 +682,16 @@ export default function CheckoutPage() {
                   </div>
                 </>
               )}
-              {quote?.specialPackaging.note && (
-                <p className="text-xs text-slate-500 bg-slate-50 rounded-lg p-3">{quote.specialPackaging.note}</p>
+              {quote && quote.specialPackaging.items.length > 0 && (
+                <div className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1" role="note">
+                  <p className="font-semibold">Chocolate &amp; Temperature-Sensitive Packaging</p>
+                  <p>Items: {quote.specialPackaging.items.join(", ")}{quote.specialPackaging.applied ? ` (${quote.specialPackaging.weightG} g combined)` : ""}</p>
+                  {packagingSummary(quote) && <p>{packagingSummary(quote)}</p>}
+                  {quote.specialPackaging.note && <p>{quote.specialPackaging.note}</p>}
+                  <p>
+                    See our <Link href="/refund-replacement-policy" className="underline">Refund &amp; Replacement Policy</Link> for how chocolate is handled in transit.
+                  </p>
+                </div>
               )}
             </div>
 
@@ -665,12 +699,12 @@ export default function CheckoutPage() {
 
             <div className="flex justify-between items-end mb-8">
               <span className="font-sans font-bold text-lg text-slate-900">Total</span>
-              <span className="font-sans font-black text-2xl text-slate-900">{total === null ? "—" : `₹${total}`}</span>
+              <span className="font-sans font-black text-2xl text-slate-900">{total === null ? <span className="text-base font-semibold text-slate-400">{isLoadingShipping ? "Calculating…" : "Not available"}</span> : `₹${total}`}</span>
             </div>
 
             <button
               onClick={handleCheckout}
-              disabled={!quote || isLoadingShipping}
+              disabled={!quote || isLoadingShipping || !!addressProblem}
               className="w-full bg-[#111] text-white font-bold text-base py-4 sm:py-5 rounded-xl hover:bg-black transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 mb-4 disabled:bg-slate-400 disabled:cursor-not-allowed"
             >
               {isPickup ? "Pay Now & Collect in Store" : "Secure Checkout"}

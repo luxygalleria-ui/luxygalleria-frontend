@@ -494,14 +494,14 @@ export default function ProfilePage() {
                                     <img 
                                       src={getImageUrl(item.image)} 
                                       alt={item.product?.name || 'Product variant'} 
-                                      className={`w-full h-full object-cover ${(order.orderStatus === 'delivered' || order.orderStatus === 'cancelled') ? 'grayscale' : ''}`} 
+                                      className={`w-full h-full object-contain ${(order.orderStatus === 'delivered' || order.orderStatus === 'cancelled') ? 'grayscale' : ''}`} 
                                       onError={handleImageError}
                                     />
                                   ) : item.product?.images?.[0] ? (
                                     <img 
                                       src={getImageUrl(item.product.images[0])} 
                                       alt={item.product?.name} 
-                                      className={`w-full h-full object-cover ${(order.orderStatus === 'delivered' || order.orderStatus === 'cancelled') ? 'grayscale' : ''}`} 
+                                      className={`w-full h-full object-contain ${(order.orderStatus === 'delivered' || order.orderStatus === 'cancelled') ? 'grayscale' : ''}`} 
                                       onError={handleImageError}
                                     />
                                   ) : (

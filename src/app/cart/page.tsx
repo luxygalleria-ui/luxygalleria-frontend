@@ -81,7 +81,7 @@ export default function CartPage() {
                       alt={item.name}
                       fill
                       sizes="(max-width: 640px) 100vw, 128px"
-                      className="object-cover"
+                      className="object-contain"
                     />
                   </div>
 
@@ -162,6 +162,11 @@ export default function CartPage() {
                         <span>Special packaging</span>
                         <span className="font-semibold text-slate-900">₹{quote.specialPackagingFee}</span>
                       </div>
+                    )}
+                    {quote.specialPackaging.items.length > 0 && (
+                      <p className="text-xs text-amber-800">
+                        Temperature-sensitive items: {quote.specialPackaging.items.join(", ")}. Special packaging and delivery options are confirmed at checkout.
+                      </p>
                     )}
                     {quote.tax.enabled && quote.tax.taxAmount > 0 && (
                       <div className="flex justify-between items-center text-slate-500 font-sans text-sm">
