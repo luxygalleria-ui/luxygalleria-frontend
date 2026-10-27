@@ -16,6 +16,8 @@ export interface CartItem {
   quantity: number;
   weight?: number;
   variantId?: string;
+  /** The chosen option was removed from the product: shown as unavailable, never swapped for another option. */
+  unavailable?: boolean;
 }
 
 export const parseWeightFromVolume = (volume: string): number | null => {
@@ -51,7 +53,9 @@ const fromServerCart = (lines: any[]): CartItem[] =>
   lines
     .filter((item: any) => item.product) // ensure product exists
     .map((item: any) => {
-      const variant = item.product.variants?.find((v: any) => v._id.toString() === item.variantId?.toString()) || item.product.variants?.[0] || {};
+      const variants = item.product.variants || [];
+      const chosen = item.variantId ? variants.find((v: any) => v._id.toString() === item.variantId.toString()) : variants[0];
+      const variant = chosen || {};
       return {
         id: item.product._id,
         name: item.product.name,
@@ -62,6 +66,7 @@ const fromServerCart = (lines: any[]): CartItem[] =>
         quantity: item.quantity,
         weight: variant.weight || parseWeightFromVolume(variant.volume || '') || item.product.weight || 0,
         variantId: item.variantId || variant._id?.toString() || '',
+        ...(chosen ? {} : { unavailable: true }),
       };
     });
 

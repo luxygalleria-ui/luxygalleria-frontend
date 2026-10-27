@@ -91,7 +91,12 @@ export default function CartPage() {
                       <h3 className="font-sans font-bold text-lg text-slate-900 pr-8 leading-tight mb-2">
                         {item.name}
                       </h3>
-                      {item.size && (
+                      {item.unavailable && (
+                        <p className="font-sans text-sm font-semibold text-red-600 mb-4">
+                          This option is no longer available. Please remove it from your cart.
+                        </p>
+                      )}
+                      {item.size && !item.unavailable && (
                         <p className="font-sans text-sm text-slate-500 mb-4 uppercase tracking-wider">
                           Size: <span className="font-semibold text-slate-700">{item.size}</span>
                         </p>
