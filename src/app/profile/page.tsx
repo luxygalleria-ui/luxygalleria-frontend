@@ -475,6 +475,12 @@ export default function ProfilePage() {
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Order ID</p>
                             <p className="text-sm font-bold text-slate-900">#{order._id.substring(0, 8)}</p>
                           </div>
+                          {order.trackingNumber && (
+                            <div>
+                              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Tracking Number</p>
+                              <p className="text-sm font-bold text-slate-900 break-all">{order.trackingNumber}</p>
+                            </div>
+                          )}
                           <div className="flex-1 text-right min-w-[100px]">
                             <span className={`inline-block text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider ${order.orderStatus === 'delivered' ? 'bg-green-100 text-green-700' :
                               order.orderStatus === 'cancelled' ? 'bg-red-100 text-red-700' :
