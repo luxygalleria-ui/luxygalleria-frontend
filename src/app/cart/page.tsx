@@ -170,7 +170,7 @@ export default function CartPage() {
                     )}
                     {quote.specialPackaging.items.length > 0 && (
                       <p className="text-xs text-amber-800">
-                        Temperature-sensitive items: {quote.specialPackaging.items.join(", ")}. Special packaging and delivery options are confirmed at checkout.
+                        Items needing special packaging: {quote.specialPackaging.items.join(", ")}. Special packaging and delivery options are confirmed at checkout.
                       </p>
                     )}
                     {quote.tax.enabled && quote.tax.taxAmount > 0 && (
@@ -195,7 +195,8 @@ export default function CartPage() {
                     <span className="text-sm text-slate-500">{isLoadingShipping ? "Calculating…" : "Calculated at checkout"}</span>
                   </div>
                 )}
-                {quoteError && !isLoadingShipping && <p className="text-xs text-amber-700">{quoteError}</p>}
+                {/* No address on this page: a refused estimate describes an assumed destination, not this customer (the reason is in the console) */}
+                {quoteError && !isLoadingShipping && <p className="text-xs text-amber-700">Delivery options depend on your address and are confirmed at checkout.</p>}
               </div>
 
               <div className="h-px bg-slate-200 mb-6" />

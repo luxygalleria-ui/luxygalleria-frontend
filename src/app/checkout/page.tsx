@@ -35,6 +35,11 @@ export default function CheckoutPage() {
 
   // Delivery or store pickup; the server prices the choice and says which options this cart allows
   const [fulfillment, setFulfillment] = useState<Fulfillment>({ method: "delivery" });
+  // A road/air choice belongs to one destination: a new address starts from what the server allows there
+  const selectAddress = (id: string) => {
+    setSelectedAddressId(id);
+    setFulfillment((f) => (f.method === "delivery" ? { method: "delivery" } : f));
+  };
   const selectedAddress = addresses.find(a => a.id === selectedAddressId)?.fullAddress;
   // Delivery is priced by destination: without a complete address there is no correct charge to show
   const missingFields = ["city", "state", "zipCode"].filter((f) => !String(selectedAddress?.[f] ?? "").trim());
@@ -181,7 +186,7 @@ export default function CheckoutPage() {
             }));
             setAddresses(mappedAddresses);
             if (mappedAddresses.length > 0) {
-              setSelectedAddressId(mappedAddresses[mappedAddresses.length - 1].id);
+              selectAddress(mappedAddresses[mappedAddresses.length - 1].id);
             }
             showToast("Address saved successfully!", "success");
           } else {
@@ -533,7 +538,7 @@ export default function CheckoutPage() {
                   return (
                     <button
                       key={addr.id}
-                      onClick={() => setSelectedAddressId(addr.id)}
+                      onClick={() => selectAddress(addr.id)}
                       className={`relative border rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 w-full max-w-sm bg-white text-left transition-colors ${isSelected ? "border-slate-300" : "border-slate-200 hover:border-slate-300"
                         }`}
                     >
@@ -635,7 +640,8 @@ export default function CheckoutPage() {
                     : <span>{rupees(isPickup ? quote.pickupFee : quote.shipping)}</span>}
                 </span>
               </div>
-              {!quote && (addressProblem || (quoteError && !isLoadingShipping)) && (
+              {/* A refusal that lists the options is shown once, beside the methods; this box is for address problems and failed requests (Retry) */}
+              {!quote && (addressProblem || (quoteError && !isLoadingShipping && !errorOptions)) && (
                 <div className="text-sm bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 space-y-2" role="alert">
                   <p>{addressProblem || quoteError}</p>
                   {!addressProblem && (
