@@ -3,9 +3,10 @@
 import { Fragment, useState, type ReactNode } from "react";
 import * as Accordion from "@radix-ui/react-accordion";
 import { ChevronDown } from "lucide-react";
+import { CONTACT } from "../../lib/contact";
 
 // Answer markup: blank line = new paragraph, "- " lines = bullet list,
-// **text** = bold, [[wa:number]] = WhatsApp link, [[tel:number]] = call link.
+// **text** = bold, [[wa]] = WhatsApp link, [[tel]] = call link (both use CONTACT).
 type FAQ = { q: string; a: string };
 type Category = { id: string; label: string; faqs: FAQ[] };
 
@@ -94,7 +95,7 @@ const FAQ_CATEGORIES: Category[] = [
       },
       {
         q: "Do you deliver outside Kerala?",
-        a: "Delivery availability outside Kerala depends on the destination, product type and courier service. Check the available delivery options during checkout or contact us before placing your order.\n\n**Contact:**\n\n- [[tel:9847978098]]",
+        a: "Delivery availability outside Kerala depends on the destination, product type and courier service. Check the available delivery options during checkout or contact us before placing your order.\n\n**Contact:**\n\n- [[tel]]",
       },
       {
         q: "How long does delivery take?",
@@ -116,11 +117,11 @@ const FAQ_CATEGORIES: Category[] = [
     faqs: [
       {
         q: "How can I order from Luxy Galleria?",
-        a: "You can shop through our website or contact Luxy Galleria through WhatsApp for assistance with your order.\n\n**WhatsApp:** [[wa:9847978098]]",
+        a: "You can shop through our website or contact Luxy Galleria through WhatsApp for assistance with your order.\n\n**WhatsApp:** [[wa]]",
       },
       {
         q: "Can I order imported snacks through WhatsApp?",
-        a: "Yes. Customers can contact Luxy Galleria through WhatsApp to enquire about products, availability and orders.\n\n**WhatsApp:**\n\n- [[wa:9847978098]]",
+        a: "Yes. Customers can contact Luxy Galleria through WhatsApp to enquire about products, availability and orders.\n\n**WhatsApp:**\n\n- [[wa]]",
       },
       {
         q: "Can I request a product that is currently out of stock?",
@@ -144,27 +145,24 @@ const FAQ_CATEGORIES: Category[] = [
   },
 ];
 
-const INLINE = /(\*\*[^*]+\*\*|\[\[(?:wa|tel):\d+\]\])/;
+const INLINE = /(\*\*[^*]+\*\*|\[\[(?:wa|tel)\]\])/;
 const linkCls =
-  "font-semibold text-[#8B5E34] hover:text-[#5A3A1E] underline decoration-[#8B5E34]/30 underline-offset-4 hover:decoration-[#5A3A1E] transition-colors";
+  "whitespace-nowrap font-semibold text-[#8B5E34] hover:text-[#5A3A1E] underline decoration-[#8B5E34]/30 underline-offset-4 hover:decoration-[#5A3A1E] transition-colors";
 
 function renderInline(text: string): ReactNode {
   return text.split(INLINE).map((part, i) => {
     const bold = part.match(/^\*\*(.+)\*\*$/);
     if (bold) return <strong key={i} className="font-semibold text-slate-900">{bold[1]}</strong>;
-    const link = part.match(/^\[\[(wa|tel):(\d+)\]\]$/);
-    if (link) {
-      const [, kind, num] = link;
-      return kind === "wa" ? (
-        <a key={i} href={`https://wa.me/91${num}`} target="_blank" rel="noopener noreferrer" aria-label={`Chat on WhatsApp at ${num}`} className={linkCls}>
-          {num}
-        </a>
-      ) : (
-        <a key={i} href={`tel:+91${num}`} aria-label={`Call ${num}`} className={linkCls}>
-          {num}
-        </a>
-      );
-    }
+    if (part === "[[wa]]") return (
+      <a key={i} href={`https://wa.me/${CONTACT.whatsapp}`} target="_blank" rel="noopener noreferrer" aria-label={`Chat on WhatsApp at ${CONTACT.phoneDisplay}`} className={linkCls}>
+        {CONTACT.phoneDisplay}
+      </a>
+    );
+    if (part === "[[tel]]") return (
+      <a key={i} href={`tel:${CONTACT.phone}`} aria-label={`Call ${CONTACT.phoneDisplay}`} className={linkCls}>
+        {CONTACT.phoneDisplay}
+      </a>
+    );
     return <Fragment key={i}>{part}</Fragment>;
   });
 }
@@ -184,7 +182,7 @@ function renderAnswer(text: string): ReactNode {
 }
 
 const toPlainText = (text: string) =>
-  text.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\[\[(?:wa|tel):(\d+)\]\]/g, "$1");
+  text.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\[\[(?:wa|tel)\]\]/g, CONTACT.phoneDisplay);
 
 const FAQ_SCHEMA = {
   "@context": "https://schema.org",
