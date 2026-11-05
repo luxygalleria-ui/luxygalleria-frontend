@@ -116,7 +116,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
               src={getImageUrl(src)}
               alt={`${product.name} image ${i + 1}`}
               fill
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 group-hover:scale-105 group-hover:transition-transform motion-reduce:transition-none ${i === imgIdx ? "opacity-100" : "opacity-0"}`}
+              className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 group-hover:scale-105 group-hover:transition-transform motion-reduce:transition-none ${i === imgIdx ? "opacity-100" : "opacity-0"}`}
               loading="lazy"
             />
           ))}

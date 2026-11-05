@@ -81,7 +81,7 @@ export default function CartPage() {
                       alt={item.name}
                       fill
                       sizes="(max-width: 640px) 100vw, 128px"
-                      className="object-cover"
+                      className="object-contain"
                     />
                   </div>
 
@@ -91,7 +91,12 @@ export default function CartPage() {
                       <h3 className="font-sans font-bold text-lg text-slate-900 pr-8 leading-tight mb-2">
                         {item.name}
                       </h3>
-                      {item.size && (
+                      {item.unavailable && (
+                        <p className="font-sans text-sm font-semibold text-red-600 mb-4">
+                          This option is no longer available. Please remove it from your cart.
+                        </p>
+                      )}
+                      {item.size && !item.unavailable && (
                         <p className="font-sans text-sm text-slate-500 mb-4 uppercase tracking-wider">
                           Size: <span className="font-semibold text-slate-700">{item.size}</span>
                         </p>
@@ -162,6 +167,11 @@ export default function CartPage() {
                         <span>Special packaging</span>
                         <span className="font-semibold text-slate-900">₹{quote.specialPackagingFee}</span>
                       </div>
+                    )}
+                    {quote.specialPackaging.items.length > 0 && (
+                      <p className="text-xs text-amber-800">
+                        Temperature-sensitive items: {quote.specialPackaging.items.join(", ")}. Special packaging and delivery options are confirmed at checkout.
+                      </p>
                     )}
                     {quote.tax.enabled && quote.tax.taxAmount > 0 && (
                       <div className="flex justify-between items-center text-slate-500 font-sans text-sm">

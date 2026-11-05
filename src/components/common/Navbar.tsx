@@ -369,7 +369,7 @@ export default function Navbar() {
                                     >
                                       <div className="w-10 h-10 bg-slate-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                                         {imgUrl ? (
-                                          <img src={imgUrl} alt={p.name} className="w-full h-full object-cover" onError={handleImageError} />
+                                          <img src={imgUrl} alt={p.name} className="w-full h-full object-contain" onError={handleImageError} />
                                         ) : (
                                           <ShoppingBag size={16} className="text-slate-400" />
                                         )}
@@ -522,7 +522,7 @@ export default function Navbar() {
                               >
                                 <div className="w-10 h-10 bg-slate-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                                   {imgUrl ? (
-                                    <img src={imgUrl} alt={p.name} className="w-full h-full object-cover" onError={handleImageError} />
+                                    <img src={imgUrl} alt={p.name} className="w-full h-full object-contain" onError={handleImageError} />
                                   ) : (
                                     <ShoppingBag size={16} className="text-slate-400" />
                                   )}

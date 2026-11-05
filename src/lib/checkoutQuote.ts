@@ -30,7 +30,12 @@ export interface Quote {
   shipping: number;
   freeShippingApplied: boolean;
   specialPackagingFee: number;
-  specialPackaging: { applied: boolean; weightG: number; steps: number; fee: number; note: string };
+  specialPackaging: {
+    applied: boolean; weightG: number; steps: number; fee: number; note: string;
+    /** Cart items the saved chocolate rule covers; empty while the feature is off or its fee unconfirmed. */
+    items: string[];
+    rule: { basis: "per_weight_step" | "flat_per_order"; feeAmount: number; unitGrams: number } | null;
+  };
   pickupFee: number;
   pickupDetails: { storeName: string; address: string; openingHours: string; phone: string; instructions: string } | null;
   tax: { enabled: boolean; pricesIncludeTax: boolean; taxableValue: number; taxAmount: number; addedToTotal: number; missingRates: string[] };
@@ -53,12 +58,12 @@ export class QuoteError extends Error {
 }
 
 /** Server quote for the cart. Throws QuoteError (with the available options when the server sent them). */
-export const fetchQuote = async (cartItems: CartItem[], fulfillment?: Fulfillment, state?: string): Promise<Quote> => {
+export const fetchQuote = async (cartItems: CartItem[], fulfillment?: Fulfillment, state?: string, country?: string): Promise<Quote> => {
   try {
     const res = await axios.post(`${getAPIURL()}/payments/calculate-shipping`, {
       items: quoteItems(cartItems),
       ...(fulfillment ? { fulfillment } : {}),
-      ...(state ? { shippingAddress: { state } } : {}),
+      ...(state ? { shippingAddress: { state, ...(country ? { country } : {}) } } : {}),
     });
     if (!res.data?.success) throw new QuoteError(res.data?.message || "Could not calculate charges", null);
     return res.data.data as Quote;
@@ -94,27 +99,42 @@ type QuoteResult = { key: string; quote: Quote | null; error: string; options: C
  * Server quote for the cart and choice, refetched when either changes. "Loading" is derived (the last result
  * belongs to an older request), so no state is set synchronously inside the effect.
  */
-export const useQuote = (cartItems: CartItem[], fulfillment?: Fulfillment, state?: string) => {
-  const key = JSON.stringify([quoteItems(cartItems), fulfillment ?? null, state ?? null]);
+export const useQuote = (cartItems: CartItem[], fulfillment?: Fulfillment, state?: string, country?: string, enabled = true) => {
+  // Retry bumps the attempt so the same request is sent again; results of older requests are never shown
+  const [attempt, setAttempt] = useState(0);
+  const key = JSON.stringify([quoteItems(cartItems), fulfillment ?? null, state ?? null, country ?? null, attempt]);
   const [result, setResult] = useState<QuoteResult | null>(null);
+  const active = enabled && cartItems.length > 0;
 
   useEffect(() => {
-    if (cartItems.length === 0) return;
+    if (!active) return;
     let cancelled = false;
-    fetchQuote(cartItems, fulfillment, state)
+    fetchQuote(cartItems, fulfillment, state, country)
       .then((quote) => { if (!cancelled) setResult({ key, quote, error: "", options: null }); })
       // No local fallback: a wrong charge is worse than asking the customer to retry
       .catch((err: QuoteError) => { if (!cancelled) setResult({ key, quote: null, error: err.message, options: err.options }); });
     return () => { cancelled = true; };
-    // key captures cartItems, fulfillment and state
+    // key captures cartItems, fulfillment, state, country and the retry attempt
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [key, active]);
 
-  const current = cartItems.length > 0 && result?.key === key ? result : null;
+  const current = active && result?.key === key ? result : null;
   return {
     quote: current?.quote ?? null,
     quoteError: current?.error ?? "",
     errorOptions: current?.options ?? null,
-    isLoading: cartItems.length > 0 && !current,
+    isLoading: active && !current,
+    retry: () => setAttempt((a) => a + 1),
   };
+};
+
+/** How the server worked out the chocolate packaging charge, in words. Uses only figures from the quote; never recalculates. */
+export const packagingSummary = (q: Quote): string => {
+  const p = q.specialPackaging;
+  if (!p.rule || p.items.length === 0) return "";
+  if (q.fulfillmentMethod === "pickup") return "Store pickup: no delivery packaging charge.";
+  if (!p.applied) return "";
+  return p.rule.basis === "flat_per_order"
+    ? `Packaging charge ₹${p.fee}: a flat fee, charged once per eligible delivery order.`
+    : `Packaging charge ₹${p.fee}: ${p.weightG} g combined = ${p.steps} × ₹${p.rule.feeAmount} per started ${p.rule.unitGrams} g, charged once per order.`;
 };

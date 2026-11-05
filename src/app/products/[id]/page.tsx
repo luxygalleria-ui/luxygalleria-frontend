@@ -711,7 +711,7 @@ export default function ProductDetailPage() {
                     src={getImageUrl(p.images && p.images.length > 0 ? p.images[0] : (p.variants?.find((v: any) => v.image)?.image || ""))}
                     alt={p.name}
                     fill
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
                 <div className="p-4 text-center">
