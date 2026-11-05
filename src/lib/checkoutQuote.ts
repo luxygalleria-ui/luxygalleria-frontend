@@ -69,7 +69,9 @@ export const fetchQuote = async (cartItems: CartItem[], fulfillment?: Fulfillmen
     return res.data.data as Quote;
   } catch (err) {
     if (err instanceof QuoteError) throw err;
-    const data = axios.isAxiosError(err) ? (err.response?.data as { message?: string; data?: { options?: CheckoutOption[] } } | undefined) : undefined;
+    const data = axios.isAxiosError(err) ? (err.response?.data as { message?: string; code?: string; data?: { options?: CheckoutOption[] } } | undefined) : undefined;
+    // The network log shows only the status; record why the server refused (e.g. "OPTION_UNAVAILABLE: We do not deliver to Kerala yet")
+    console.warn(`[checkout] quote refused (HTTP ${axios.isAxiosError(err) ? err.response?.status ?? "no response" : "?"})`, data?.code ? `${data.code}: ${data.message}` : data?.message ?? err);
     throw new QuoteError(data?.message || "Could not calculate delivery charges. Please try again.", data?.data?.options ?? null);
   }
 };
