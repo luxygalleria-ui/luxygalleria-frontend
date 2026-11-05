@@ -12,6 +12,20 @@ const OLD_CLOUDINARY_PREFIX = /^(https?:\/\/res\.cloudinary\.com\/)dlysz5wmo\//;
 export const fixCloudinaryCloud = (url: string): string => url.replace(OLD_CLOUDINARY_PREFIX, '$1luxygalleria-staging/');
 
 /**
+ * A URL copied from a rendered page ("Copy image address") is a Next optimizer URL, e.g.
+ * https://luxygalleria.com/_next/image?url=<original>&w=3840&q=75. /_next/image refuses another optimizer URL as its
+ * source (HTTP 400), so return the original image it wraps. Anything else is returned unchanged.
+ */
+export const unwrapNextImageUrl = (url: string): string => {
+  try {
+    const parsed = new URL(url, 'http://relative.invalid');
+    return (parsed.pathname === '/_next/image' && parsed.searchParams.get('url')) || url;
+  } catch {
+    return url;
+  }
+};
+
+/**
  * Get full image URL from backend path or remote URL
  * @param imagePath - Image path or URL from API (e.g., "/uploads/image.jpg" or "https://...")
  * @returns Full image URL ready for img src
@@ -21,6 +35,7 @@ export const getImageUrl = (imagePath: string | undefined | null): string => {
   if (!imagePath || imagePath.trim() === '') {
     return getPlaceholderUrl('No image available');
   }
+  imagePath = unwrapNextImageUrl(imagePath.trim());
 
   // Already a full URL (http/https)
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
