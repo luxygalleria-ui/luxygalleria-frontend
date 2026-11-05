@@ -61,6 +61,7 @@ const socials = [
 const footerLinks = [
   { label: "About", href: "/about" },
   { label: "Featured Products", href: "/products" },
+  { label: "FAQ", href: "/faq" },
   { label: "Refund & Replacement Policy", href: "/refund-replacement-policy" },
 ];
 
