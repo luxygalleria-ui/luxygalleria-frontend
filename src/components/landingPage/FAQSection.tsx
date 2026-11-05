@@ -196,12 +196,14 @@ const FAQ_SCHEMA = {
   ),
 };
 
-export default function FAQSection() {
+// page: the dedicated /faq page, where the title is the page's h1
+export default function FAQSection({ page = false }: { page?: boolean }) {
+  const Heading = page ? "h1" : "h2";
   const [activeId, setActiveId] = useState(FAQ_CATEGORIES[0].id);
   const active = FAQ_CATEGORIES.find((c) => c.id === activeId)!;
 
   return (
-    <section id="faq" aria-labelledby="faq-heading" className="bg-background py-12 md:py-20 w-full">
+    <section id="faq" aria-labelledby="faq-heading" className={`bg-background w-full ${page ? "pt-12 pb-16 md:pt-14 md:pb-24" : "py-12 md:py-20"}`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }}
@@ -211,9 +213,9 @@ export default function FAQSection() {
           <p className="font-sans font-semibold text-xs tracking-[0.3em] uppercase text-[#5A3A1E] mb-4">
             FAQ
           </p>
-          <h2 id="faq-heading" className="font-serif font-normal text-3xl md:text-4xl lg:text-5xl text-slate-900 leading-tight mb-4">
+          <Heading id="faq-heading" className="font-serif font-normal text-3xl md:text-4xl lg:text-5xl text-slate-900 leading-tight mb-4">
             Frequently Asked Questions
-          </h2>
+          </Heading>
           <p className="font-sans text-base md:text-lg text-slate-500 leading-relaxed max-w-2xl mx-auto">
             Everything you need to know about Luxy Galleria, our imported products, delivery, ordering and policies.
           </p>
