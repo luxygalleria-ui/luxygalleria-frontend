@@ -32,6 +32,16 @@ export default function CheckoutPage() {
 
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  // ICICI Orange PG is offered only where it is switched on (NEXT_PUBLIC_ICICI_PG_ENABLED=true); Razorpay otherwise
+  const iciciEnabled = process.env.NEXT_PUBLIC_ICICI_PG_ENABLED === "true";
+  const [gateway, setGateway] = useState<"razorpay" | "icici">("razorpay");
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  // Back from ICICI's page restores this page from the browser cache: re-enable the pay button
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => { if (e.persisted) setIsRedirecting(false); };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, []);
 
   // Delivery or store pickup; the server prices the choice and says which options this cart allows
   const [fulfillment, setFulfillment] = useState<Fulfillment>({ method: "delivery" });
@@ -321,6 +331,22 @@ export default function CheckoutPage() {
         zipCode: addr.zipCode,
         country: addr.country || "India"
       };
+
+      if (iciciEnabled && gateway === "icici") {
+        // The server prices the cart, reserves stock and opens the ICICI payment; the customer pays on ICICI's page
+        // and comes back through the backend's return URL to /order-success or /order-failure
+        setIsRedirecting(true);
+        try {
+          const res = await axios.post(`${API_URL}/payments/icici/initiate`, {
+            total, items: orderItems, shippingAddress: orderShippingAddress, fulfillment: orderFulfillment,
+          }, { headers: { Authorization: `Bearer ${token}` } });
+          window.location.assign(res.data.data.redirectUrl);
+        } catch (err) {
+          setIsRedirecting(false);
+          throw err;
+        }
+        return;
+      }
 
       // Call backend to create Razorpay order only (no DB save yet)
       const createOrderRes = await axios.post(`${API_URL}/payments/create-order`, {
@@ -708,12 +734,24 @@ export default function CheckoutPage() {
               <span className="font-sans font-black text-2xl text-slate-900">{total === null ? <span className="text-base font-semibold text-slate-400">{isLoadingShipping ? "Calculating…" : "Not available"}</span> : `₹${total}`}</span>
             </div>
 
+            {iciciEnabled && (
+              <fieldset className="mb-4">
+                <legend className="font-sans font-bold text-sm text-slate-900 mb-2">Pay with</legend>
+                {([["razorpay", "Razorpay (UPI, cards, wallets)"], ["icici", "ICICI Bank (cards, net banking, UPI)"]] as const).map(([value, label]) => (
+                  <label key={value} className="flex items-center gap-3 py-2 text-sm text-slate-700 cursor-pointer">
+                    <input type="radio" name="gateway" value={value} checked={gateway === value} onChange={() => setGateway(value)} />
+                    {label}
+                  </label>
+                ))}
+              </fieldset>
+            )}
+
             <button
               onClick={handleCheckout}
-              disabled={!quote || isLoadingShipping || !!addressProblem}
+              disabled={!quote || isLoadingShipping || !!addressProblem || isRedirecting}
               className="w-full bg-[#111] text-white font-bold text-base py-4 sm:py-5 rounded-xl hover:bg-black transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 mb-4 disabled:bg-slate-400 disabled:cursor-not-allowed"
             >
-              {isPickup ? "Pay Now & Collect in Store" : "Secure Checkout"}
+              {isRedirecting ? "Redirecting to ICICI Bank…" : isPickup ? "Pay Now & Collect in Store" : "Secure Checkout"}
             </button>
 
             <div className="flex items-center justify-center gap-2 text-slate-400">
