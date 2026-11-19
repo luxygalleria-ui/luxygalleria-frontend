@@ -5,6 +5,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useToast } from "../../context/ToastContext";
 import { useCart } from "../../context/CartContext";
+import { getAPIURL } from "../../lib/apiClient";
 
 interface GoogleAuthButtonProps {
   mode?: "signin" | "register";
@@ -26,10 +27,7 @@ function GoogleAuthButtonConfigured({ mode = "signin" }: GoogleAuthButtonProps) 
   // Dynamically import useGoogleLogin only when configured
   const { useGoogleLogin } = require("@react-oauth/google");
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL
-    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api(\/v1)?\/?$/, "")
-    : "http://localhost:5000";
-  const apiURL = `${baseUrl}/api/v1`;
+  const apiURL = getAPIURL();
 
   const googleLogin = useGoogleLogin({
     flow: "implicit",
@@ -68,7 +66,9 @@ function GoogleAuthButtonConfigured({ mode = "signin" }: GoogleAuthButtonProps) 
         // Log status/message only: the axios error object carries the access token in config.data
         console.error("Google auth error:", err.response?.status, err.message);
         setError(
-          err.response?.data?.message ||
+          (err.response?.data?.errors?.code === "USE_ADMIN_PORTAL"
+            ? `${err.response.data.message} (${process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.luxygalleria.com"})`
+            : err.response?.data?.message) ||
             (err.code === "ECONNABORTED" || !err.response
               ? "Could not reach the server. Please check your connection and try again."
               : "Google sign-in failed. Please try again.")
