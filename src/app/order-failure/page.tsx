@@ -13,6 +13,11 @@ const MESSAGES: Record<string, { title: string; text: string; retry: boolean }> 
     text: 'Your payment was received, but an item sold out while your checkout was open. The order has been cancelled and a full refund will be arranged. We will contact you.',
     retry: false,
   },
+  pending: {
+    title: 'Awaiting Payment Confirmation',
+    text: 'Your bank has not confirmed this payment yet. If you paid by UPI, approve the request in your UPI app. Your order will appear in My Orders once the bank confirms it, and nothing is charged if the request expires. Please do not pay again.',
+    retry: false,
+  },
   unconfirmed: {
     title: 'Confirming Your Payment',
     text: 'We could not confirm your payment. If money was deducted, please do not pay again: your order will appear in My Orders once confirmed, or the amount will be refunded. Contact us with your payment ID if you need help.',
@@ -31,7 +36,7 @@ export default async function OrderFailurePage({ searchParams }: { searchParams:
         </div>
         <h1 className="font-serif font-normal text-4xl md:text-5xl text-slate-900 mb-4 tracking-tight">{known?.title ?? 'Payment Failed'}</h1>
         <p className="text-slate-500 mb-10 leading-relaxed font-sans text-base">
-          {known?.text ?? "Unfortunately, your payment could not be processed. Don't worry, your items are still in your cart. Please try again or use a different payment method."}
+          {known?.text ?? "Your payment was cancelled or declined by the bank, so no order was placed. Your items are still in your cart. You can try again with another card, UPI app or bank."}
         </p>
         <div className="flex flex-col gap-3">
           <Link 

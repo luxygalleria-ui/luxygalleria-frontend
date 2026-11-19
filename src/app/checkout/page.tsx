@@ -13,7 +13,7 @@ import { getAPIURL } from "../../lib/apiClient";
 import { fixCloudinaryCloud, getImageUrl } from '../../lib/imageUtils';
 
 export default function CheckoutPage() {
-  const { cartItems, clearCart } = useCart();
+  const { cartItems } = useCart();
   const { showToast } = useToast();
   const router = useRouter();
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -31,7 +31,13 @@ export default function CheckoutPage() {
   const [addressErrors, setAddressErrors] = useState<Record<string, string>>({});
 
   const [isSavingAddress, setIsSavingAddress] = useState(false);
-  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  // Back from ICICI's page restores this page from the browser cache: re-enable the pay button
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => { if (e.persisted) setIsRedirecting(false); };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, []);
 
   // Delivery or store pickup; the server prices the choice and says which options this cart allows
   const [fulfillment, setFulfillment] = useState<Fulfillment>({ method: "delivery" });
@@ -241,37 +247,6 @@ export default function CheckoutPage() {
   // Calculation is resolved from backend shippingDetails state
 
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      if ((window as any).Razorpay) {
-        resolve(true);
-        return;
-      }
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
-  /** Routes the customer after /payments/verify. Paid-but-not-placed outcomes never send them back to pay again. */
-  const finishVerification = async (status: number, data: { success?: boolean; code?: string } | undefined) => {
-    if (data?.success) {
-      await clearCart();
-      window.location.href = "/order-success";
-    } else if (data?.code === "PROCESSING") {
-      await clearCart(); // the order is being completed server-side (webhook/reconciliation)
-      window.location.href = "/order-failure?reason=processing";
-    } else if (data?.code === "PAID_OUT_OF_STOCK") {
-      await clearCart();
-      window.location.href = "/order-failure?reason=paid_out_of_stock";
-    } else {
-      setIsVerifyingPayment(false);
-      window.location.href = status >= 500 ? "/order-failure?reason=unconfirmed" : "/order-failure";
-    }
-  };
-
   const handleCheckout = async () => {
     // Home delivery must resolve to a real address with the fields the order needs, before any payment call
     const selectedAddress = addresses.find(a => a.id === selectedAddressId);
@@ -322,97 +297,15 @@ export default function CheckoutPage() {
         country: addr.country || "India"
       };
 
-      // Call backend to create Razorpay order only (no DB save yet)
-      const createOrderRes = await axios.post(`${API_URL}/payments/create-order`, {
-        total,
-        items: orderItems,
-        shippingAddress: orderShippingAddress,
-        fulfillment: orderFulfillment,
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!createOrderRes.data.success) {
-        showToast("Failed to create order.", "error");
-        return;
-      }
-
-      const { razorpayOrder, isMock, key_id } = createOrderRes.data.data;
-
-      if (isMock) {
-        setIsVerifyingPayment(true);
-        const verifyRes = await axios.post(`${API_URL}/payments/verify`, {
-          razorpay_order_id: razorpayOrder.id,
-          razorpay_payment_id: "mock_payment",
-          razorpay_signature: "mock_signature",
-          // Pass order details so backend saves to DB
-          items: orderItems,
-          shippingAddress: orderShippingAddress,
-          fulfillment: orderFulfillment,
-        }, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        await finishVerification(verifyRes.status, verifyRes.data);
-        return;
-      }
-
-      const isLoaded = await loadRazorpayScript();
-      if (!isLoaded) {
-        showToast("Razorpay SDK failed to load. Are you online?", "error");
-        return;
-      }
-
-      const options = {
-        key: key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_YourTestKey", // Use backend key first to guarantee match
-        amount: razorpayOrder.amount,
-        currency: razorpayOrder.currency,
-        name: "Luxy Galleria",
-        description: "Order Payment",
-        order_id: razorpayOrder.id,
-        handler: async function (response: any) {
-          setIsVerifyingPayment(true);
-          try {
-            // Verify payment
-            const verifyRes = await axios.post(`${API_URL}/payments/verify`, {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              // Pass order details so backend saves to DB
-              items: orderItems,
-              shippingAddress: orderShippingAddress,
-              fulfillment: orderFulfillment,
-            }, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            await finishVerification(verifyRes.status, verifyRes.data);
-          } catch (err) {
-            console.error(err);
-            // Razorpay already took the payment here: a lost response must not look like a failed payment
-            const res = axios.isAxiosError(err) ? err.response : undefined;
-            if (res?.status) await finishVerification(res.status, res.data);
-            else { setIsVerifyingPayment(false); window.location.href = "/order-failure?reason=unconfirmed"; }
-          }
-        },
-        prefill: {
-          name: "Customer",
-          email: "customer@example.com",
-          contact: "9999999999"
-        },
-        theme: {
-          color: "#0A192F"
-        }
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', function (response: any) {
-        window.location.href = "/order-failure";
-      });
-      rzp.open();
-
+      // ICICI Orange PG is the only gateway: the server prices the cart, reserves stock and opens the payment; the
+      // customer pays on ICICI's page and comes back through the backend's return URL to /order-success or /order-failure
+      setIsRedirecting(true);
+      const res = await axios.post(`${API_URL}/payments/icici/initiate`, {
+        total, items: orderItems, shippingAddress: orderShippingAddress, fulfillment: orderFulfillment,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      window.location.assign(res.data.data.redirectUrl);
     } catch (err: any) {
-      setIsVerifyingPayment(false);
+      setIsRedirecting(false);
       const status = err.response?.status;
       if (status === 401) {
         // Token expired or invalid - redirect to sign-in
@@ -438,16 +331,6 @@ export default function CheckoutPage() {
             <p className="text-slate-500 mt-2">Redirecting to login...</p>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  if (isVerifyingPayment) {
-    return (
-      <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center">
-        <div className="w-16 h-16 border-4 border-slate-200 border-t-[#0A192F] rounded-full animate-spin mb-6"></div>
-        <h2 className="font-sans font-bold text-2xl text-slate-900 mb-2">Verifying Payment</h2>
-        <p className="text-slate-500">Please wait while we confirm your order. Do not close this window.</p>
       </div>
     );
   }
@@ -708,12 +591,20 @@ export default function CheckoutPage() {
               <span className="font-sans font-black text-2xl text-slate-900">{total === null ? <span className="text-base font-semibold text-slate-400">{isLoadingShipping ? "Calculating…" : "Not available"}</span> : `₹${total}`}</span>
             </div>
 
+            <fieldset className="mb-4">
+              <legend className="font-sans font-bold text-sm text-slate-900 mb-2">Pay with</legend>
+              <label className="flex items-center gap-3 py-2 text-sm text-slate-700">
+                <input type="radio" name="gateway" value="icici" checked readOnly />
+                ICICI Bank secure payment (cards, net banking, UPI)
+              </label>
+            </fieldset>
+
             <button
               onClick={handleCheckout}
-              disabled={!quote || isLoadingShipping || !!addressProblem}
+              disabled={!quote || isLoadingShipping || !!addressProblem || isRedirecting}
               className="w-full bg-[#111] text-white font-bold text-base py-4 sm:py-5 rounded-xl hover:bg-black transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 mb-4 disabled:bg-slate-400 disabled:cursor-not-allowed"
             >
-              {isPickup ? "Pay Now & Collect in Store" : "Secure Checkout"}
+              {isRedirecting ? "Redirecting to ICICI Bank…" : isPickup ? "Pay Now & Collect in Store" : "Secure Checkout"}
             </button>
 
             <div className="flex items-center justify-center gap-2 text-slate-400">

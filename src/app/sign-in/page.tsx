@@ -13,6 +13,8 @@ import { useCart } from "../../context/CartContext";
 import GoogleAuthButton from "../../components/auth/GoogleAuthButton";
 import { getAPIURL } from "../../lib/apiClient";
 
+const ADMIN_PORTAL_URL = process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.luxygalleria.com";
+
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
@@ -36,10 +38,12 @@ export default function SignInPage() {
   const { syncCartAfterLogin } = useCart();
   const { showToast } = useToast();
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isStaffAccount, setIsStaffAccount] = useState(false);
 
   const onSubmit = async (data: SignInValues) => {
     try {
       setApiError(null);
+      setIsStaffAccount(false);
       const apiURL = getAPIURL();
       const res = await axios.post(`${apiURL}/auth/customer-login`, {
         email: data.email,
@@ -61,6 +65,7 @@ export default function SignInPage() {
       if (status === 401) {
         setApiError("Invalid email or password. Please try again.");
       } else if (status === 403) {
+        setIsStaffAccount(err.response?.data?.errors?.code === "USE_ADMIN_PORTAL");
         setApiError(serverMsg || "Your account cannot be accessed. Please contact support.");
       } else {
         console.error("Sign in error:", err);
@@ -111,6 +116,9 @@ export default function SignInPage() {
             {apiError && (
               <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100">
                 {apiError}
+                {isStaffAccount && (
+                  <a href={ADMIN_PORTAL_URL} className="block mt-2 font-bold underline">Go to the admin portal</a>
+                )}
               </div>
             )}
 
