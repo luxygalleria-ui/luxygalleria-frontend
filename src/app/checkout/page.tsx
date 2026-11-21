@@ -12,6 +12,16 @@ import { useToast } from "../../context/ToastContext";
 import { getAPIURL } from "../../lib/apiClient";
 import { fixCloudinaryCloud, getImageUrl } from '../../lib/imageUtils';
 
+/** Saved address (server shape) -> checkout card. */
+type SavedAddress = { _id: string; street?: string; city?: string; state?: string; zipCode?: string; country?: string };
+const toCard = (addr: SavedAddress) => ({
+  id: addr._id,
+  name: addr.city?.toLowerCase() || 'Address',
+  line1: `${addr.street ? addr.street + ", " : ""}${addr.state?.toLowerCase() || ''}`,
+  line2: addr.zipCode,
+  fullAddress: addr,
+});
+
 export default function CheckoutPage() {
   const { cartItems } = useCart();
   const { showToast } = useToast();
@@ -19,7 +29,6 @@ export default function CheckoutPage() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [addresses, setAddresses] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [newAddressForm, setNewAddressForm] = useState({
     street: "",
@@ -72,7 +81,6 @@ export default function CheckoutPage() {
       router.push("/sign-in");
       return;
     }
-    setIsLoggedIn(true);
     setIsLoading(false);
     fetchAddresses();
   }, []);
@@ -80,24 +88,18 @@ export default function CheckoutPage() {
   const fetchAddresses = async () => {
     try {
       const userStr = localStorage.getItem("luxygalleria_user");
-      if (!userStr) {
-        console.log('No user token found');
-        return;
-      }
+      if (!userStr) return;
       
       const userData = JSON.parse(userStr);
       const token = userData.token;
       
       if (!token) {
-        console.log('No token in user data');
         showToast("Please login again to continue.", "warning");
         router.push("/sign-in");
         return;
       }
 
       const apiURL = getAPIURL();
-      console.log('Fetching addresses from:', `${apiURL}/users/addresses`);
-      
       const res = await axios.get(`${apiURL}/users/addresses`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -107,13 +109,7 @@ export default function CheckoutPage() {
       });
       
       if (res.data.success && res.data.data) {
-        const mappedAddresses = res.data.data.map((addr: any) => ({
-          id: addr._id,
-          name: addr.city?.toLowerCase() || 'Address',
-          line1: `${addr.street ? addr.street + ", " : ""}${addr.state?.toLowerCase() || ''}`,
-          line2: addr.zipCode,
-          fullAddress: addr
-        }));
+        const mappedAddresses = res.data.data.map(toCard);
         setAddresses(mappedAddresses);
         if (mappedAddresses.length > 0) {
           setSelectedAddressId(mappedAddresses[0].id);
@@ -147,95 +143,43 @@ export default function CheckoutPage() {
     setIsSavingAddress(true);
 
     try {
-      const userStr = localStorage.getItem("luxygalleria_user");
-      
-      // If logged in, save to backend
-      if (userStr) {
-        try {
-          const userData = JSON.parse(userStr);
-          const token = userData.token;
-          
-          if (!token) {
-            showToast("Please login again.", "warning");
-            router.push("/sign-in");
-            return;
-          }
-          
-          const apiURL = getAPIURL();
-
-          const payload = {
-            street: newAddressForm.street.trim(),
-            city: newAddressForm.city.trim(),
-            state: newAddressForm.state.trim(),
-            zipCode: newAddressForm.zip.trim(),
-            country: newAddressForm.country
-          };
-
-          console.log('Saving address:', payload);
-
-          const res = await axios.post(`${apiURL}/users/addresses`, payload, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            withCredentials: true
-          });
-
-          if (res.data.success) {
-            const newAddrs = res.data.data;
-            const mappedAddresses = newAddrs.map((addr: any) => ({
-              id: addr._id,
-              name: addr.city?.toLowerCase() || 'Address',
-              line1: `${addr.street ? addr.street + ", " : ""}${addr.state?.toLowerCase() || ''}`,
-              line2: addr.zipCode,
-              fullAddress: addr
-            }));
-            setAddresses(mappedAddresses);
-            if (mappedAddresses.length > 0) {
-              selectAddress(mappedAddresses[mappedAddresses.length - 1].id);
-            }
-            showToast("Address saved successfully!", "success");
-          } else {
-            showToast(res.data.message || "Failed to save address", "error");
-          }
-        } catch (err: any) {
-          console.error('Address save error:', err);
-          if (err.response?.status === 401) {
-            showToast("Session expired. Please login again.", "warning");
-            localStorage.removeItem("luxygalleria_user");
-            router.push("/sign-in");
-          } else {
-            showToast(err.response?.data?.message || "Error saving address", "error");
-          }
-        }
-      } else {
-        // Guest checkout: save address to sessionStorage temporarily
-        const guestAddress = {
-          street: newAddressForm.street.trim(),
-          city: newAddressForm.city.trim(),
-          state: newAddressForm.state.trim(),
-          zipCode: newAddressForm.zip.trim(),
-          country: newAddressForm.country,
-          id: `guest_${Date.now()}`
-        };
-        
-        const guestAddresses = JSON.parse(sessionStorage.getItem("guest_addresses") || "[]");
-        guestAddresses.push(guestAddress);
-        sessionStorage.setItem("guest_addresses", JSON.stringify(guestAddresses));
-        
-        const mappedAddress = {
-          id: guestAddress.id,
-          name: guestAddress.city?.toLowerCase() || 'Address',
-          line1: `${guestAddress.street ? guestAddress.street + ", " : ""}${guestAddress.state?.toLowerCase() || ''}`,
-          line2: guestAddress.zipCode,
-          fullAddress: guestAddress,
-        };
-        
-        setAddresses([...addresses, mappedAddress]);
-        setSelectedAddressId(guestAddress.id);
-        showToast("Address added for checkout (guest mode)", "info");
+      const token = JSON.parse(localStorage.getItem("luxygalleria_user") || "{}").token;
+      if (!token) {
+        showToast("Please login again.", "warning");
+        router.push("/sign-in");
+        return;
       }
-      
+      const payload = {
+        street: newAddressForm.street.trim(),
+        city: newAddressForm.city.trim(),
+        state: newAddressForm.state.trim(),
+        zipCode: newAddressForm.zip.trim(),
+        country: newAddressForm.country.trim() || "India",
+      };
+      try {
+        const res = await axios.post(`${getAPIURL()}/users/addresses`, payload, {
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          withCredentials: true
+        });
+        if (!res.data.success) {
+          showToast(res.data.message || "Failed to save address", "error");
+          return;
+        }
+        const mappedAddresses = res.data.data.map(toCard);
+        setAddresses(mappedAddresses);
+        if (mappedAddresses.length > 0) selectAddress(mappedAddresses[mappedAddresses.length - 1].id);
+        showToast("Address saved successfully!", "success");
+      } catch (err: any) {
+        if (err.response?.status === 401) {
+          showToast("Session expired. Please login again.", "warning");
+          localStorage.removeItem("luxygalleria_user");
+          router.push("/sign-in");
+        } else {
+          showToast(err.response?.data?.message || "Error saving address", "error");
+        }
+        return; // keep the modal open with what was typed
+      }
+
       setIsAddressModalOpen(false);
       setNewAddressForm({ street: "", city: "", state: "", zip: "", country: "India" });
       setAddressErrors({});
@@ -398,7 +342,7 @@ export default function CheckoutPage() {
                   {quote.pickupDetails.instructions && <p className="text-slate-500">{quote.pickupDetails.instructions}</p>}
                 </div>
               )}
-              {quoteError && !isLoadingShipping && (
+              {quoteError && !isLoadingShipping && !(errorOptions && !isPickup && deliveryOptions.some((o) => o.reason === quoteError)) && (
                 <p className="text-sm text-red-600" role="alert">{quoteError}</p>
               )}
             </div>
@@ -698,9 +642,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {!isLoggedIn && (
-                <p className="text-sm text-blue-600 mb-3">💡 Guest checkout: Address will be saved temporarily for this order.</p>
-              )}
               <button
                 onClick={handleSaveAddress}
                 disabled={isSavingAddress}
