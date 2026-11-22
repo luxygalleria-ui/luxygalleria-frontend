@@ -166,16 +166,34 @@ export const takePayLock = (lock: { current: boolean }) => {
 const ICICI_PAYMENT_HOSTS = new Set(["pgpayuat.icicibank.com", "pgpay.icicibank.com"]);
 
 /**
- * ICICI's payment page from the initiate reply, normalised, or "" unless it is https on the default port, without
- * credentials, on an exact ICICI payment host (never navigate elsewhere).
+ * The local ICICI mock's payment page origin (backend `npm run dev:icici-mock`), or "" outside that setup. Both are
+ * required: `next dev` (NODE_ENV "development"; Next inlines it, so a production bundle can never take this path) and
+ * NEXT_PUBLIC_ICICI_MOCK_ORIGIN set to an exact https loopback origin such as https://localhost:8443. Any other value
+ * (http, another host, a path, credentials) is ignored.
+ */
+const mockPaymentOrigin = (): string => {
+  if (process.env.NODE_ENV !== "development") return "";
+  const configured = (process.env.NEXT_PUBLIC_ICICI_MOCK_ORIGIN || "").trim();
+  try {
+    const o = new URL(configured);
+    const loopback = o.protocol === "https:" && (o.hostname === "localhost" || o.hostname === "127.0.0.1") && o.port !== "";
+    return loopback && o.origin === configured.replace(/\/$/, "") ? o.origin : "";
+  } catch { return ""; }
+};
+
+/**
+ * ICICI's payment page from the initiate reply, normalised, or "" unless it is https without credentials and either on
+ * an exact ICICI payment host (default port) or, in local mock mode only, on the exact configured mock origin.
  */
 export const paymentPageUrl = (reply: unknown): string => {
   const url = (reply as { data?: { redirectUrl?: unknown } } | null)?.data?.redirectUrl;
   if (typeof url !== "string") return "";
   try {
     const u = new URL(url);
-    const trusted = u.protocol === "https:" && ICICI_PAYMENT_HOSTS.has(u.hostname) && u.port === "" && !u.username && !u.password;
-    return trusted ? u.toString() : "";
+    if (u.protocol !== "https:" || u.username || u.password) return "";
+    const icici = ICICI_PAYMENT_HOSTS.has(u.hostname) && u.port === "";
+    const mock = mockPaymentOrigin();
+    return icici || (mock !== "" && u.origin === mock) ? u.toString() : "";
   } catch { return ""; }
 };
 
