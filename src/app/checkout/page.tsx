@@ -316,7 +316,7 @@ export default function CheckoutPage() {
   };
 
   const showPayError = (e: unknown) => {
-      const err = e as { response?: { status?: number; data?: { message?: string } }; code?: string; message?: string };
+      const err = e as { response?: { status?: number; data?: { message?: string; code?: string } }; code?: string; message?: string };
       const status = err.response?.status;
       // Gateway unreachable / proxy timeout / our own timeout: nothing was charged at this step
       const gatewayDown = [502, 503, 504].includes(status ?? 0) || err.code === "ECONNABORTED" || !err.response;
@@ -326,7 +326,8 @@ export default function CheckoutPage() {
         showToast("Your session expired. Please sign in again.", "warning");
         router.push("/sign-in");
       } else {
-        console.error("Checkout error:", status ?? err.code ?? err.message);
+        // The server's error code too (e.g. ICICI_LOCAL_MOCK_DOWN in local development): never the payload or a token
+        console.error("Checkout error:", status ?? err.code ?? err.message, err.response?.data?.code ?? "");
         // The server's own message when it answered (e.g. ICICI refused the start, out of stock); a proxy error page or
         // no reply at all gets the not-charged message
         showToast(err.response?.data?.message || (gatewayDown
