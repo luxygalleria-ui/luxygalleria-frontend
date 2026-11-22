@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import ResilientImage from "../../components/common/ResilientImage";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Check, ShieldCheck, MapPin, X, Lock, ArrowRight, Store, Truck } from "lucide-react";
 import { useCart } from "../../context/CartContext";
-import { useQuote, Fulfillment, METHOD_LABEL, rupees, money, pricedLine, packagingSummary } from "../../lib/checkoutQuote";
+import { useQuote, Fulfillment, METHOD_LABEL, rupees, money, pricedLine, packagingSummary, startPayment, PayStage, sharedRefusal } from "../../lib/checkoutQuote";
 import { useToast } from "../../context/ToastContext";
 import { getAPIURL } from "../../lib/apiClient";
 import { fixCloudinaryCloud, getImageUrl } from '../../lib/imageUtils';
@@ -27,6 +27,9 @@ export default function CheckoutPage() {
   const { showToast } = useToast();
   const router = useRouter();
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  // Which choice the New Address modal fills: the delivery destination or the billing address
+  const [modalFor, setModalFor] = useState<"shipping" | "billing">("shipping");
+  const openAddressModal = (forWhat: "shipping" | "billing") => { setModalFor(forWhat); setIsAddressModalOpen(true); };
   const [addresses, setAddresses] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -40,10 +43,17 @@ export default function CheckoutPage() {
   const [addressErrors, setAddressErrors] = useState<Record<string, string>>({});
 
   const [isSavingAddress, setIsSavingAddress] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
+  // "" | waiting for the server to open the ICICI payment | ICICI's URL received, browser leaving
+  const [payStage, setPayStage] = useState<PayStage>("");
+  const isRedirecting = payStage !== "";
+  // Set synchronously on the first click: a second click in the same moment (before React re-renders the disabled
+  // button) is ignored instead of starting a second ICICI payment
+  const payLock = useRef(false);
+  // Fires if the browser is still on this page well after being sent to ICICI (see startPayment)
+  const leaveWatchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // Back from ICICI's page restores this page from the browser cache: re-enable the pay button
   useEffect(() => {
-    const onShow = (e: PageTransitionEvent) => { if (e.persisted) setIsRedirecting(false); };
+    const onShow = (e: PageTransitionEvent) => { if (e.persisted) { clearTimeout(leaveWatchdog.current); payLock.current = false; setPayStage(""); } };
     window.addEventListener("pageshow", onShow);
     return () => window.removeEventListener("pageshow", onShow);
   }, []);
@@ -56,6 +66,17 @@ export default function CheckoutPage() {
     setFulfillment((f) => (f.method === "delivery" ? { method: "delivery" } : f));
   };
   const selectedAddress = addresses.find(a => a.id === selectedAddressId)?.fullAddress;
+  const [confirmDeleteId, setConfirmDeleteId] = useState("");
+  const [deletingId, setDeletingId] = useState("");
+  // Billing: the delivery address by default, or one of the saved addresses (checked again on the server)
+  const [billingSame, setBillingSame] = useState(true);
+  const [billingAddressId, setBillingAddressId] = useState("");
+  const billingAddress = addresses.find(a => a.id === billingAddressId)?.fullAddress;
+  const billingMissing = ["city", "state", "zipCode"].filter((f) => !String(billingAddress?.[f] ?? "").trim());
+  const billingProblem = fulfillment.method !== "delivery" || billingSame ? ""
+    : !billingAddress ? "Choose a billing address or add a new one."
+    : billingMissing.length ? `Your billing address is missing its ${billingMissing.map((f) => (f === "zipCode" ? "PIN code" : f)).join(" and ")}. Choose or add a complete address.`
+    : "";
   // Delivery is priced by destination: without a complete address there is no correct charge to show
   const missingFields = ["city", "state", "zipCode"].filter((f) => !String(selectedAddress?.[f] ?? "").trim());
   const addressProblem = fulfillment.method !== "delivery" ? ""
@@ -68,6 +89,7 @@ export default function CheckoutPage() {
 
   const options = quote?.options ?? errorOptions ?? [];
   const deliveryOptions = options.filter(o => o.fulfillment === "delivery" && (o.offered || o.reason));
+  const sharedDeliveryRefusal = sharedRefusal(deliveryOptions);
   const pickupOption = options.find(o => o.fulfillment === "pickup" && o.offered);
   const isPickup = fulfillment.method === "pickup";
   const subtotal = quote ? quote.subtotal : money(cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0));
@@ -127,6 +149,34 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleDeleteAddress = async (id: string) => {
+    const token = JSON.parse(localStorage.getItem("luxygalleria_user") || "{}").token;
+    if (!token) { router.push("/sign-in"); return; }
+    setDeletingId(id);
+    try {
+      const res = await axios.delete(`${getAPIURL()}/users/addresses/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const cards = (res.data?.data ?? []).map(toCard);
+      setAddresses(cards);
+      // The deleted one was in use: move to the first remaining address (re-prices), or none
+      if (id === selectedAddressId) selectAddress(cards[0]?.id ?? "");
+      // A deleted billing address is never kept: the customer chooses again
+      if (id === billingAddressId) setBillingAddressId("");
+      showToast("Address deleted.", "success");
+    } catch (e) {
+      const err = e as { response?: { status?: number; data?: { message?: string } } };
+      if (err.response?.status === 401) {
+        localStorage.removeItem("luxygalleria_user");
+        showToast("Session expired. Please login again.", "warning");
+        router.push("/sign-in");
+      } else {
+        showToast(err.response?.data?.message || "Could not delete the address. Please try again.", "error");
+      }
+    } finally {
+      setDeletingId("");
+      setConfirmDeleteId("");
+    }
+  };
+
   const validateAddressForm = () => {
     const errors: Record<string, string> = {};
     if (!newAddressForm.city.trim()) errors.city = "City is required.";
@@ -167,7 +217,9 @@ export default function CheckoutPage() {
         }
         const mappedAddresses = res.data.data.map(toCard);
         setAddresses(mappedAddresses);
-        if (mappedAddresses.length > 0) selectAddress(mappedAddresses[mappedAddresses.length - 1].id);
+        const added = mappedAddresses[mappedAddresses.length - 1]?.id;
+        if (added && modalFor === "billing") setBillingAddressId(added);
+        else if (added) selectAddress(added);
         showToast("Address saved successfully!", "success");
       } catch (err: any) {
         if (err.response?.status === 401) {
@@ -243,24 +295,44 @@ export default function CheckoutPage() {
 
       // ICICI Orange PG is the only gateway: the server prices the cart, reserves stock and opens the payment; the
       // customer pays on ICICI's page and comes back through the backend's return URL to /order-success or /order-failure
-      setIsRedirecting(true);
-      const res = await axios.post(`${API_URL}/payments/icici/initiate`, {
-        total, items: orderItems, shippingAddress: orderShippingAddress, fulfillment: orderFulfillment,
-      }, { headers: { Authorization: `Bearer ${token}` } });
-      window.location.assign(res.data.data.redirectUrl);
+      if (billingProblem) { showToast(billingProblem, "warning"); return; }
+      await startPayment({
+        lock: payLock, watchdog: leaveWatchdog, setStage: setPayStage,
+        // The server gives ICICI 20 s; never leave the button spinning if the connection itself hangs.
+        // Saved addresses go by id too: the server uses its own copy and refuses one deleted since this page loaded.
+        initiate: async () => (await axios.post(`${API_URL}/payments/icici/initiate`, {
+          total, items: orderItems, shippingAddress: orderShippingAddress, fulfillment: orderFulfillment,
+          ...(isPickup ? {} : { shippingAddressId: selectedAddressId }),
+          ...(!isPickup && !billingSame ? { billingAddressId } : {}),
+        }, { headers: { Authorization: `Bearer ${token}` }, timeout: 45_000 })).data,
+        navigate: (url) => window.location.assign(url),
+        onError: (err) => showPayError(err),
+        // Still on this page long after being sent to ICICI: the navigation was cancelled or ICICI's page is not answering
+        onStuck: () => showToast("The ICICI payment page did not open. No payment was taken here; please try again.", "error"),
+      });
     } catch (err: any) {
-      setIsRedirecting(false);
+      showPayError(err);
+    }
+  };
+
+  const showPayError = (e: unknown) => {
+      const err = e as { response?: { status?: number; data?: { message?: string } }; code?: string; message?: string };
       const status = err.response?.status;
+      // Gateway unreachable / proxy timeout / our own timeout: nothing was charged at this step
+      const gatewayDown = [502, 503, 504].includes(status ?? 0) || err.code === "ECONNABORTED" || !err.response;
       if (status === 401) {
         // Token expired or invalid - redirect to sign-in
         localStorage.removeItem("luxygalleria_user");
         showToast("Your session expired. Please sign in again.", "warning");
         router.push("/sign-in");
       } else {
-        console.error("Checkout error:", err);
-        showToast(err.response?.data?.message || "An error occurred during checkout.", "error");
+        console.error("Checkout error:", status ?? err.code ?? err.message);
+        // The server's own message when it answered (e.g. ICICI refused the start, out of stock); a proxy error page or
+        // no reply at all gets the not-charged message
+        showToast(err.response?.data?.message || (gatewayDown
+          ? "The ICICI payment page is not responding right now. You have not been charged. Please try again in a few minutes."
+          : "An error occurred during checkout."), "error");
       }
-    }
   };
 
   if (isLoading) {
@@ -304,6 +376,8 @@ export default function CheckoutPage() {
                   </button>
                   {!isPickup && deliveryOptions.length > 0 && (
                     <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Delivery method">
+                      {/* The same refusal for every method (e.g. a product without a weight) is said once, not per method */}
+                      {sharedDeliveryRefusal && <p className="text-sm text-amber-700" role="alert">{sharedDeliveryRefusal}</p>}
                       {deliveryOptions.map((o) => {
                         const checked = quote?.fulfillmentMethod === "delivery" ? quote.shippingMethod === o.shippingMethod : fulfillment.shippingMethod === o.shippingMethod;
                         return (
@@ -313,7 +387,7 @@ export default function CheckoutPage() {
                             <span className="text-sm">
                               <span className="block font-semibold text-slate-900">{METHOD_LABEL[o.shippingMethod!]}</span>
                               {o.eta && <span className="block text-slate-500">{o.eta}</span>}
-                              {!o.allowed && <span className="block text-amber-700">{o.reason}</span>}
+                              {!o.allowed && o.reason !== sharedDeliveryRefusal && <span className="block text-amber-700">{o.reason}</span>}
                             </span>
                           </label>
                         );
@@ -363,10 +437,10 @@ export default function CheckoutPage() {
                 {addresses.map((addr) => {
                   const isSelected = selectedAddressId === addr.id;
                   return (
+                    <div key={addr.id} className="relative w-full max-w-sm">
                     <button
-                      key={addr.id}
                       onClick={() => selectAddress(addr.id)}
-                      className={`relative border rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 w-full max-w-sm bg-white text-left transition-colors ${isSelected ? "border-slate-300" : "border-slate-200 hover:border-slate-300"
+                      className={`relative border rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 pb-12 sm:pb-12 w-full bg-white text-left transition-colors ${isSelected ? "border-slate-300" : "border-slate-200 hover:border-slate-300"
                         }`}
                     >
                       {isSelected && (
@@ -385,12 +459,27 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                     </button>
+                    {/* Beside the card, not inside it: a button cannot contain another button */}
+                    <div className="absolute bottom-3 right-6 flex items-center gap-3 text-xs font-bold">
+                      {confirmDeleteId === addr.id ? (
+                        <>
+                          <span className="text-slate-600 font-semibold">Delete this address?</span>
+                          <button type="button" onClick={() => handleDeleteAddress(addr.id)} disabled={deletingId === addr.id}
+                            className="text-red-600 hover:underline disabled:opacity-50">{deletingId === addr.id ? "Deleting…" : "Yes, delete"}</button>
+                          <button type="button" onClick={() => setConfirmDeleteId("")} className="text-slate-500 hover:underline">Cancel</button>
+                        </>
+                      ) : (
+                        <button type="button" onClick={() => setConfirmDeleteId(addr.id)} aria-label={`Delete address ${addr.name}`}
+                          className="text-slate-400 hover:text-red-600 uppercase tracking-wider">Delete</button>
+                      )}
+                    </div>
+                    </div>
                   );
                 })}
 
                 {/* New Address Button */}
                 <button
-                  onClick={() => setIsAddressModalOpen(true)}
+                  onClick={() => openAddressModal("shipping")}
                   className="border border-slate-200 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 w-full sm:w-40 flex flex-col items-center justify-center gap-2 bg-white hover:bg-slate-50 transition-colors text-slate-900 font-bold text-sm"
                 >
                   <span className="text-xl font-normal">+</span>
@@ -399,6 +488,39 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            )}
+
+            {/* Step 3: BILLING ADDRESS (home delivery only; pickup orders are unchanged) */}
+            {!isPickup && (
+            <div className="flex flex-col gap-4 ml-0 sm:ml-12">
+              <h2 className="font-sans font-bold text-xl text-[#0A192F]">Billing Address</h2>
+              <div className="flex flex-col gap-2" role="radiogroup" aria-label="Billing address">
+                <label className="flex items-center gap-3 text-sm text-slate-800 cursor-pointer">
+                  <input type="radio" name="billingChoice" checked={billingSame} onChange={() => setBillingSame(true)} />
+                  Same as delivery address
+                </label>
+                <label className="flex items-center gap-3 text-sm text-slate-800 cursor-pointer">
+                  <input type="radio" name="billingChoice" checked={!billingSame} onChange={() => setBillingSame(false)} />
+                  Use another billing address
+                </label>
+              </div>
+              {!billingSame && (
+                <div className="flex flex-col gap-2">
+                  {addresses.map((addr) => (
+                    <label key={addr.id} className={`flex items-start gap-3 p-4 rounded-xl border bg-white cursor-pointer text-sm ${billingAddressId === addr.id ? "border-[#0A192F] ring-1 ring-[#0A192F]" : "border-slate-200"}`}>
+                      <input type="radio" name="billingAddress" className="mt-1" checked={billingAddressId === addr.id} onChange={() => setBillingAddressId(addr.id)} />
+                      <span>
+                        <span className="block font-semibold text-slate-900 capitalize">{addr.name}</span>
+                        <span className="block text-slate-500">{addr.line1}{addr.line2 ? ` ${addr.line2}` : ""}</span>
+                      </span>
+                    </label>
+                  ))}
+                  <button type="button" onClick={() => openAddressModal("billing")}
+                    className="self-start text-sm font-bold text-[#0A192F] underline underline-offset-4 py-2">+ New billing address</button>
+                  {billingProblem && <p className="text-sm text-amber-700" role="alert">{billingProblem}</p>}
+                </div>
+              )}
+            </div>
             )}
 
             <div className="h-px bg-slate-200 w-full ml-0 sm:ml-12" />
@@ -545,10 +667,10 @@ export default function CheckoutPage() {
 
             <button
               onClick={handleCheckout}
-              disabled={!quote || isLoadingShipping || !!addressProblem || isRedirecting}
+              disabled={!quote || isLoadingShipping || !!addressProblem || !!billingProblem || isRedirecting}
               className="w-full bg-[#111] text-white font-bold text-base py-4 sm:py-5 rounded-xl hover:bg-black transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 mb-4 disabled:bg-slate-400 disabled:cursor-not-allowed"
             >
-              {isRedirecting ? "Redirecting to ICICI Bank…" : isPickup ? "Pay Now & Collect in Store" : "Secure Checkout"}
+              {payStage === "connecting" ? "Connecting to ICICI Bank…" : payStage === "redirecting" ? "Redirecting to ICICI Bank…" : isPickup ? "Pay Now & Collect in Store" : "Secure Checkout"}
             </button>
 
             <div className="flex items-center justify-center gap-2 text-slate-400">
@@ -573,7 +695,7 @@ export default function CheckoutPage() {
             {/* Header */}
             <div className="flex items-center justify-between p-6 sm:p-8 border-b border-slate-100">
               <h2 className="font-sans font-black text-2xl text-slate-900 tracking-tight">
-                New Shipping Address
+                {modalFor === "billing" ? "New Billing Address" : "New Shipping Address"}
               </h2>
               <button
                 onClick={() => setIsAddressModalOpen(false)}
@@ -647,7 +769,7 @@ export default function CheckoutPage() {
                 disabled={isSavingAddress}
                 className="w-full bg-[#111] text-white font-bold text-base py-4 rounded-xl mt-4 hover:bg-black transition-colors focus:outline-none disabled:opacity-50"
               >
-                {isSavingAddress ? "Saving..." : "Save & Deliver Here"}
+                {isSavingAddress ? "Saving..." : modalFor === "billing" ? "Save & Use for Billing" : "Save & Deliver Here"}
               </button>
             </div>
           </div>

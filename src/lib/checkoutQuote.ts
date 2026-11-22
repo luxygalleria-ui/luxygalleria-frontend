@@ -141,3 +141,74 @@ export const packagingSummary = (q: Quote): string => {
     ? `Packaging charge ₹${p.fee}: a flat fee, charged once per eligible delivery order.`
     : `Packaging charge ₹${p.fee}: ${p.weightG} g combined = ${p.steps} × ₹${p.rule.feeAmount} per started ${p.rule.unitGrams} g, charged once per order.`;
 };
+
+/**
+ * A refusal that every refused delivery option shares (e.g. "no weight is set for …", which the server attaches to Road
+ * and Air alike) is shown once for the group instead of under each option. Returns "" when the reasons differ or only
+ * one option is refused, so per-option reasons stay where they are.
+ */
+export const sharedRefusal = (options: Pick<CheckoutOption, "allowed" | "reason">[]): string => {
+  const reasons = options.filter((o) => !o.allowed && o.reason).map((o) => o.reason as string);
+  return reasons.length > 1 && reasons.every((r) => r === reasons[0]) ? reasons[0] : "";
+};
+
+/**
+ * One payment start at a time (double click, Enter + click). Takes the lock on a useRef object and returns true, or
+ * returns false while a start is already in flight. Release it (lock.current = false) only when the start failed.
+ */
+export const takePayLock = (lock: { current: boolean }) => {
+  if (lock.current) return false;
+  lock.current = true;
+  return true;
+};
+
+/** The only hosts the browser may be sent to for payment: ICICI's UAT and live payment pages (exact match). */
+const ICICI_PAYMENT_HOSTS = new Set(["pgpayuat.icicibank.com", "pgpay.icicibank.com"]);
+
+/**
+ * ICICI's payment page from the initiate reply, normalised, or "" unless it is https on the default port, without
+ * credentials, on an exact ICICI payment host (never navigate elsewhere).
+ */
+export const paymentPageUrl = (reply: unknown): string => {
+  const url = (reply as { data?: { redirectUrl?: unknown } } | null)?.data?.redirectUrl;
+  if (typeof url !== "string") return "";
+  try {
+    const u = new URL(url);
+    const trusted = u.protocol === "https:" && ICICI_PAYMENT_HOSTS.has(u.hostname) && u.port === "" && !u.username && !u.password;
+    return trusted ? u.toString() : "";
+  } catch { return ""; }
+};
+
+export type PayStage = "" | "connecting" | "redirecting";
+
+/**
+ * Starts the ICICI payment once per click burst: lock -> "connecting" while the server opens it -> "redirecting" and
+ * navigate. Every failure (no reply, timeout, refusal, bad URL, a navigation that throws) releases the lock and clears
+ * the stage before onError. A navigation that never leaves the page (cancelled, blocked, ICICI not answering) is
+ * caught by the watchdog: after stuckAfterMs the lock and stage are released and onStuck runs. Unloading the page
+ * stops the timer with it; the page clears it on a back-navigation restore.
+ */
+export const startPayment = async (o: {
+  lock: { current: boolean };
+  watchdog: { current: ReturnType<typeof setTimeout> | undefined };
+  setStage: (s: PayStage) => void;
+  initiate: () => Promise<unknown>;
+  navigate: (url: string) => void;
+  onError: (err: unknown) => void;
+  onStuck: () => void;
+  stuckAfterMs?: number;
+}) => {
+  if (!takePayLock(o.lock)) return;
+  o.setStage("connecting");
+  try {
+    const url = paymentPageUrl(await o.initiate());
+    if (!url) throw new Error("No payment page URL in the gateway response");
+    o.setStage("redirecting");
+    o.navigate(url);
+    o.watchdog.current = setTimeout(() => { o.lock.current = false; o.setStage(""); o.onStuck(); }, o.stuckAfterMs ?? 20_000);
+  } catch (err) {
+    o.lock.current = false;
+    o.setStage("");
+    o.onError(err);
+  }
+};

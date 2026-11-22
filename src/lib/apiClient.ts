@@ -1,36 +1,21 @@
 import axios from 'axios';
 
-// Centralized API client configuration
+// Centralized API client configuration.
+// NEXT_PUBLIC_API_URL always wins when it is set, on localhost too (it used to be ignored on localhost, so a local
+// checkout silently talked to whatever ran on :5000). The local default applies only when it is unset or blank.
+// The variable may be given with or without /api or /api/v1 and trailing slashes; the result never doubles /api/v1.
+const LOCAL_DEFAULT_ORIGIN = 'http://localhost:5000';
+
+/** API origin (and any mount path), without /api/v1 and without a trailing slash. */
 export const getBaseURL = () => {
-  if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:5000';
-    }
-  }
-  // Use environment variable if available
-  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '').replace('/api', '');
-  }
-  // Fallback to localhost
-  return 'http://localhost:5000';
+  // Literal reference: Next.js inlines NEXT_PUBLIC_* at build time
+  const configured = (process.env.NEXT_PUBLIC_API_URL || '').trim();
+  if (!configured) return LOCAL_DEFAULT_ORIGIN;
+  return configured.replace(/\/+$/, '').replace(/\/api(?:\/v1)?$/i, '').replace(/\/+$/, '');
 };
 
-export const getAPIURL = () => {
-  if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:5000/api/v1';
-    }
-  }
-  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
-    // If env already has /api/v1, return as-is
-    if (process.env.NEXT_PUBLIC_API_URL.includes('/api/v1')) {
-      return process.env.NEXT_PUBLIC_API_URL;
-    }
-    // Otherwise append /api/v1
-    return `${getBaseURL()}/api/v1`;
-  }
-  return 'http://localhost:5000/api/v1';
-};
+/** Base for every API call: <origin>/api/v1 */
+export const getAPIURL = () => `${getBaseURL()}/api/v1`;
 
 const apiClient = axios.create({
   baseURL: getAPIURL(),
