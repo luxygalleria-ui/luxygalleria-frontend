@@ -5,11 +5,12 @@ import Link from "next/link";
 import ResilientImage from "../../components/common/ResilientImage";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Check, ShieldCheck, MapPin, X, Lock, ArrowRight, Store, Truck } from "lucide-react";
+import { Check, ShieldCheck, MapPin, X, Lock, Store, Truck } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useQuote, Fulfillment, METHOD_LABEL, rupees, money, pricedLine, packagingSummary, startPayment, PayStage, sharedRefusal } from "../../lib/checkoutQuote";
 import { useToast } from "../../context/ToastContext";
 import { getAPIURL } from "../../lib/apiClient";
+import { pinStateProblem } from "../../lib/addressRules";
 import { fixCloudinaryCloud, getImageUrl } from '../../lib/imageUtils';
 
 /** Saved address (server shape) -> checkout card. */
@@ -30,7 +31,7 @@ export default function CheckoutPage() {
   // Which choice the New Address modal fills: the delivery destination or the billing address
   const [modalFor, setModalFor] = useState<"shipping" | "billing">("shipping");
   const openAddressModal = (forWhat: "shipping" | "billing") => { setModalFor(forWhat); setIsAddressModalOpen(true); };
-  const [addresses, setAddresses] = useState<any[]>([]);
+  const [addresses, setAddresses] = useState<ReturnType<typeof toCard>[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [newAddressForm, setNewAddressForm] = useState({
@@ -72,16 +73,18 @@ export default function CheckoutPage() {
   const [billingSame, setBillingSame] = useState(true);
   const [billingAddressId, setBillingAddressId] = useState("");
   const billingAddress = addresses.find(a => a.id === billingAddressId)?.fullAddress;
-  const billingMissing = ["city", "state", "zipCode"].filter((f) => !String(billingAddress?.[f] ?? "").trim());
+  const billingMissing = (["city", "state", "zipCode"] as const).filter((f) => !String(billingAddress?.[f] ?? "").trim());
   const billingProblem = fulfillment.method !== "delivery" || billingSame ? ""
     : !billingAddress ? "Choose a billing address or add a new one."
     : billingMissing.length ? `Your billing address is missing its ${billingMissing.map((f) => (f === "zipCode" ? "PIN code" : f)).join(" and ")}. Choose or add a complete address.`
     : "";
   // Delivery is priced by destination: without a complete address there is no correct charge to show
-  const missingFields = ["city", "state", "zipCode"].filter((f) => !String(selectedAddress?.[f] ?? "").trim());
+  const missingFields = (["city", "state", "zipCode"] as const).filter((f) => !String(selectedAddress?.[f] ?? "").trim());
   const addressProblem = fulfillment.method !== "delivery" ? ""
     : !selectedAddress ? "Add or select a delivery address to see the delivery charge."
     : missingFields.length ? `Your selected address is missing its ${missingFields.map((f) => (f === "zipCode" ? "PIN code" : f)).join(" and ")}. Add a complete address to continue.`
+    // An older saved address can contradict itself (e.g. a Kerala PIN with another state): say so before payment
+    : pinStateProblem(selectedAddress) ? `This saved address needs a correction: ${pinStateProblem(selectedAddress)} Delete it and add the corrected address.`
     : "";
   const { quote, quoteError, errorOptions, isLoading: isLoadingShipping, retry: retryQuote } =
     useQuote(cartItems, fulfillment, fulfillment.method === "delivery" ? selectedAddress?.state : undefined,
@@ -90,22 +93,11 @@ export default function CheckoutPage() {
   const options = quote?.options ?? errorOptions ?? [];
   const deliveryOptions = options.filter(o => o.fulfillment === "delivery" && (o.offered || o.reason));
   const sharedDeliveryRefusal = sharedRefusal(deliveryOptions);
-  const pickupOption = options.find(o => o.fulfillment === "pickup" && o.offered);
+  // Shown whenever the server lists it: selectable only while offered, otherwise greyed with the server's reason
+  const pickupOption = options.find(o => o.fulfillment === "pickup");
   const isPickup = fulfillment.method === "pickup";
   const subtotal = quote ? quote.subtotal : money(cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0));
   const total = quote ? quote.grandTotal : null;
-
-  // Check login status on mount
-  useEffect(() => {
-    const userStr = localStorage.getItem("luxygalleria_user");
-    if (!userStr) {
-      showToast("Please login to proceed with checkout.", "warning");
-      router.push("/sign-in");
-      return;
-    }
-    setIsLoading(false);
-    fetchAddresses();
-  }, []);
 
   const fetchAddresses = async () => {
     try {
@@ -137,7 +129,8 @@ export default function CheckoutPage() {
           setSelectedAddressId(mappedAddresses[0].id);
         }
       }
-    } catch (err: any) {
+    } catch (e) {
+      const err = e as { response?: { status?: number; data?: { message?: string } } };
       console.error("Failed to fetch addresses", err);
       if (err.response?.status === 401) {
         showToast("Session expired. Please login again.", "warning");
@@ -148,6 +141,22 @@ export default function CheckoutPage() {
       }
     }
   };
+
+  // Check login status on mount
+  useEffect(() => {
+    const userStr = localStorage.getItem("luxygalleria_user");
+    if (!userStr) {
+      showToast("Please login to proceed with checkout.", "warning");
+      router.push("/sign-in");
+      return;
+    }
+    // Client-only sign-in gate: localStorage cannot be read during server render, so the page is revealed here
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsLoading(false);
+    fetchAddresses();
+    // Runs once on mount by design: re-running on every render would refetch the addresses each time
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDeleteAddress = async (id: string) => {
     const token = JSON.parse(localStorage.getItem("luxygalleria_user") || "{}").token;
@@ -182,7 +191,11 @@ export default function CheckoutPage() {
     if (!newAddressForm.city.trim()) errors.city = "City is required.";
     if (!newAddressForm.state.trim()) errors.state = "State is required.";
     if (!newAddressForm.zip.trim()) errors.zip = "PIN code is required.";
-    else if (!/^\d{5,6}$/.test(newAddressForm.zip.trim())) errors.zip = "Enter a valid 5-6 digit PIN code.";
+    else {
+      // Same rule as the server: 6 digits, and the PIN must agree with the state at the Kerala boundary
+      const pinProblem = pinStateProblem({ state: newAddressForm.state, zipCode: newAddressForm.zip, country: newAddressForm.country });
+      if (pinProblem) errors.zip = pinProblem;
+    }
     if (newAddressForm.street.trim() && newAddressForm.street.trim().length < 3) errors.street = "Street must be at least 3 characters.";
     setAddressErrors(errors);
     return Object.keys(errors).length === 0;
@@ -221,7 +234,8 @@ export default function CheckoutPage() {
         if (added && modalFor === "billing") setBillingAddressId(added);
         else if (added) selectAddress(added);
         showToast("Address saved successfully!", "success");
-      } catch (err: any) {
+      } catch (e) {
+        const err = e as { response?: { status?: number; data?: { message?: string } } };
         if (err.response?.status === 401) {
           showToast("Session expired. Please login again.", "warning");
           localStorage.removeItem("luxygalleria_user");
@@ -285,7 +299,8 @@ export default function CheckoutPage() {
       }));
 
       // Use the stored fields directly (splitting the display string broke when street was empty or had commas)
-      const orderShippingAddress = isPickup ? undefined : {
+      // (delivery without a complete address already returned above, so addr is set whenever it is used)
+      const orderShippingAddress = isPickup || !addr ? undefined : {
         street: addr.street || '',
         city: addr.city,
         state: addr.state,
@@ -310,7 +325,7 @@ export default function CheckoutPage() {
         // Still on this page long after being sent to ICICI: the navigation was cancelled or ICICI's page is not answering
         onStuck: () => showToast("The ICICI payment page did not open. No payment was taken here; please try again.", "error"),
       });
-    } catch (err: any) {
+    } catch (err) {
       showPayError(err);
     }
   };
@@ -403,8 +418,17 @@ export default function CheckoutPage() {
                       <Store size={20} className="text-slate-600" />
                       <span className="font-bold text-slate-900">Store pickup</span>
                     </span>
-                    <span className="block text-sm text-slate-500 mt-2">Collect in store. Pay now online; no delivery fee.</span>
-                    {pickupOption.eta && <span className="block text-sm text-slate-500">{pickupOption.eta}</span>}
+                    {pickupOption.offered ? (
+                      <>
+                        <span className="block text-sm text-slate-500 mt-2">Collect in store. Pay now online; no delivery fee.</span>
+                        {pickupOption.eta && <span className="block text-sm text-slate-500">{pickupOption.eta}</span>}
+                        {typeof pickupOption.fee === "number" && (
+                          <span className="block text-sm font-semibold text-slate-700 mt-1">Pickup charge: {pickupOption.fee === 0 ? <span className="text-green-600">Free</span> : rupees(pickupOption.fee)}</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="block text-sm text-amber-700 mt-2">{pickupOption.reason || "Store pickup is not available right now"}</span>
+                    )}
                   </button>
                 )}
               </div>

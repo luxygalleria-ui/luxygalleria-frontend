@@ -7,6 +7,9 @@ import { User, Package, MapPin, LogOut, X } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
 import { useCart } from "../../context/CartContext";
 import { fixCloudinaryCloud, getImageUrl, handleImageError } from "../../lib/imageUtils";
+import { pinStateProblem } from "../../lib/addressRules";
+import { paymentBadge, refundNote, toneClass } from "../../lib/orderDisplay";
+import LinkGoogleButton from "../../components/auth/LinkGoogleButton";
 
 interface UserProfile {
   name: string;
@@ -50,31 +53,10 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const handleAuth = async () => {
-      // Check for auto-login token in URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlToken = urlParams.get('token');
-
-      if (urlToken) {
-        try {
-          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-          const res = await axios.get(`${baseUrl}/users/profile`, {
-            headers: { 'Authorization': `Bearer ${urlToken}` }
-          });
-
-          if (res.data.success) {
-            const userData = { ...res.data.data, token: urlToken };
-            setUser(userData);
-            localStorage.setItem("luxygalleria_user", JSON.stringify(userData));
-
-            // Clean up the URL to remove the token without reloading the page
-            window.history.replaceState({}, document.title, window.location.pathname);
-            setLoading(false);
-            return;
-          }
-        } catch (err) {
-          console.error("Auto-login failed:", err);
-          // Fallback to regular auth below if auto-login fails
-        }
+      // Older order emails linked here with ?token=: it is never used to sign in (a link in a mailbox must not open
+      // the account); it is only removed from the address bar and history. The customer signs in normally.
+      if (new URLSearchParams(window.location.search).has('token')) {
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       // Load user from localStorage
@@ -140,7 +122,11 @@ export default function ProfilePage() {
     if (!newAddressForm.city.trim()) errors.city = "City is required.";
     if (!newAddressForm.state.trim()) errors.state = "State is required.";
     if (!newAddressForm.zip.trim()) errors.zip = "PIN code is required.";
-    else if (!/^\d{5,6}$/.test(newAddressForm.zip.trim())) errors.zip = "Enter a valid 5-6 digit PIN code.";
+    else {
+      // Same rule as the server: 6 digits, and the PIN must agree with the state at the Kerala boundary
+      const pinProblem = pinStateProblem({ state: newAddressForm.state, zipCode: newAddressForm.zip, country: newAddressForm.country });
+      if (pinProblem) errors.zip = pinProblem;
+    }
     if (newAddressForm.street.trim() && newAddressForm.street.trim().length < 3) errors.street = "Street must be at least 3 characters.";
     setAddressErrors(errors);
     return Object.keys(errors).length === 0;
@@ -390,6 +376,7 @@ export default function ProfilePage() {
                     Welcome back, {user.name.split(' ')[0]}. Here&apos;s what&apos;s happening with your account.
                   </p>
                 </div>
+                <LinkGoogleButton token={user.token} />
 
                 {/* Profile Completion Warning */}
                 {!user.phone && (
@@ -436,6 +423,10 @@ export default function ProfilePage() {
                                   'bg-slate-100 text-slate-700'
                               }`}>
                               {order.orderStatus}
+                            </span>
+                            {/* The money, separately from the order: Cancelled is never mistaken for Refunded */}
+                            <span className={`inline-block mt-1 ml-1 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${toneClass[paymentBadge(order).tone]}`}>
+                              {paymentBadge(order).label}
                             </span>
                           </div>
                         </div>
@@ -489,7 +480,13 @@ export default function ProfilePage() {
                               }`}>
                               {order.orderStatus}
                             </span>
+                            <span className={`inline-block ml-2 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider ${toneClass[paymentBadge(order).tone]}`}>
+                              {paymentBadge(order).label}
+                            </span>
                           </div>
+                          {refundNote(order) && (
+                            <p className="w-full text-sm text-slate-600" role="note">{refundNote(order)}</p>
+                          )}
                         </div>
                         <div className="p-6 sm:p-8">
                           <div className="flex flex-col gap-4">

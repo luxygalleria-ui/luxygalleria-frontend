@@ -14,6 +14,8 @@ export interface CheckoutOption {
   allowed: boolean;
   reason: string;
   eta: string;
+  /** Store pickup only, while offered: the configured pickup charge (0 = free). */
+  fee?: number;
 }
 
 export interface Quote {

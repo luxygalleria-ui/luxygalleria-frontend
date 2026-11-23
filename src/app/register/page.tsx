@@ -11,6 +11,7 @@ import * as z from "zod";
 import { Eye, EyeOff, ShieldCheck, ArrowRight } from "lucide-react";
 import GoogleAuthButton from "../../components/auth/GoogleAuthButton";
 import { getAPIURL } from "../../lib/apiClient";
+import { pinStateProblem } from "../../lib/addressRules";
 
 // ─── Form Validation Schema ───
 const registerSchema = z
@@ -23,12 +24,20 @@ const registerSchema = z
     street: z.string().optional(),
     city: z.string().optional(),
     state: z.string().optional(),
-    zipCode: z.string().optional().refine((val) => !val || /^\d{5,6}$/.test(val), { message: "PIN code must be 5-6 digits." }),
+    zipCode: z.string().optional(),
     country: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match.",
     path: ["confirmPassword"],
+  })
+  // The address is optional; once any part of it is filled in, it follows the same rules as the server
+  .superRefine((data, ctx) => {
+    if (![data.street, data.city, data.state, data.zipCode].some((v) => v?.trim())) return;
+    if (!data.city?.trim()) ctx.addIssue({ code: "custom", path: ["city"], message: "City is required for the address." });
+    if (!data.state?.trim()) ctx.addIssue({ code: "custom", path: ["state"], message: "State is required for the address." });
+    const pin = pinStateProblem({ state: data.state, zipCode: data.zipCode, country: data.country });
+    if (pin) ctx.addIssue({ code: "custom", path: ["zipCode"], message: pin });
   });
 
 type RegisterValues = z.infer<typeof registerSchema>;
@@ -60,13 +69,14 @@ export default function RegisterPage() {
         email: data.email,
         password: data.password,
         phone: data.phone,
-        addresses: [{
+        // Only an address the customer actually entered (a blank one is never saved)
+        addresses: [data.street, data.city, data.state, data.zipCode].some((v) => v?.trim()) ? [{
           street: data.street,
           city: data.city,
           state: data.state,
           zipCode: data.zipCode,
           country: data.country
-        }]
+        }] : []
       });
 
       // Direct signup — account is created and logged in immediately
@@ -75,7 +85,8 @@ export default function RegisterPage() {
         await syncCartAfterLogin(); // carry the signed-out cart into the new account
       }
       router.push("/");
-    } catch (err: any) {
+    } catch (e) {
+      const err = e as { response?: { status?: number; data?: { message?: string } } };
       // Don't log 400 errors to console (expected: email already exists, etc.)
       const status = err.response?.status;
       if (status === 400 || status === 409) {
