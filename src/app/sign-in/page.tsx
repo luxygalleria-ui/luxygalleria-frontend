@@ -181,11 +181,11 @@ export default function SignInPage() {
                 </p>
               )}
 
-              {/* <div className="mt-3 text-right">
-                <Link href="#" className="font-sans text-sm text-slate-500 hover:text-slate-800 transition-colors">
+              <div className="mt-3 text-right">
+                <Link href="/forgot-password" className="font-sans text-sm text-slate-500 hover:text-slate-800 transition-colors">
                   Forgot Password?
                 </Link>
-              </div> */}
+              </div>
             </div>
 
             {/* Submit Button */}
