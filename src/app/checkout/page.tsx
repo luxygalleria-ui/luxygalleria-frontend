@@ -320,7 +320,7 @@ export default function CheckoutPage() {
           total, items: orderItems, shippingAddress: orderShippingAddress, fulfillment: orderFulfillment,
           ...(isPickup ? {} : { shippingAddressId: selectedAddressId }),
           ...(!isPickup && !billingSame ? { billingAddressId } : {}),
-        }, { headers: { Authorization: `Bearer ${token}` }, timeout: 45_000, withCredentials: true })).data,
+        }, { headers: { Authorization: `Bearer ${token}` }, timeout: 45_000 })).data,
         navigate: (url) => window.location.assign(url),
         onError: (err) => showPayError(err),
         // Still on this page long after being sent to ICICI: the navigation was cancelled or ICICI's page is not answering
