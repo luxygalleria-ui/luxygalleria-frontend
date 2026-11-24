@@ -9,7 +9,7 @@ const LOCAL_DEFAULT_ORIGIN = 'http://localhost:5000';
 /** API origin (and any mount path), without /api/v1 and without a trailing slash. */
 export const getBaseURL = () => {
   // Literal reference: Next.js inlines NEXT_PUBLIC_* at build time
-  const configured = (process.env.NEXT_PUBLIC_API_URL || '').trim();
+  const configured = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || '').trim();
   if (!configured) return LOCAL_DEFAULT_ORIGIN;
   return configured.replace(/\/+$/, '').replace(/\/api(?:\/v1)?$/i, '').replace(/\/+$/, '');
 };

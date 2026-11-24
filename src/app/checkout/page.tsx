@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Check, ShieldCheck, MapPin, X, Lock, Store, Truck } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useQuote, Fulfillment, METHOD_LABEL, rupees, money, pricedLine, packagingSummary, startPayment, PayStage, sharedRefusal } from "../../lib/checkoutQuote";
+import { TEST_PAYMENT_NOTICE } from "../../lib/testPayment";
 import { useToast } from "../../context/ToastContext";
 import { getAPIURL } from "../../lib/apiClient";
 import { pinStateProblem } from "../../lib/addressRules";
@@ -319,7 +320,7 @@ export default function CheckoutPage() {
           total, items: orderItems, shippingAddress: orderShippingAddress, fulfillment: orderFulfillment,
           ...(isPickup ? {} : { shippingAddressId: selectedAddressId }),
           ...(!isPickup && !billingSame ? { billingAddressId } : {}),
-        }, { headers: { Authorization: `Bearer ${token}` }, timeout: 45_000 })).data,
+        }, { headers: { Authorization: `Bearer ${token}` }, timeout: 45_000, withCredentials: true })).data,
         navigate: (url) => window.location.assign(url),
         onError: (err) => showPayError(err),
         // Still on this page long after being sent to ICICI: the navigation was cancelled or ICICI's page is not answering
@@ -689,6 +690,12 @@ export default function CheckoutPage() {
                 ICICI Bank secure payment (cards, net banking, UPI)
               </label>
             </fieldset>
+
+            {quote?.testPayment && (
+              <p role="alert" data-testid="uat-test-notice" className="mb-4 rounded-xl border-2 border-red-600 bg-red-50 p-3 text-center text-xs font-bold uppercase tracking-wide text-red-800">
+                {TEST_PAYMENT_NOTICE}
+              </p>
+            )}
 
             <button
               onClick={handleCheckout}

@@ -43,6 +43,8 @@ export interface Quote {
   tax: { enabled: boolean; pricesIncludeTax: boolean; taxableValue: number; taxAmount: number; addedToTotal: number; missingRates: string[] };
   grandTotal: number;
   options: CheckoutOption[];
+  /** Server: online payment goes to ICICI UAT (test money), so the order will not be a real purchase. */
+  testPayment?: boolean;
   /** Server-priced lines, in the same order as the cart items sent (price and weight from the product records). */
   lines: { product: string; variantId: string; name: string; price: number; weight: number; quantity: number; stock: number }[];
 }

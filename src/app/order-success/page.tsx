@@ -1,17 +1,31 @@
 import Link from 'next/link';
 import { CheckCircle } from 'lucide-react';
+import { TEST_PAYMENT_NOTICE } from '../../lib/testPayment';
 
-export default function OrderSuccessPage() {
+// ?test=1 is added by the backend for an ICICI UAT test order (from its stored session): never shown as a purchase
+export default async function OrderSuccessPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const isTest = (await searchParams).test === '1';
   return (
     <div className="min-h-screen bg-[#FAFAFA] pt-24 pb-16 flex items-center justify-center">
       <div className="max-w-md w-full mx-auto p-8 bg-white rounded-[2rem] shadow-sm border border-slate-100 text-center animate-in fade-in zoom-in duration-500">
         <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle size={48} className="text-green-500" strokeWidth={2.5} />
         </div>
-        <h1 className="font-serif font-normal text-4xl md:text-5xl text-slate-900 mb-4 tracking-tight">Order Placed!</h1>
-        <p className="text-slate-500 mb-10 leading-relaxed font-sans text-base">
-          Thank you for your purchase. We've received your order and are getting it ready for shipment. You can track your order status in your profile.
-        </p>
+        {isTest ? (
+          <>
+            <h1 className="font-serif font-normal text-4xl md:text-5xl text-slate-900 mb-4 tracking-tight">Test Order Recorded</h1>
+            <p role="alert" data-testid="uat-test-notice" className="mb-10 rounded-xl border-2 border-red-600 bg-red-50 p-4 text-sm font-bold uppercase tracking-wide text-red-800">
+              {TEST_PAYMENT_NOTICE}
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="font-serif font-normal text-4xl md:text-5xl text-slate-900 mb-4 tracking-tight">Order Placed!</h1>
+            <p className="text-slate-500 mb-10 leading-relaxed font-sans text-base">
+              Thank you for your purchase. We&apos;ve received your order and are getting it ready for shipment. You can track your order status in your profile.
+            </p>
+          </>
+        )}
         <div className="flex flex-col gap-3">
           <Link 
             href="/profile"
