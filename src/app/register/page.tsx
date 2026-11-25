@@ -11,6 +11,8 @@ import * as z from "zod";
 import { Eye, EyeOff, ShieldCheck, ArrowRight } from "lucide-react";
 import GoogleAuthButton from "../../components/auth/GoogleAuthButton";
 import { getAPIURL } from "../../lib/apiClient";
+import { authErrorMessage } from "../../lib/authErrors";
+import { useToast } from "../../context/ToastContext";
 import { pinStateProblem } from "../../lib/addressRules";
 
 // ─── Form Validation Schema ───
@@ -58,6 +60,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { syncCartAfterLogin } = useCart();
   const [apiError, setApiError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const onSubmit = async (data: RegisterValues) => {
     try {
@@ -85,18 +88,16 @@ export default function RegisterPage() {
         await syncCartAfterLogin(); // carry the signed-out cart into the new account
       }
       router.push("/");
-    } catch (e) {
-      const err = e as { response?: { status?: number; data?: { message?: string } } };
-      // Don't log 400 errors to console (expected: email already exists, etc.)
-      const status = err.response?.status;
-      if (status === 400 || status === 409) {
-        setApiError(err.response?.data?.message || "Registration failed. Please try again.");
-      } else {
-        console.error("Registration error:", err);
-        setApiError(err.response?.data?.message || "Something went wrong. Please try again.");
-      }
+    } catch (err) {
+      const status = (err as { response?: { status?: number } }).response?.status;
+      if (!status || status >= 500) console.error("Registration error:", status);
+      const msg = authErrorMessage(err, "register");
+      setApiError(msg);
+      showToast(msg, "error");
     }
   };
+
+  const clearApiError = () => { if (apiError) setApiError(null); };
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row pt-0">
@@ -125,7 +126,7 @@ export default function RegisterPage() {
       {/* ── Right Panel: Registration Form ── */}
       <div className="bg-white lg:w-7/12 flex flex-col justify-center px-6 py-10 lg:p-16 xl:p-24 overflow-y-auto">
         <div className="max-w-2xl mx-auto w-full">
-          <h2 className="font-sans font-bold text-4xl md:text-5xl text-slate-900 mb-3">
+          <h2 className="font-sans font-bold text-3xl sm:text-4xl md:text-5xl text-slate-900 mb-3">
             Create Account
           </h2>
           <p className="font-sans text-slate-500 text-base mb-10">
@@ -134,7 +135,7 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-7">
             {apiError && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100">
+              <div role="alert" aria-live="assertive" className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100 break-words">
                 {apiError}
               </div>
             )}
@@ -167,7 +168,7 @@ export default function RegisterPage() {
                   id="email"
                   type="email"
                   placeholder="Enter your email address"
-                  {...register("email")}
+                  {...register("email", { onChange: clearApiError })}
                   className={`w-full bg-slate-50 border rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors ${
                     errors.email ? "border-red-500 ring-1 ring-red-500" : "border-slate-100"
                   }`}
@@ -203,7 +204,7 @@ export default function RegisterPage() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    {...register("password")}
+                    {...register("password", { onChange: clearApiError })}
                     className={`w-full bg-slate-50 border rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors pr-14 ${
                       errors.password ? "border-red-500 ring-1 ring-red-500" : "border-slate-100"
                     }`}
@@ -211,7 +212,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 focus:outline-none"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -229,7 +230,7 @@ export default function RegisterPage() {
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    {...register("confirmPassword")}
+                    {...register("confirmPassword", { onChange: clearApiError })}
                     className={`w-full bg-slate-50 border rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors pr-14 ${
                       errors.confirmPassword ? "border-red-500 ring-1 ring-red-500" : "border-slate-100"
                     }`}
@@ -237,7 +238,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 focus:outline-none"
                     aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                   >
                     {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -362,7 +363,7 @@ export default function RegisterPage() {
           <div className="text-center">
             <Link 
               href="/sign-in" 
-              className="font-sans text-sm text-slate-500 hover:text-slate-900 transition-colors"
+              className="inline-flex items-center min-h-[44px] font-sans text-sm text-slate-500 hover:text-slate-900 transition-colors"
             >
               Already have an account? <span className="font-bold text-slate-800">Sign In</span>
             </Link>

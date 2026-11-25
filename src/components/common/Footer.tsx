@@ -114,14 +114,14 @@ export default function Footer() {
               </p>
   
               {/* Socials */}
-              <div className="flex items-center justify-center lg:justify-start gap-2.5 sm:gap-3 md:gap-4 w-full">
+              <div className="flex items-center justify-center lg:justify-start gap-2 sm:gap-3 md:gap-4 w-full flex-wrap">
                 {socials.map(({ svg, label, href }) => (
                   <a
                     key={label + href}
                     href={href}
                     aria-label={label}
                     rel="noopener noreferrer"
-                    className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-white border border-slate-200 transition-all duration-300 text-[#8B5E34] hover:text-white hover:bg-[#8B5E34] hover:border-[#8B5E34] shadow-sm hover:shadow-md hover:-translate-y-1"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white border border-slate-200 transition-all duration-300 text-[#8B5E34] hover:text-white hover:bg-[#8B5E34] hover:border-[#8B5E34] shadow-sm hover:shadow-md hover:-translate-y-1"
                     target="_blank"
                     referrerPolicy="no-referrer"
                     title={label}
@@ -135,12 +135,12 @@ export default function Footer() {
             {/* Quick Links column */}
             <div className="col-span-1 lg:col-span-2 flex flex-col items-start text-left min-w-0">
               <h3 className="text-[clamp(11px,1vw,12px)] font-bold uppercase tracking-[0.2em] text-[#8B5E34] mb-4 lg:mb-6 leading-none">Company</h3>
-              <ul className="space-y-2.5 lg:space-y-3">
+              <ul className="space-y-0 lg:space-y-3">
                 {footerLinks.map(({ label, href }) => (
                   <li key={href}>
                     <Link
                       href={href}
-                      className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 -my-1 lg:my-0"
+                      className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium flex items-center min-h-[44px] break-words lg:min-h-0 lg:inline-block lg:py-1"
                     >
                       {label}
                     </Link>
@@ -152,23 +152,23 @@ export default function Footer() {
             {/* Contact column */}
             <div className="col-span-1 lg:col-span-3 flex flex-col items-start text-left min-w-0">
               <h3 className="text-[clamp(11px,1vw,12px)] font-bold uppercase tracking-[0.2em] text-[#8B5E34] mb-4 lg:mb-6 leading-none">Contact</h3>
-              <ul className="space-y-2.5 lg:space-y-3 w-full">
+              <ul className="space-y-0 lg:space-y-3 w-full">
                 <li>
-                  <a href={`tel:${CONTACT.phone}`} className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 -my-1 lg:my-0">
+                  <a href={`tel:${CONTACT.phone}`} className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium flex items-center min-h-[44px] break-words lg:min-h-0 lg:inline-block lg:py-1">
                     {CONTACT.phoneDisplay}
                   </a>
                 </li>
                 <li>
-                  <a href={`mailto:${CONTACT.email}`} className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 -my-1 lg:my-0">
+                  <a href={`mailto:${CONTACT.email}`} className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium flex items-center min-h-[44px] break-words lg:min-h-0 lg:inline-block lg:py-1">
                     {/* wbr: on narrow columns wrap before "@" instead of mid-word */}
                     {CONTACT.email.split("@")[0]}<wbr />@{CONTACT.email.split("@")[1]}
                   </a>
                 </li>
-                <li className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 font-medium lg:py-1">
+                <li className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 font-medium py-2 lg:py-1">
                   {CONTACT.location}
                 </li>
                 <li>
-                  <Link href="/contact-us" className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium inline-block py-1 -my-1 lg:my-0">
+                  <Link href="/contact-us" className="text-[13px] lg:text-[clamp(13px,1.5vw,14px)] text-slate-500 hover:text-[#8B5E34] transition-colors font-medium flex items-center min-h-[44px] break-words lg:min-h-0 lg:inline-block lg:py-1">
                     Contact Us
                   </Link>
                 </li>
@@ -178,7 +178,7 @@ export default function Footer() {
         </div>
   
         {/* Bottom bar */}
-        <div className="py-4 lg:py-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-center md:justify-between gap-4">
+        <div className="pt-4 pb-20 md:pb-4 lg:py-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-center md:justify-between gap-4">
           <p className="text-[clamp(11px,1vw,12px)] text-slate-500 text-center lg:text-left w-full">
             © {new Date().getFullYear()} <span className="font-bold text-[#8B5E34]">Luxy Galleria</span>. All rights reserved.
           </p>

@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // This app's own folder is the root (a stray lockfile in the parent folder otherwise triggers a root warning)
+  outputFileTracingRoot: __dirname,
   // Ship smaller production bundles (SWC minification is on by default in prod builds)
   productionBrowserSourceMaps: false,
   compress: true,

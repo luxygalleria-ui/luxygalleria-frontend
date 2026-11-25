@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { getImageUrl, getPlaceholderUrl, reportImageError } from "../../lib/imageUtils";
+import { getAPIURL } from "../../lib/apiClient";
 
 interface IBanner {
   _id: string;
@@ -92,7 +93,7 @@ export default function HeroSection() {
 
   useEffect(() => {
     let cancelled = false;
-    const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+    const apiURL = getAPIURL();
     // Same resolver as every other image: /uploads/ paths go to the backend origin, whatever form NEXT_PUBLIC_BACKEND_URL takes
     const abs = getImageUrl;
 
@@ -276,7 +277,7 @@ export default function HeroSection() {
           <button
             onClick={prevSlide}
             aria-label="Previous slide"
-            className="flex absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 backdrop-blur-sm items-center justify-center text-white hover:bg-white/30 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black z-20"
+            className="flex absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-11 h-11 md:w-12 md:h-12 rounded-full bg-white/20 backdrop-blur-sm items-center justify-center text-white hover:bg-white/30 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black z-20"
           >
             <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
           </button>
@@ -284,13 +285,13 @@ export default function HeroSection() {
           <button
             onClick={nextSlide}
             aria-label="Next slide"
-            className="flex absolute right-4 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 backdrop-blur-sm items-center justify-center text-white hover:bg-white/30 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black z-20"
+            className="flex absolute right-4 md:right-6 top-1/2 -translate-y-1/2 w-11 h-11 md:w-12 md:h-12 rounded-full bg-white/20 backdrop-blur-sm items-center justify-center text-white hover:bg-white/30 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black z-20"
           >
             <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
           </button>
 
           {/* Dots Indicator */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2" role="tablist">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4" role="tablist">
             {finalSlides.map((slide, index) => (
               <button
                 key={slide.id}
@@ -298,7 +299,7 @@ export default function HeroSection() {
                 aria-selected={activeSlide === index}
                 aria-label={`Go to slide ${index + 1}`}
                 onClick={() => goToSlide(index)}
-                className={`transition-colors duration-300 motion-reduce:transition-none focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 focus:ring-offset-black ${activeSlide === index
+                className={`relative after:absolute after:-inset-[17px] transition-colors duration-300 motion-reduce:transition-none focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 focus:ring-offset-black ${activeSlide === index
                     ? "w-2.5 h-2.5 rounded-full bg-[#A68B5B]/50"
                     : "w-2.5 h-2.5 rounded-full bg-white/50"
                   }`}

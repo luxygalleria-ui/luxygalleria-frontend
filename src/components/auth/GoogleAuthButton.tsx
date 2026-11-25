@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "../../context/ToastContext";
 import { useCart } from "../../context/CartContext";
 import { getAPIURL } from "../../lib/apiClient";
+import { authErrorMessage } from "../../lib/authErrors";
 
 interface GoogleAuthButtonProps {
   mode?: "signin" | "register";
@@ -65,14 +66,11 @@ function GoogleAuthButtonConfigured({ mode = "signin" }: GoogleAuthButtonProps) 
       } catch (err: any) {
         // Log status/message only: the axios error object carries the access token in config.data
         console.error("Google auth error:", err.response?.status, err.message);
-        setError(
-          (err.response?.data?.errors?.code === "USE_ADMIN_PORTAL"
-            ? `${err.response.data.message} (${process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.luxygalleria.com"})`
-            : err.response?.data?.message) ||
-            (err.code === "ECONNABORTED" || !err.response
-              ? "Could not reach the server. Please check your connection and try again."
-              : "Google sign-in failed. Please try again.")
-        );
+        const msg = err.response?.data?.errors?.code === "USE_ADMIN_PORTAL"
+          ? `${err.response.data.message} (${process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.luxygalleria.com"})`
+          : authErrorMessage(err, "google");
+        setError(msg);
+        showToast(msg, "error");
       } finally {
         setLoading(false);
       }
@@ -125,7 +123,7 @@ function GoogleButtonUI({
   return (
     <div className="w-full">
       {error && (
-        <div className="mb-4 bg-red-50 text-red-600 p-3 rounded-xl text-sm font-medium border border-red-100 text-center">
+        <div role="alert" className="mb-4 bg-red-50 text-red-600 p-3 rounded-xl text-sm font-medium border border-red-100 text-center break-words">
           {error}
         </div>
       )}

@@ -10,6 +10,7 @@ import { fixCloudinaryCloud, getImageUrl, handleImageError } from "../../lib/ima
 import { pinStateProblem } from "../../lib/addressRules";
 import { paymentBadge, refundNote, toneClass } from "../../lib/orderDisplay";
 import LinkGoogleButton from "../../components/auth/LinkGoogleButton";
+import { getAPIURL } from "../../lib/apiClient";
 
 interface UserProfile {
   name: string;
@@ -29,6 +30,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"overview" | "orders" | "addresses">("overview");
   const [addresses, setAddresses] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
@@ -77,7 +79,7 @@ export default function ProfilePage() {
     if (activeTab === "addresses" && user?.token) {
       const fetchAddresses = async () => {
         try {
-          const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+          const apiURL = getAPIURL();
           const res = await axios.get(`${apiURL}/users/addresses`, {
             headers: { 'Authorization': `Bearer ${user.token}` }
           });
@@ -98,18 +100,22 @@ export default function ProfilePage() {
     if (user?.token && (activeTab === "orders" || activeTab === "overview")) {
       const fetchOrders = async () => {
         try {
-          const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+          const apiURL = getAPIURL();
           const res = await axios.get(`${apiURL}/payments/myorders`, {
             headers: { 'Authorization': `Bearer ${user.token}` }
           });
           if (res.data.success) {
             setOrders(res.data.data);
+            setOrdersError(null);
           }
         } catch (err: any) {
-          console.error("Failed to fetch orders", err);
+          console.error("Failed to fetch orders", err?.response?.status ?? err?.message);
           if (err.response?.status === 401) {
             handleSignOut();
             showToast("Session expired. Please sign in again.", "error");
+          } else {
+            // Never show "no orders" when the list simply failed to load
+            setOrdersError(err.response?.data?.message || "Your orders could not be loaded. Please refresh the page.");
           }
         }
       };
@@ -138,7 +144,7 @@ export default function ProfilePage() {
 
     try {
       if (!user?.token) return;
-      const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiURL = getAPIURL();
 
       const payload = {
         street: newAddressForm.street,
@@ -187,7 +193,7 @@ export default function ProfilePage() {
   const handleDeleteAddress = async (addressId: string) => {
     try {
       if (!user?.token) return;
-      const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiURL = getAPIURL();
 
       const res = await axios.delete(`${apiURL}/users/addresses/${addressId}`, {
         headers: { 'Authorization': `Bearer ${user.token}` }
@@ -229,7 +235,7 @@ export default function ProfilePage() {
     setIsSavingProfile(true);
     try {
       if (!user?.token) return;
-      const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const apiURL = getAPIURL();
 
       const payload = {
         name: editProfileForm.name,
@@ -309,7 +315,7 @@ export default function ProfilePage() {
             )}
             <button
               onClick={handleEditProfileClick}
-              className="text-xs font-bold text-[#8B5E34] bg-[#A68B5B]/5 hover:bg-[#A68B5B]/10 px-4 py-2 rounded-full transition-colors"
+              className="min-h-[44px] text-xs font-bold text-[#8B5E34] bg-[#A68B5B]/5 hover:bg-[#A68B5B]/10 px-5 py-2 rounded-full transition-colors"
             >
               Edit Profile
             </button>
@@ -362,7 +368,7 @@ export default function ProfilePage() {
         </aside>
 
         {/* ── Main Content ── */}
-        <main className="flex-1 p-8 md:p-12 lg:p-16 bg-[#F8F9FB]">
+        <main className="flex-1 min-w-0 p-5 sm:p-8 md:p-12 lg:p-16 bg-[#F8F9FB]">
           <div className="max-w-3xl">
             {activeTab === "overview" && (
               <>
@@ -388,7 +394,7 @@ export default function ProfilePage() {
                       <h3 className="font-bold text-amber-800 text-[15px] mb-1">Complete your profile</h3>
                       <p className="text-amber-700/80 text-[14px]">Please add your phone number to receive important order updates and delivery notifications.</p>
                     </div>
-                    <button onClick={handleEditProfileClick} className="px-5 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 text-[13px] font-bold rounded-xl transition-colors shrink-0">
+                    <button onClick={handleEditProfileClick} className="min-h-[44px] px-5 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 text-[13px] font-bold rounded-xl transition-colors shrink-0">
                       Add Number
                     </button>
                   </div>
@@ -441,7 +447,10 @@ export default function ProfilePage() {
 
             {activeTab === "orders" && (
               <div>
-                <h1 className="font-serif text-4xl text-slate-900 leading-tight mb-8">My Orders</h1>
+                <h1 className="font-serif text-3xl sm:text-4xl text-slate-900 leading-tight mb-8">My Orders</h1>
+                {ordersError && (
+                  <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 break-words">{ordersError}</div>
+                )}
 
                 {orders.length > 0 ? (
                   <div className="flex flex-col gap-6">
@@ -628,13 +637,13 @@ export default function ProfilePage() {
                             setEditingAddressId(addr._id);
                             setIsAddressModalOpen(true);
                           }}
-                          className="text-[#8B5E34] text-sm font-bold hover:underline"
+                          className="min-h-[44px] text-[#8B5E34] text-sm font-bold hover:underline"
                         >
                           Edit Details
                         </button>
                         <button
                           onClick={() => setDeleteConfirmId(addr._id)}
-                          className="text-red-500 text-sm font-bold hover:underline"
+                          className="min-h-[44px] text-red-500 text-sm font-bold hover:underline"
                         >
                           Remove
                         </button>

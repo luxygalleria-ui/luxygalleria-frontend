@@ -235,7 +235,7 @@ export default function FAQSection({ page = false }: { page?: boolean }) {
                 type="button"
                 aria-pressed={selected}
                 onClick={() => setActiveId(c.id)}
-                className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-xs md:text-sm font-semibold font-sans transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A68B5B]/50 focus-visible:ring-offset-2 ${
+                className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 min-h-[44px] text-xs md:text-sm font-semibold font-sans transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A68B5B]/50 focus-visible:ring-offset-2 ${
                   selected
                     ? "bg-[#8B5E34] border-[#8B5E34] text-white"
                     : "bg-white border-slate-200 text-slate-600 hover:border-[#8B5E34]/40 hover:text-[#5A3A1E]"

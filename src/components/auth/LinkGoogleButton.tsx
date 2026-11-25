@@ -62,7 +62,7 @@ function LinkGoogleConfigured({ token }: { token: string }) {
         <>
           <p className="text-slate-600 mt-1">Link the Google account for this email to sign in with Google.</p>
           <button type="button" onClick={() => { setMessage(null); login(); }} disabled={busy}
-            className="mt-3 px-4 py-2 rounded-lg border-2 border-slate-200 font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-60">
+            className="mt-3 min-h-[44px] px-4 py-2 rounded-lg border-2 border-slate-200 font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-60">
             {busy ? "Linking…" : "Link Google account"}
           </button>
         </>

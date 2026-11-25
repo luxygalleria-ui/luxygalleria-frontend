@@ -155,9 +155,15 @@ const run = async () => {
       ['credentials', 'https://user:pass@localhost:8443/authRedirect'], ['http mock', 'http://localhost:8443/authRedirect'],
       ['malformed', 'https://'], ['javascript:', 'javascript:alert(1)'], ['not a string', 8443],
     ] as const) check(at(bad), '', `mock mode, ${label}: refused`);
-    // 5. A mock origin that is not an https loopback origin is ignored (never widens the allowlist)
+    // 4b. Plain http mock page (no certificate warning): accepted only for its exact http origin, only under next dev
+    const HTTP_MOCK = 'http://localhost:8443/tsp/pg/api/v2/authRedirect?tranCtx=CTX-LG2';
+    setMode('development', 'http://localhost:8443'); check(at(HTTP_MOCK), HTTP_MOCK, 'http mock page accepted for an http mock origin');
+    check(at('https://localhost:8443/x'), '', 'http origin configured: https on the same port is a different origin, refused');
+    check(at('http://pgpay.icicibank.com/authRedirect'), '', 'ICICI over http: refused');
+    setMode('production', 'http://localhost:8443'); check(at(HTTP_MOCK), '', 'production build: http mock refused');
+    // 5. A mock origin that is not a loopback origin with a port is ignored (never widens the allowlist)
     for (const [label, origin, url] of [
-      ['http origin', 'http://localhost:8443', 'http://localhost:8443/authRedirect'], ['external origin', 'https://evil.example', 'https://evil.example/authRedirect'],
+      ['external http origin', 'http://evil.example:8443', 'http://evil.example:8443/authRedirect'], ['external origin', 'https://evil.example', 'https://evil.example/authRedirect'],
       ['origin with a path', 'https://localhost:8443/tsp', MOCK_PAGE], ['origin without a port', 'https://localhost', 'https://localhost/authRedirect'],
       ['wildcard', 'https://*.localhost:8443', 'https://a.localhost:8443/x'], ['not a URL', 'localhost:8443', MOCK_PAGE],
     ] as const) { setMode('development', origin); check(at(url), '', `configured ${label}: ignored`); }

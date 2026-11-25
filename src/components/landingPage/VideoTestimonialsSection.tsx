@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import axios from "axios";
 import VideoModal from "./VideoModal";
+import { getAPIURL } from "../../lib/apiClient";
 
 interface VideoTestimonial {
   _id: string;
@@ -75,7 +76,7 @@ export default function VideoTestimonialsSection() {
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
-        const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        const apiURL = getAPIURL();
         const res = await axios.get(`${apiURL}/video-testimonials/active`);
         if (res.data.success && res.data.data) {
           setTestimonials(res.data.data);
@@ -280,7 +281,7 @@ export default function VideoTestimonialsSection() {
                 <button
                   key={idx}
                   onClick={() => scrollToCard(idx)}
-                  className={`h-2 rounded-full transition-all duration-350 ${isSelected
+                  className={`relative after:absolute after:-inset-x-2 after:-inset-y-[18px] h-2 rounded-full transition-all duration-350 ${isSelected
                     ? "w-8 bg-[#A68B5B]"
                     : "w-2 bg-[#A68B5B]/30 hover:bg-[#A68B5B]/60"
                     }`}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { getImageUrl } from "../../lib/imageUtils";
 import ResilientImage from "../common/ResilientImage";
+import { getAPIURL } from "../../lib/apiClient";
 
 interface Brand {
   _id: string;
@@ -49,7 +50,7 @@ export default function BrandSection() {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        const apiURL = getAPIURL();
         const res = await axios.get(`${apiURL}/brands`);
         if (res.data.success && res.data.data) {
           const activeBrands = res.data.data.filter((b: any) => b.status === 'ACTIVE' || !b.status);

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { CONTACT } from "../../lib/contact";
+import { getAPIURL } from "../../lib/apiClient";
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
@@ -217,7 +218,7 @@ function ContactForm() {
   const onSubmit = async (data: ContactFormData) => {
     try {
       setSubmitError("");
-      const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+      const apiURL = getAPIURL();
       const response = await axios.post(`${apiURL}/contacts`, data);
       if (response.data.success) {
         setSubmitted(true);
@@ -468,7 +469,7 @@ export default function ContactUsPage() {
             >
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors text-sm font-semibold bg-white/10 hover:bg-white/20 px-5 py-2.5 rounded-full border border-white/20 backdrop-blur-sm shadow-sm"
+                className="inline-flex items-center min-h-[44px] gap-2 text-white/90 hover:text-white transition-colors text-sm font-semibold bg-white/10 hover:bg-white/20 px-5 py-2.5 rounded-full border border-white/20 backdrop-blur-sm shadow-sm"
               >
                 <ChevronLeft size={16} />
                 Back to Home

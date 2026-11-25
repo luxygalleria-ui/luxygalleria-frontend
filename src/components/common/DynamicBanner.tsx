@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getAPIURL } from "../../lib/apiClient";
 
 interface Settings {
   bannerText: string;
@@ -13,7 +14,7 @@ const DEFAULT_BANNER = "✨ WELCOME TO LUXY GALLERIA — Premium Imported Snacks
 // Rendered inside Navbar, which lives in the root layout — so this bar shows on every page.
 export default function DynamicBanner() {
   const [settings, setSettings] = useState<Settings | null>(null);
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+  const baseUrl = getAPIURL();
 
   useEffect(() => {
     const fetchSettings = async () => {

@@ -8,6 +8,7 @@ import { useCart, parseWeightFromVolume } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import CartAnimation from "../CartAnimation";
 import { getImageUrl, getPlaceholderUrl, handleImageError } from "../../lib/imageUtils";
+import { getAPIURL } from "../../lib/apiClient";
 
 interface Product {
   id: string;
@@ -131,7 +132,7 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
             type="button"
             disabled
             aria-label={`${product.name} is out of stock`}
-            className="w-full inline-flex items-center justify-center text-center leading-none min-h-[2.25rem] md:min-h-[2.75rem] pl-[0.1em] text-slate-400 bg-slate-200 font-sans font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full cursor-not-allowed"
+            className="w-full inline-flex items-center justify-center text-center leading-none min-h-[44px] pl-[0.1em] text-slate-400 bg-slate-200 font-sans font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full cursor-not-allowed"
           >
             OUT OF STOCK
           </button>
@@ -140,7 +141,7 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
             <button
               type="button"
               aria-label={`Add ${product.name} to cart`}
-              className={`w-full inline-flex items-center justify-center text-center leading-none min-h-[2.25rem] md:min-h-[2.75rem] pl-[0.1em] text-white font-sans font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 ${isAdded
+              className={`w-full inline-flex items-center justify-center text-center leading-none min-h-[44px] pl-[0.1em] text-white font-sans font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 ${isAdded
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-slate-500 hover:bg-slate-600"
                 }`}
@@ -163,7 +164,7 @@ export default function ProductSection() {
   useEffect(() => {
     const fetchLandingProducts = async () => {
       try {
-        const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        const apiURL = getAPIURL();
         // Everything except Gifting, which lives exclusively on /gifting
         const res = await axios.get(`${apiURL}/products`, { params: { general: true } });
         if (res.data.success && res.data.data) {

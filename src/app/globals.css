@@ -37,6 +37,13 @@
   --color-blue-700: #6B5344; /* Active/Dark state */
 }
 
+/* No sideways scroll on phones; clip (not hidden) keeps position: sticky working */
+html,
+body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

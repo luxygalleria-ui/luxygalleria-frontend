@@ -139,17 +139,17 @@ export default function Navbar() {
       <DynamicBanner />
       <div className="relative h-16 lg:h-20 px-4 lg:px-10 flex items-center justify-between transition-all duration-300">
         {/* ── Mobile Menu Toggle & Profile (Left on Mobile) ── */}
-        <div className="flex md:hidden flex-1 justify-start items-center gap-1 relative z-20">
+        <div className="flex md:hidden flex-1 justify-start items-center gap-0 sm:gap-1 relative z-20">
           <button
             onClick={toggleMobileMenu}
-            className="p-2 -ml-2 text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2 text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
             aria-label="Toggle mobile menu"
           >
             {isMobileMenuOpen ? <X size={24} strokeWidth={2} /> : <Menu size={24} strokeWidth={2} />}
           </button>
           <Link
             href={isLoggedIn ? "/profile" : "/sign-in"}
-            className="p-2 text-slate-900 hover:text-[#A68B5B] transition-colors duration-200 pointer-events-auto flex items-center justify-center"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-900 hover:text-[#A68B5B] transition-colors duration-200 pointer-events-auto"
             aria-label="Account"
           >
             {user && user.avatar ? (
@@ -167,7 +167,7 @@ export default function Navbar() {
 
         {/* ── Logo (Center on Mobile, Left on Desktop) ── */}
         <div className="flex items-center justify-center md:justify-start flex-1 md:flex-none z-10 min-w-0">
-          <Link href="/" className="group flex items-center" aria-label="Luxy Galleria home">
+          <Link href="/" className="group flex items-center min-h-[44px]" aria-label="Luxy Galleria home">
             <img
               src="/luxy_logo_trimmed.png"
               alt="Luxy Galleria"
@@ -216,11 +216,11 @@ export default function Navbar() {
         <div className="flex items-center justify-end gap-2 md:gap-4 flex-1 md:flex-none relative z-20">
 
           {/* --- Mobile Always Visible Icons --- */}
-          <div className="flex md:hidden items-center gap-1 sm:gap-2 pointer-events-auto">
+          <div className="flex md:hidden items-center gap-0 sm:gap-1 pointer-events-auto">
             {/* Search Trigger */}
             <button
               onClick={handleToggleSearch}
-              className="p-2 text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
               aria-label="Toggle search"
             >
               <Search size={22} strokeWidth={2} />
@@ -228,7 +228,7 @@ export default function Navbar() {
 
             <Link
               href="/cart"
-              className="relative p-2 flex items-center justify-center text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
+              className="relative min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
               aria-label="Cart"
             >
               <motion.div
@@ -240,8 +240,8 @@ export default function Navbar() {
                 <ShoppingBag size={22} strokeWidth={2} />
               </motion.div>
               {cartCount > 0 && (
-                <span className="absolute top-0 right-0 w-4 h-4 bg-[#A68B5B] text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white">
-                  {cartCount}
+                <span className="absolute top-1 right-0.5 min-w-[18px] h-[18px] px-1 bg-[#A68B5B] text-white text-[10px] leading-none font-bold rounded-full flex items-center justify-center border border-white">
+                  {cartCount > 99 ? "99+" : cartCount}
                 </span>
               )}
             </Link>
@@ -477,7 +477,7 @@ export default function Navbar() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-14 left-0 right-0 bg-background/95 backdrop-blur-md border-b border-slate-200 px-6 py-4 md:hidden shadow-lg z-40"
+              className="absolute top-full left-0 right-0 bg-background/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 py-3 md:hidden shadow-lg z-40 max-h-[70vh] overflow-y-auto"
             >
               <form onSubmit={handleSearch} className="flex items-center gap-3">
                 <div className="relative flex-1">
@@ -487,11 +487,11 @@ export default function Navbar() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search products..."
-                    className="w-full bg-slate-50 border-2 border-[#A68B5B] rounded-full pl-5 pr-12 py-2.5 text-slate-900 focus:outline-none"
+                    className="w-full min-h-[44px] bg-slate-50 border-2 border-[#A68B5B] rounded-full pl-4 pr-12 py-2.5 text-base text-slate-900 focus:outline-none"
                   />
                   <button
                     type="submit"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#A68B5B] transition-colors"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-[#A68B5B] transition-colors"
                     aria-label="Submit search"
                   >
                     <Search size={20} strokeWidth={2} />
@@ -500,7 +500,8 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setIsSearchOpen(false)}
-                  className="text-slate-500 p-2"
+                  className="text-slate-500 min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
+                  aria-label="Close search"
                 >
                   <X size={24} />
                 </button>
@@ -562,9 +563,9 @@ export default function Navbar() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="absolute top-14 left-0 right-0 bg-background/95 backdrop-blur-md border-b border-slate-200 shadow-lg z-30 md:hidden overflow-hidden"
+              className="absolute top-full left-0 right-0 bg-background/95 backdrop-blur-md border-b border-slate-200 shadow-lg z-30 md:hidden overflow-x-hidden overflow-y-auto max-h-[calc(100dvh-7rem)]"
             >
-              <nav className="flex flex-col px-6 py-4 gap-2">
+              <nav className="flex flex-col px-4 sm:px-6 py-3 gap-1">
                 <Link
                   href="/"
                   onClick={() => setIsMobileMenuOpen(false)}

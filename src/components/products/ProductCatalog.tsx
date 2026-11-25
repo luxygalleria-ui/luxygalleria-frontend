@@ -10,6 +10,7 @@ import CartAnimation from "../CartAnimation";
 import { SlidersHorizontal, X, ChevronLeft, ChevronUp, ChevronDown } from "lucide-react";
 import { getImageUrl, getPlaceholderUrl } from "../../lib/imageUtils";
 import ResilientImage from "../common/ResilientImage";
+import { getAPIURL } from "../../lib/apiClient";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -116,8 +117,11 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
               src={getImageUrl(src)}
               alt={`${product.name} image ${i + 1}`}
               fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
               className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 group-hover:scale-105 group-hover:transition-transform motion-reduce:transition-none ${i === imgIdx ? "opacity-100" : "opacity-0"}`}
-              loading="lazy"
+              // First row is above the fold (the page's LCP): load it right away; everything else stays lazy
+              loading={index < 4 && i === 0 ? "eager" : "lazy"}
+              fetchPriority={index < 4 && i === 0 ? "high" : "auto"}
             />
           ))}
           {/* Out of Stock overlay */}
@@ -163,7 +167,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             type="button"
             disabled
             aria-label={`${product.name} is out of stock`}
-            className="w-full text-slate-400 bg-slate-200 font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full cursor-not-allowed"
+            className="w-full min-h-[44px] text-slate-400 bg-slate-200 font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full cursor-not-allowed"
           >
             OUT OF STOCK
           </button>
@@ -172,7 +176,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             <button
               type="button"
               aria-label={`Add ${product.name} to cart`}
-              className={`w-full text-white font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 motion-reduce:transition-none ${isAdded
+              className={`w-full min-h-[44px] text-white font-bold text-[10px] md:text-xs uppercase tracking-widest py-2 md:py-3 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:ring-offset-2 motion-reduce:transition-none ${isAdded
                 ? "bg-green-600 hover:bg-green-700"
                 : "bg-slate-900 hover:bg-slate-800"
                 }`}
@@ -471,6 +475,8 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [totalProducts, setTotalProducts] = useState(0);
   const [loading, setLoading] = useState(true);
+  // A failed load is shown as such, never as "No products found"
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Filter States
   const [activeCategory, setActiveCategory] = useState("all");
@@ -496,7 +502,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
     const [titleKey, subtitleKey] = collection === "gifting"
       ? ["giftingTitle", "giftingSubtitle"]
       : ["newArrivalsTitle", "newArrivalsSubtitle"];
-    const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+    const apiURL = getAPIURL();
     axios
       .get(`${apiURL}/settings`)
       .then((res) => res.data?.data || {})
@@ -516,7 +522,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
 
     const fetchFacets = async () => {
       try {
-        const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        const apiURL = getAPIURL();
         // Facets are only used by the Shop sidebar, so they're scoped to general products
         const params = { facets: true, general: true };
 
@@ -589,7 +595,8 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
     const requestId = ++latestRequest.current;
     try {
       setLoading(true);
-      const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+      setLoadError(null);
+      const apiURL = getAPIURL();
 
       const params: any = {
         page: currentPage,
@@ -658,7 +665,13 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
         }
       }
     } catch (error) {
-      console.error("Failed to fetch products:", error);
+      console.error("Failed to fetch products:", (error as { message?: string })?.message);
+      if (requestId === latestRequest.current) {
+        const e = error as { response?: { status?: number; data?: { message?: string } } };
+        setLoadError(e.response
+          ? `Could not load products (${e.response.status}): ${e.response.data?.message || "server error"}.`
+          : "Could not reach the server. Please check your connection.");
+      }
     } finally {
       if (requestId === latestRequest.current) setLoading(false);
     }
@@ -811,7 +824,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
           {/* Mobile Back to Home */}
           <Link
             href="/"
-            className="md:hidden inline-flex items-center gap-2 text-slate-700 hover:text-slate-900 mb-5 transition-colors text-sm font-semibold bg-white border border-slate-200 px-5 py-2.5 rounded-full shadow-sm"
+            className="md:hidden inline-flex items-center min-h-[44px] gap-2 text-slate-700 hover:text-slate-900 mb-5 transition-colors text-sm font-semibold bg-white border border-slate-200 px-5 py-2.5 rounded-full shadow-sm"
           >
             <ChevronLeft size={16} />
             Back to Home
@@ -840,7 +853,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
               {searchTerm && (
                 <p className="font-sans text-sm text-slate-500 mt-1">
                   Search results for: <span className="font-bold text-slate-900">&quot;{searchTerm}&quot;</span>
-                  <button onClick={() => updateUrlFilters({ search: '' })} className="ml-3 text-[#A68B5B] hover:underline text-xs">Clear search</button>
+                  <button onClick={() => updateUrlFilters({ search: '' })} className="ml-1 px-2 min-h-[44px] inline-flex items-center text-[#A68B5B] hover:underline text-xs">Clear search</button>
                 </p>
               )}
             </div>
@@ -851,7 +864,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
                 <select
                   value={sortBy}
                   onChange={(e) => updateUrlFilters({ sort: e.target.value })}
-                  className="min-w-0 bg-white border border-slate-200 rounded-xl px-3 py-2 font-sans text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 cursor-pointer"
+                  className="min-w-0 min-h-[44px] bg-white border border-slate-200 rounded-xl px-3 py-2 font-sans text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 cursor-pointer"
                 >
                   {collection && <option value="featured">Featured</option>}
                   <option value="newest">Newest</option>
@@ -863,7 +876,7 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
               {showFilters && (
                 <button
                   onClick={() => setDrawerOpen(true)}
-                  className="lg:hidden shrink-0 flex items-center gap-2 font-sans font-bold text-sm text-slate-700 border border-slate-200 rounded-xl px-4 py-2 hover:bg-slate-50 transition-colors"
+                  className="lg:hidden shrink-0 flex items-center min-h-[44px] gap-2 font-sans font-bold text-sm text-slate-700 border border-slate-200 rounded-xl px-4 py-2 hover:bg-slate-50 transition-colors"
                 >
                   <SlidersHorizontal size={16} />
                   Filters
@@ -908,6 +921,17 @@ function ProductsContent({ collection, title, subtitle }: CatalogProps) {
               {Array.from({ length: 8 }).map((_, i) => (
                 <SkeletonCard key={`sk-${i}`} />
               ))}
+            </div>
+          ) : loadError && products.length === 0 ? (
+            <div role="alert" className="flex flex-col items-center justify-center py-20 text-center px-4">
+              <h3 className="font-serif text-2xl text-slate-900 mb-2">Products could not be loaded</h3>
+              <p className="font-sans text-base text-slate-500 mb-6 break-words max-w-md">{loadError}</p>
+              <button
+                onClick={() => fetchProducts()}
+                className="min-h-[44px] bg-slate-900 text-white font-bold text-sm uppercase tracking-widest px-8 py-3 rounded-full hover:bg-slate-800 transition-colors"
+              >
+                TRY AGAIN
+              </button>
             </div>
           ) : products.length > 0 ? (
             <>

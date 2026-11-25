@@ -47,6 +47,8 @@ export default function CheckoutPage() {
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   // "" | waiting for the server to open the ICICI payment | ICICI's URL received, browser leaving
   const [payStage, setPayStage] = useState<PayStage>("");
+  // Last payment failure, shown beside the pay button (the toast fades; this stays until the next attempt)
+  const [payError, setPayError] = useState<string | null>(null);
   const isRedirecting = payStage !== "";
   // Set synchronously on the first click: a second click in the same moment (before React re-renders the disabled
   // button) is ignored instead of starting a second ICICI payment
@@ -259,6 +261,7 @@ export default function CheckoutPage() {
 
 
   const handleCheckout = async () => {
+    setPayError(null);
     // Home delivery must resolve to a real address with the fields the order needs, before any payment call
     const selectedAddress = addresses.find(a => a.id === selectedAddressId);
     const addr = selectedAddress?.fullAddress;
@@ -324,7 +327,11 @@ export default function CheckoutPage() {
         navigate: (url) => window.location.assign(url),
         onError: (err) => showPayError(err),
         // Still on this page long after being sent to ICICI: the navigation was cancelled or ICICI's page is not answering
-        onStuck: () => showToast("The ICICI payment page did not open. No payment was taken here; please try again.", "error"),
+        onStuck: () => {
+          const msg = "The ICICI payment page did not open. No payment was taken here; please try again.";
+          setPayError(msg);
+          showToast(msg, "error");
+        },
       });
     } catch (err) {
       showPayError(err);
@@ -346,9 +353,11 @@ export default function CheckoutPage() {
         console.error("Checkout error:", status ?? err.code ?? err.message, err.response?.data?.code ?? "");
         // The server's own message when it answered (e.g. ICICI refused the start, out of stock); a proxy error page or
         // no reply at all gets the not-charged message
-        showToast(err.response?.data?.message || (gatewayDown
+        const msg = err.response?.data?.message || (gatewayDown
           ? "The ICICI payment page is not responding right now. You have not been charged. Please try again in a few minutes."
-          : "An error occurred during checkout."), "error");
+          : "An error occurred during checkout. Please try again.");
+        setPayError(msg);
+        showToast(msg, "error");
       }
   };
 
@@ -373,7 +382,7 @@ export default function CheckoutPage() {
       <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 pt-8">
 
         {/* Main Title */}
-        <h1 className="font-sans font-bold text-3xl md:text-4xl text-slate-900 mb-12">
+        <h1 className="font-sans font-bold text-3xl md:text-4xl text-slate-900 mb-8 md:mb-12">
           Secure Checkout
         </h1>
 
@@ -387,7 +396,7 @@ export default function CheckoutPage() {
               <h2 className="font-sans font-bold text-xl text-[#0A192F]">How would you like to receive your order?</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className={`border rounded-2xl p-5 bg-white ${!isPickup ? "border-[#0A192F] ring-1 ring-[#0A192F]" : "border-slate-200"}`}>
-                  <button type="button" onClick={() => setFulfillment({ method: "delivery" })} className="w-full flex items-center gap-3 text-left">
+                  <button type="button" onClick={() => setFulfillment({ method: "delivery" })} className="w-full min-h-[44px] flex items-center gap-3 text-left">
                     <Truck size={20} className="text-slate-600" />
                     <span className="font-bold text-slate-900">Home delivery</span>
                   </button>
@@ -454,7 +463,7 @@ export default function CheckoutPage() {
                 <div className="w-8 h-8 rounded-full bg-[#0A192F] text-white flex items-center justify-center text-sm font-bold flex-shrink-0 mt-1">
                   2
                 </div>
-                <h2 className="font-sans font-black text-4xl lg:text-5xl text-[#0A192F] uppercase tracking-tight text-left w-full leading-[1.1]">
+                <h2 className="font-sans font-black text-2xl sm:text-4xl lg:text-5xl text-[#0A192F] uppercase tracking-tight break-words text-left w-full leading-[1.1]">
                   Shipping<br />Destination
                 </h2>
               </div>
@@ -496,7 +505,7 @@ export default function CheckoutPage() {
                         </>
                       ) : (
                         <button type="button" onClick={() => setConfirmDeleteId(addr.id)} aria-label={`Delete address ${addr.name}`}
-                          className="text-slate-400 hover:text-red-600 uppercase tracking-wider">Delete</button>
+                          className="min-h-[44px] px-2 -mr-2 text-slate-400 hover:text-red-600 uppercase tracking-wider">Delete</button>
                       )}
                     </div>
                     </div>
@@ -554,7 +563,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* ── Right Column (Order Bag) ── */}
-          <div className="lg:col-span-4 bg-white p-8 rounded-3xl shadow-sm border border-slate-100 sticky top-32">
+          <div className="lg:col-span-4 bg-white p-5 sm:p-8 rounded-3xl shadow-sm border border-slate-100 sticky top-32">
             <h2 className="font-sans font-bold text-xl text-slate-900 mb-8">Order Bag</h2>
 
             {/* Cart Items List */}
@@ -620,7 +629,7 @@ export default function CheckoutPage() {
                 <div className="text-sm bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 space-y-2" role="alert">
                   <p>{addressProblem || quoteError}</p>
                   {!addressProblem && (
-                    <button type="button" onClick={retryQuote} className="text-xs font-bold uppercase tracking-wider underline">Retry</button>
+                    <button type="button" onClick={retryQuote} className="min-h-[44px] min-w-[44px] text-xs font-bold uppercase tracking-wider underline">Retry</button>
                   )}
                 </div>
               )}
@@ -695,6 +704,12 @@ export default function CheckoutPage() {
               <p role="alert" data-testid="uat-test-notice" className="mb-4 rounded-xl border-2 border-red-600 bg-red-50 p-3 text-center text-xs font-bold uppercase tracking-wide text-red-800">
                 {TEST_PAYMENT_NOTICE}
               </p>
+            )}
+
+            {payError && (
+              <div role="alert" aria-live="assertive" data-testid="pay-error" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 break-words">
+                {payError}
+              </div>
             )}
 
             <button

@@ -17,7 +17,7 @@ export default function HomeIntro() {
         </p>
         <Link
           href="/about"
-          className="inline-block mt-5 md:mt-6 font-sans font-semibold text-[11px] md:text-xs tracking-[0.2em] uppercase text-[#8B5E34] hover:text-[#5A3A1E] border-b border-[#8B5E34]/40 hover:border-[#5A3A1E] pb-1 transition-colors"
+          className="relative after:absolute after:-inset-y-3 after:inset-x-0 inline-block mt-5 md:mt-6 font-sans font-semibold text-[11px] md:text-xs tracking-[0.2em] uppercase text-[#8B5E34] hover:text-[#5A3A1E] border-b border-[#8B5E34]/40 hover:border-[#5A3A1E] pb-1 transition-colors"
         >
           Discover Our Story <span aria-hidden="true">→</span>
         </Link>

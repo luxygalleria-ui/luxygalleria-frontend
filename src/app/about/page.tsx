@@ -68,7 +68,7 @@ export default function AboutPage() {
         <section className="pt-6 md:pt-12 lg:pt-14 pb-10 md:pb-14 lg:pb-16">
           <div className={wrapCls}>
             <div className="md:hidden mb-5" style={fade(50)}>
-              <Link href="/" className="inline-flex items-center gap-2 text-[#5A3A1E] hover:text-[#8B5E34] text-sm font-semibold bg-white px-4 py-2 rounded-full border border-[#A68B5B]/25">
+              <Link href="/" className="inline-flex items-center min-h-[44px] gap-2 text-[#5A3A1E] hover:text-[#8B5E34] text-sm font-semibold bg-white px-4 py-2 rounded-full border border-[#A68B5B]/25">
                 <ChevronLeft size={16} /> Back to Home
               </Link>
             </div>

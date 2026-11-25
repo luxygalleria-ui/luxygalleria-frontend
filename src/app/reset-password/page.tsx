@@ -87,7 +87,7 @@ function ResetPasswordForm() {
           <input id="password" type={show ? "text" : "password"} autoComplete="new-password" value={password}
             onChange={(e) => setPassword(e.target.value)} className={`${field} border-slate-100`} />
           <button type="button" onClick={() => setShow(!show)} aria-label={show ? "Hide password" : "Show password"}
-            className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none">
+            className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 focus:outline-none">
             {show ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>

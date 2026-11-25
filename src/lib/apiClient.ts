@@ -67,6 +67,8 @@ apiClient.interceptors.response.use(
         if (storedUser) {
           // Token expired - clear storage and redirect to login
           localStorage.removeItem('luxygalleria_user');
+          // Shown inline on the sign-in page, so the redirect is never silent
+          sessionStorage.setItem('luxygalleria_auth_notice', `Authentication failed (401): ${error.response?.data?.message || 'Invalid credentials or session expired.'}`);
           if (window.location.pathname !== '/sign-in') {
             window.location.href = '/sign-in?redirect=' + encodeURIComponent(window.location.pathname);
           }

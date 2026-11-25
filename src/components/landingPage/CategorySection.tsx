@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { getImageUrl } from "../../lib/imageUtils";
 import ResilientImage from "../common/ResilientImage";
+import { getAPIURL } from "../../lib/apiClient";
 
 type CategoryCard = { id: string; label: string; image: string; alt: string };
 
@@ -19,7 +20,7 @@ export default function CategorySection() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        const apiURL = getAPIURL();
         const res = await axios.get(`${apiURL}/categories`);
         if (res.data.success && res.data.data) {
           const activeCats = res.data.data.filter((c: any) => c.status === 'ACTIVE').slice(0, 6);
@@ -133,8 +134,9 @@ export default function CategorySection() {
                 src={category.image}
                 alt={category.alt}
                 fill
-                // No priority: one of the two layouts is display:none, and an eager load there measures height 0
+                // No priority prop (one layout is display:none); the first card is the phone's LCP, so it loads eagerly
                 sizes="(max-width: 768px) 100vw, 33vw"
+                loading={index === 0 ? "eager" : "lazy"}
                 className="object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105"
               />
 
@@ -166,6 +168,7 @@ export default function CategorySection() {
                 alt={category.alt}
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
+                loading={index === 0 ? "eager" : "lazy"}
                 className="object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors duration-500 motion-reduce:transition-none" />
@@ -208,7 +211,7 @@ export default function CategorySection() {
                 currentIndexRef.current = index;
               }
             }}
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${activeIndex === index ? 'bg-[#A68B5B]/30 w-4' : 'bg-[#A68B5B]/10/80'
+            className={`relative after:absolute after:-inset-[17px] w-2.5 h-2.5 rounded-full transition-all duration-300 ${activeIndex === index ? 'bg-[#A68B5B]/30 w-4' : 'bg-[#A68B5B]/10/80'
               }`}
             aria-label={`Go to slide ${index + 1}`}
           />

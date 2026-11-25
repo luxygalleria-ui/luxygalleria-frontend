@@ -80,11 +80,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       {/* Toast Container */}
-      <div className="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
+      <div className="fixed top-4 left-4 right-4 sm:top-6 sm:left-auto sm:right-6 z-[9999] flex flex-col items-stretch sm:items-end gap-3 pointer-events-none">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-start gap-3 px-5 py-4 rounded-2xl border shadow-lg backdrop-blur-sm min-w-[320px] max-w-[440px] animate-slide-in ${getStyles(toast.type)}`}
+            className={`pointer-events-auto flex items-start gap-3 px-5 py-4 rounded-2xl border shadow-lg backdrop-blur-sm w-full sm:w-auto sm:min-w-[320px] max-w-[440px] animate-slide-in ${getStyles(toast.type)}`}
             style={{
               animation: "slideIn 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards"
             }}
@@ -92,10 +92,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <span className={`shrink-0 mt-0.5 ${getIconColor(toast.type)}`}>
               {getIcon(toast.type)}
             </span>
-            <p className="text-sm font-semibold flex-1 leading-relaxed">{toast.message}</p>
+            <p className="text-sm font-semibold flex-1 min-w-0 break-words leading-relaxed">{toast.message}</p>
             <button
               onClick={() => removeToast(toast.id)}
-              className="shrink-0 opacity-50 hover:opacity-100 transition-opacity mt-0.5"
+              className="shrink-0 -my-3 -mr-3 w-11 h-11 flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity"
+              aria-label="Dismiss notification"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>

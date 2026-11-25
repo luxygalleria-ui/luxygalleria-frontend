@@ -14,6 +14,7 @@ import { useCart, parseWeightFromVolume } from "../../../context/CartContext";
 import TaxLabel from "../../../components/common/TaxLabel";
 import { getImageUrl, getPlaceholderUrl } from "../../../lib/imageUtils";
 import ResilientImage from "../../../components/common/ResilientImage";
+import { getAPIURL } from "../../../lib/apiClient";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -75,7 +76,7 @@ export default function ProductDetailPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        const apiURL = getAPIURL();
 
         const [prodRes, catRes] = await Promise.all([
           axios.get(`${apiURL}/products`),
@@ -403,9 +404,9 @@ export default function ProductDetailPage() {
         className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-4 flex items-center gap-2 text-xs font-sans text-slate-400"
         aria-label="Breadcrumb"
       >
-        <Link href="/" className="hover:text-slate-700 transition-colors">Home</Link>
+        <Link href="/" className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:text-slate-700 transition-colors">Home</Link>
         <ChevronRight size={12} />
-        <Link href="/products" className="hover:text-slate-700 transition-colors">Products</Link>
+        <Link href="/products" className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:text-slate-700 transition-colors">Products</Link>
         <ChevronRight size={12} />
         <span className="text-slate-700 font-semibold line-clamp-1">{selectedVariant?.name || product.name}</span>
       </nav>
@@ -424,6 +425,8 @@ export default function ProductDetailPage() {
                   alt={`${product.name} - ${selectedVariant.flavor}`}
                   fill
                   sizes="(max-width: 1024px) 100vw, 600px"
+                  loading="eager"
+                  fetchPriority="high"
                   className="absolute inset-0 w-full h-full object-contain"
                 />
               ) : (
@@ -463,6 +466,8 @@ export default function ProductDetailPage() {
                       alt={`Thumbnail ${i + 1}`}
                       fill
                       sizes="96px"
+                      // Shown right under the main image, and the same file as the (eager) LCP image: never lazy
+                      loading="eager"
                       className="w-full h-full object-contain"
                     />
                   </button>
@@ -711,6 +716,7 @@ export default function ProductDetailPage() {
                     src={getImageUrl(p.images && p.images.length > 0 ? p.images[0] : (p.variants?.find((v: any) => v.image)?.image || ""))}
                     alt={p.name}
                     fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
                     className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>

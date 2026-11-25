@@ -172,15 +172,15 @@ const ICICI_PAYMENT_HOSTS = new Set(["pgpayuat.icicibank.com", "pgpay.icicibank.
 /**
  * The local ICICI mock's payment page origin (backend `npm run dev:icici-mock`), or "" outside that setup. Both are
  * required: `next dev` (NODE_ENV "development"; Next inlines it, so a production bundle can never take this path) and
- * NEXT_PUBLIC_ICICI_MOCK_ORIGIN set to an exact https loopback origin such as https://localhost:8443. Any other value
- * (http, another host, a path, credentials) is ignored.
+ * NEXT_PUBLIC_ICICI_MOCK_ORIGIN set to an exact loopback origin with a port, such as http://localhost:8443 (plain http, so
+ * no self-signed certificate warning). Any other value (another host, no port, a path, credentials) is ignored.
  */
 const mockPaymentOrigin = (): string => {
   if (process.env.NODE_ENV !== "development") return "";
   const configured = (process.env.NEXT_PUBLIC_ICICI_MOCK_ORIGIN || "").trim();
   try {
     const o = new URL(configured);
-    const loopback = o.protocol === "https:" && (o.hostname === "localhost" || o.hostname === "127.0.0.1") && o.port !== "";
+    const loopback = (o.protocol === "http:" || o.protocol === "https:") && (o.hostname === "localhost" || o.hostname === "127.0.0.1") && o.port !== "";
     return loopback && o.origin === configured.replace(/\/$/, "") ? o.origin : "";
   } catch { return ""; }
 };
@@ -194,8 +194,9 @@ export const paymentPageUrl = (reply: unknown): string => {
   if (typeof url !== "string") return "";
   try {
     const u = new URL(url);
-    if (u.protocol !== "https:" || u.username || u.password) return "";
-    const icici = ICICI_PAYMENT_HOSTS.has(u.hostname) && u.port === "";
+    if (u.username || u.password) return "";
+    // ICICI itself: https only. The local mock (next dev only): its exact configured origin, http allowed
+    const icici = u.protocol === "https:" && ICICI_PAYMENT_HOSTS.has(u.hostname) && u.port === "";
     const mock = mockPaymentOrigin();
     return icici || (mock !== "" && u.origin === mock) ? u.toString() : "";
   } catch { return ""; }

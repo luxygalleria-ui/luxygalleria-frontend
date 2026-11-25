@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { getAPIURL } from "../lib/apiClient";
 
 export default function DebugInfo() {
   const [userInfo, setUserInfo] = useState<any>(null);
@@ -19,7 +20,7 @@ export default function DebugInfo() {
     }
     
     // Get API URL
-    setApiUrl(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1');
+    setApiUrl(getAPIURL());
   }, []);
 
   // Only show in development

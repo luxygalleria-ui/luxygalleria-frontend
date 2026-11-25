@@ -42,7 +42,7 @@ export default function PrivacyPolicyPage() {
             >
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors text-sm font-semibold bg-white/10 hover:bg-white/20 px-5 py-2.5 rounded-full border border-white/20 backdrop-blur-sm shadow-sm"
+                className="inline-flex items-center min-h-[44px] gap-2 text-white/90 hover:text-white transition-colors text-sm font-semibold bg-white/10 hover:bg-white/20 px-5 py-2.5 rounded-full border border-white/20 backdrop-blur-sm shadow-sm"
               >
                 <ChevronLeft size={16} />
                 Back to Home

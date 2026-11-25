@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
               <p>{sent}</p>
             </div>
             <p className="font-sans text-sm text-slate-500">Did not get it? Check your spam folder, or try again in a minute.</p>
-            <Link href="/sign-in" className="inline-block font-bold text-sm text-slate-800 underline">Back to Sign In</Link>
+            <Link href="/sign-in" className="inline-flex items-center min-h-[44px] font-bold text-sm text-slate-800 underline">Back to Sign In</Link>
           </div>
         ) : (
           <>
@@ -77,7 +77,7 @@ export default function ForgotPasswordPage() {
               </button>
             </form>
             <div className="mt-8 text-center">
-              <Link href="/sign-in" className="font-sans text-sm text-slate-500 hover:text-slate-900">Remembered it? <span className="font-bold text-slate-800">Sign In</span></Link>
+              <Link href="/sign-in" className="inline-flex items-center min-h-[44px] font-sans text-sm text-slate-500 hover:text-slate-900">Remembered it? <span className="font-bold text-slate-800">Sign In</span></Link>
             </div>
           </>
         )}

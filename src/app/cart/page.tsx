@@ -26,7 +26,7 @@ export default function CartPage() {
         className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-4 flex items-center gap-2 text-xs font-sans text-slate-400"
         aria-label="Breadcrumb"
       >
-        <Link href="/" className="hover:text-slate-700 transition-colors">Home</Link>
+        <Link href="/" className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:text-slate-700 transition-colors">Home</Link>
         <ChevronRight size={12} />
         <span className="text-slate-700 font-semibold">Shopping Cart</span>
       </nav>
@@ -69,7 +69,7 @@ export default function CartPage() {
                   <button
                     onClick={() => removeItem(item.id, item.variantId, item.size)}
                     aria-label="Remove item"
-                    className="absolute top-2 right-4 sm:top-6 sm:right-6 text-slate-400 hover:text-red-500 transition-colors focus:outline-none"
+                    className="absolute top-1 right-2 sm:top-4 sm:right-4 w-11 h-11 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 transition-colors focus:outline-none"
                   >
                     <Trash2 size={20} />
                   </button>
@@ -120,7 +120,7 @@ export default function CartPage() {
                           onClick={() => updateQuantity(item.id, item.quantity - 1, item.variantId, item.size)}
                           aria-label="Decrease quantity"
                           disabled={item.quantity <= 1}
-                          className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
+                          className="w-11 h-11 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
                         >
                           <Minus size={14} />
                         </button>
@@ -132,7 +132,7 @@ export default function CartPage() {
                           aria-label="Increase quantity"
                           // Stop at the server's stock figure (from the quote) and per-line limit instead of failing later
                           disabled={item.quantity >= Math.min(pricedLine(quote, item, index).stock ?? MAX_QTY_PER_LINE, MAX_QTY_PER_LINE)}
-                          className="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
+                          className="w-11 h-11 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
                         >
                           <Plus size={14} />
                         </button>

@@ -28,7 +28,7 @@ const playfair = Playfair_Display({
 // Backend origin used for API + image requests — preconnect to cut connection setup time
 const API_ORIGIN = (() => {
   try {
-    return new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1").origin;
+    return new URL(getBaseURL()).origin;
   } catch {
     return "";
   }
@@ -45,6 +45,7 @@ export const metadata: Metadata = {
 import { CartProvider } from "../context/CartContext";
 import { ToastProvider } from "../context/ToastContext";
 import GoogleOAuthWrapper from "../components/auth/GoogleOAuthWrapper";
+import { getBaseURL } from "../lib/apiClient";
 
 export default function RootLayout({
   children,

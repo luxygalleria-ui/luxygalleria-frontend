@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Star } from "lucide-react";
 import axios from "axios";
 import { getImageUrl } from '../../lib/imageUtils';
+import { getAPIURL } from "../../lib/apiClient";
 
 interface Testimonial {
   id: string;
@@ -95,7 +96,7 @@ export default function TestimonialsSection() {
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
-        const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        const apiURL = getAPIURL();
         const res = await axios.get(`${apiURL}/testimonials`);
         if (res.data.success && res.data.data) {
           const activeOnes = res.data.data.filter(

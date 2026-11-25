@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import { useRouter } from "next/navigation";
@@ -12,6 +12,7 @@ import { useToast } from "../../context/ToastContext";
 import { useCart } from "../../context/CartContext";
 import GoogleAuthButton from "../../components/auth/GoogleAuthButton";
 import { getAPIURL } from "../../lib/apiClient";
+import { authErrorMessage } from "../../lib/authErrors";
 
 const ADMIN_PORTAL_URL = process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.luxygalleria.com";
 
@@ -40,6 +41,12 @@ export default function SignInPage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [isStaffAccount, setIsStaffAccount] = useState(false);
 
+  // Reason left by apiClient when an expired session redirected here
+  useEffect(() => {
+    const notice = sessionStorage.getItem("luxygalleria_auth_notice");
+    if (notice) { sessionStorage.removeItem("luxygalleria_auth_notice"); setApiError(notice); }
+  }, []);
+
   const onSubmit = async (data: SignInValues) => {
     try {
       setApiError(null);
@@ -58,21 +65,18 @@ export default function SignInPage() {
       showToast("Signed in successfully!", "success");
       router.push("/");
     } catch (err: any) {
-      // Don't log expected auth errors (401, 403) to console - show user-friendly message instead
       const status = err.response?.status;
-      const serverMsg = err.response?.data?.message;
-
-      if (status === 401) {
-        setApiError("Invalid email or password. Please try again.");
-      } else if (status === 403) {
-        setIsStaffAccount(err.response?.data?.errors?.code === "USE_ADMIN_PORTAL");
-        setApiError(serverMsg || "Your account cannot be accessed. Please contact support.");
-      } else {
-        console.error("Sign in error:", err);
-        setApiError(serverMsg || "Something went wrong. Please try again.");
-      }
+      if (status === 403) setIsStaffAccount(err.response?.data?.errors?.code === "USE_ADMIN_PORTAL");
+      else if (status !== 401 && status !== 400) console.error("Sign in error:", status, err.message);
+      const msg = status === 403
+        ? err.response?.data?.message || "Your account cannot be accessed. Please contact support."
+        : authErrorMessage(err, "signin");
+      setApiError(msg);
+      showToast(msg, "error");
     }
   };
+
+  const clearApiError = () => { if (apiError) { setApiError(null); setIsStaffAccount(false); } };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row pt-0">
@@ -105,7 +109,7 @@ export default function SignInPage() {
       {/* ── Right Panel: Sign In Form ── */}
       <div className="bg-white md:w-1/2 flex flex-col justify-center px-6 py-10 md:p-16 lg:p-24">
         <div className="max-w-lg mx-auto w-full">
-          <h2 className="font-sans font-bold text-4xl md:text-5xl text-slate-900 mb-3">
+          <h2 className="font-sans font-bold text-3xl sm:text-4xl md:text-5xl text-slate-900 mb-3">
             Sign In
           </h2>
           <p className="font-sans text-slate-500 text-base mb-10">
@@ -114,7 +118,7 @@ export default function SignInPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-7">
             {apiError && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100">
+              <div role="alert" aria-live="assertive" className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100 break-words">
                 {apiError}
                 {isStaffAccount && (
                   <a href={ADMIN_PORTAL_URL} className="block mt-2 font-bold underline">Go to the admin portal</a>
@@ -134,7 +138,7 @@ export default function SignInPage() {
                 id="email"
                 type="email"
                 placeholder="Enter your email address"
-                {...register("email")}
+                {...register("email", { onChange: clearApiError })}
                 className={`w-full bg-slate-50 border rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors ${errors.email ? "border-red-500 ring-1 ring-red-500" : "border-slate-100"
                   }`}
                 aria-invalid={errors.email ? "true" : "false"}
@@ -160,7 +164,7 @@ export default function SignInPage() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  {...register("password")}
+                  {...register("password", { onChange: clearApiError })}
                   className={`w-full bg-slate-50 border rounded-xl px-5 py-4 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#A68B5B]/50 focus:bg-white transition-colors pr-14 ${errors.password ? "border-red-500 ring-1 ring-red-500" : "border-slate-100"
                     }`}
                   aria-invalid={errors.password ? "true" : "false"}
@@ -169,7 +173,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none focus:text-slate-800"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 focus:outline-none focus:text-slate-800"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -182,7 +186,7 @@ export default function SignInPage() {
               )}
 
               <div className="mt-3 text-right">
-                <Link href="/forgot-password" className="font-sans text-sm text-slate-500 hover:text-slate-800 transition-colors">
+                <Link href="/forgot-password" className="inline-flex items-center min-h-[44px] font-sans text-sm text-slate-500 hover:text-slate-800 transition-colors">
                   Forgot Password?
                 </Link>
               </div>
@@ -220,7 +224,7 @@ export default function SignInPage() {
           <div className="text-center">
             <Link
               href="/register"
-              className="inline-flex items-center justify-center gap-1.5 font-sans text-sm text-slate-500 hover:text-slate-900 transition-colors"
+              className="inline-flex flex-wrap items-center justify-center gap-1.5 min-h-[44px] font-sans text-sm text-slate-500 hover:text-slate-900 transition-colors"
             >
               New to Luxy Galleria? <span className="font-bold text-slate-800">Create Account</span> <UserPlus size={16} className="text-slate-800" />
             </Link>

@@ -69,7 +69,7 @@ export default function RefundReplacementPolicyPage() {
             <div className="md:hidden flex justify-center mb-6" style={fade(50)}>
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-white/80 hover:text-white transition-colors text-xs font-semibold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full border border-white/20"
+                className="inline-flex items-center min-h-[44px] gap-1.5 text-white/80 hover:text-white transition-colors text-xs font-semibold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full border border-white/20"
               >
                 <ChevronLeft size={14} />
                 Back to Home
