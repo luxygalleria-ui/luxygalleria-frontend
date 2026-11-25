@@ -76,7 +76,6 @@ export default function HeroSection({ initialSlides }: { initialSlides?: ISlide[
   const [allSlides, setAllSlides] = useState<ISlide[] | null>(initialSlides ?? null);
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -144,14 +143,6 @@ export default function HeroSection({ initialSlides }: { initialSlides?: ISlide[
     return () => { cancelled = true; window.removeEventListener("load", warm); };
   }, [allSlides, isMobile]);
 
-  // Preloader timer
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
   // Keep every active slide on mobile; each slide uses its mobile asset when set and desktop otherwise.
   const slides = allSlides ?? [];
   const finalSlides = slides;
@@ -161,12 +152,12 @@ export default function HeroSection({ initialSlides }: { initialSlides?: ISlide[
 
   // Timeout keyed on currentSlide: every slide (including after manual nav/swipe) gets the full delay
   useEffect(() => {
-    if (isLoading || finalSlides.length <= 1) return;
+    if (finalSlides.length <= 1) return;
     const timer = setTimeout(() => {
       setCurrentSlide((prev) => (prev + 1) % finalSlides.length);
     }, SLIDE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [isLoading, currentSlide, finalSlides.length]);
+  }, [currentSlide, finalSlides.length]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % finalSlides.length);
@@ -216,34 +207,9 @@ export default function HeroSection({ initialSlides }: { initialSlides?: ISlide[
       onTouchMove={onTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Preloader */}
-      <AnimatePresence>
-        {isLoading && (
-          <m.div
-            key="preloader"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6, ease: "easeInOut" }}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background"
-          >
-            <h1 className="text-[#A68B5B] font-sans font-black text-3xl sm:text-5xl md:text-8xl tracking-[0.2em] uppercase mb-8 text-center px-4">
-              LUXY GALLERIA
-            </h1>
-            <div className="w-64 md:w-80 h-[2px] bg-slate-100 overflow-hidden relative">
-              <m.div
-                initial={{ width: 0 }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 2, ease: "easeInOut" }}
-                className="h-full bg-[#A68B5B]/60"
-              />
-            </div>
-          </m.div>
-        )}
-      </AnimatePresence>
-
-      {/* Background & Content Layer — the first slide fades in (it sits under the preloader anyway). Its image is still in
-          the HTML with fetchpriority=high, so it downloads right away; starting visible made the banner the LCP element and
-          tied LCP to the image download (PageSpeed mobile 70 -> 59) for a paint nobody sees behind the preloader. */}
+      {/* Background & Content Layer — the first slide fades in on hydration. Its image is in the HTML with
+          fetchpriority=high, so it downloads right away; starting visible made the banner the LCP element and tied LCP to
+          the image download (PageSpeed mobile 70 -> 59). */}
       <AnimatePresence mode="sync">
         {finalSlides.map((slide, index) =>
           index === activeSlide ? (
