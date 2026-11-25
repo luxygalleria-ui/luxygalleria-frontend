@@ -355,9 +355,12 @@ export default function CheckoutPage() {
         console.error("Checkout error:", status ?? err.code ?? err.message, err.response?.data?.code ?? "");
         // The server's own message when it answered (e.g. ICICI refused the start, out of stock); a proxy error page or
         // no reply at all gets the not-charged message
-        const msg = err.response?.data?.message || (gatewayDown
-          ? "The ICICI payment page is not responding right now. You have not been charged. Please try again in a few minutes."
-          : err.message?.startsWith(PAGE_URL_REFUSED) ? err.message : "An error occurred during checkout. Please try again.");
+        const serverMsg = err.response?.data?.message;
+        const msg = gatewayDown
+          // 502/503/504 or no reply: the payment never started, so say plainly that no money was taken
+          ? (serverMsg && /not been charged/i.test(serverMsg) ? serverMsg
+            : `${serverMsg ? `${serverMsg} ` : "The ICICI Bank payment gateway is unavailable right now. "}No money was charged. Please try again in a few minutes.`)
+          : serverMsg || (err.message?.startsWith(PAGE_URL_REFUSED) ? err.message : "An error occurred during checkout. Please try again.");
         setPayError(msg);
         showToast(msg, "error");
       }
@@ -706,6 +709,16 @@ export default function CheckoutPage() {
               <p role="alert" data-testid="uat-test-notice" className="mb-4 rounded-xl border-2 border-red-600 bg-red-50 p-3 text-center text-xs font-bold uppercase tracking-wide text-red-800">
                 {TEST_PAYMENT_NOTICE}
               </p>
+            )}
+
+            {/* Why the pay button is disabled, right beside it (the details may be scrolled out of view) */}
+            {!isLoadingShipping && !isRedirecting && (addressProblem || billingProblem || (!quote && quoteError)) && (
+              <div role="status" data-testid="pay-blocked" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 break-words">
+                <p>{addressProblem || billingProblem || quoteError}</p>
+                {!addressProblem && !billingProblem && quoteError && (
+                  <button type="button" onClick={retryQuote} className="mt-1 min-h-[44px] text-xs font-bold uppercase tracking-wider underline">Try again</button>
+                )}
+              </div>
             )}
 
             {payError && (

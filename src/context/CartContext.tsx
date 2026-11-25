@@ -3,7 +3,10 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { fixCloudinaryCloud } from '../lib/imageUtils';
-import { getAPIURL } from '../lib/apiClient';
+import { getAPIURL, sessionExpired } from '../lib/apiClient';
+
+/** Pages that need the account: a rejected session there goes to sign-in instead of continuing as a guest. */
+const ACCOUNT_PAGES = new Set(['/checkout', '/profile']);
 import { useToast } from './ToastContext';
 
 export interface CartItem {
@@ -108,7 +111,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
    */
   const handleWriteError = async (err: any, token: string) => {
     if (err?.response?.status === 401) {
-      localStorage.removeItem("luxygalleria_user");
+      sessionExpired(err.response.data?.message, ACCOUNT_PAGES.has(window.location.pathname));
       return;
     }
     console.error("Cart update failed", err?.response?.status, err?.response?.data?.message || err?.message);
@@ -128,9 +131,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           if (err?.response?.status === 401) {
             // The stored token was rejected (expired, or its user no longer exists): drop it once, as apiClient does,
             // instead of re-sending it on every page load. The browser cart below keeps working as a guest cart.
-            localStorage.removeItem("luxygalleria_user");
+            // On checkout/profile (which need the account) go to sign-in with a notice; elsewhere carry on as a guest.
+            sessionExpired(err.response.data?.message, ACCOUNT_PAGES.has(window.location.pathname));
           } else {
-            console.error("Failed to fetch cart from backend", err);
+            console.error("Failed to fetch cart from backend", err?.response?.status ?? err?.message);
           }
         }
       }

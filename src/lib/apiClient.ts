@@ -63,21 +63,25 @@ apiClient.interceptors.response.use(
     if (status === 401) {
       if (typeof window !== 'undefined') {
         // Don't redirect if user isn't logged in at all (no stored user)
-        const storedUser = localStorage.getItem('luxygalleria_user');
-        if (storedUser) {
-          // Token expired - clear storage and redirect to login
-          localStorage.removeItem('luxygalleria_user');
-          // Shown inline on the sign-in page, so the redirect is never silent
-          sessionStorage.setItem('luxygalleria_auth_notice', `Authentication failed (401): ${error.response?.data?.message || 'Invalid credentials or session expired.'}`);
-          if (window.location.pathname !== '/sign-in') {
-            window.location.href = '/sign-in?redirect=' + encodeURIComponent(window.location.pathname);
-          }
-        }
+        if (localStorage.getItem('luxygalleria_user')) sessionExpired(error.response?.data?.message, true);
         // If no stored user, it's a guest trying a protected route - just reject silently
       }
     }
     return Promise.reject(error);
   }
 );
+
+/**
+ * A stored session the server rejected (401): sign out once and leave a notice the sign-in page shows, so it is never
+ * silent. redirect: go to sign-in now (always for apiClient; pages that need an account for anything else).
+ */
+export const sessionExpired = (message?: string, redirect = false) => {
+  if (typeof window === 'undefined' || !localStorage.getItem('luxygalleria_user')) return;
+  localStorage.removeItem('luxygalleria_user');
+  sessionStorage.setItem('luxygalleria_auth_notice', `Authentication failed (401): ${message || 'Your session expired. Please sign in again.'}`);
+  if (redirect && window.location.pathname !== '/sign-in') {
+    window.location.href = '/sign-in?redirect=' + encodeURIComponent(window.location.pathname);
+  }
+};
 
 export default apiClient;
