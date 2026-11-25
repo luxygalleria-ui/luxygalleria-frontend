@@ -167,14 +167,17 @@ export const takePayLock = (lock: { current: boolean }) => {
   return true;
 };
 
-/** ICICI Bank's own domains: the payment page may be on any of their hosts (UAT, live, or a new one ICICI moves to). */
-const ICICI_DOMAINS = ["icicibank.com", "icici.com"];
+/**
+ * ICICI Bank's own domains: the payment page may be on any of their hosts, e.g. pgpay(uat).icicibank.com and
+ * pgpay(uat).icici.bank.in (ICICI's .bank.in domain; .bank.in is reserved for Indian banks).
+ */
+const ICICI_DOMAINS = ["icicibank.com", "icici.bank.in", "icici.com"];
 const iciciHost = (h: string) => ICICI_DOMAINS.some((d) => h === d || h.endsWith(`.${d}`));
 const LOOPBACK = new Set(["localhost", "127.0.0.1"]);
 
 /**
  * Checks the payment page from the initiate reply. Accepted (normalised URL, reason ""): https without credentials on
- * icicibank.com / icici.com or any subdomain; or the local ICICI mock, a loopback page (http or https), only while this
+ * icicibank.com / icici.bank.in / icici.com or any subdomain; or the local ICICI mock, a loopback page (http or https), only while this
  * storefront is itself open on loopback, so a deployed site is never sent to localhost. Anything else: url "" and a
  * reason naming the host (never the full URL: its tranCtx is a payment token).
  */

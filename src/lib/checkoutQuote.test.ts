@@ -118,8 +118,10 @@ const run = async () => {
   assert.strictEqual(paymentPageUrl({ data: { redirectUrl: PAGE } }), PAGE);
   assert.strictEqual(paymentPageUrl(null), '');
   // Any ICICI Bank host over https is accepted (live, UAT, a new subdomain, an explicit port)
-  for (const ok of ['https://pgpay.icicibank.com:8443/pg?tranCtx=X', 'https://secure.pgpay.icicibank.com/x', 'https://icicibank.com/x', 'https://pay.icici.com/x', 'https://icici.com/x'])
+  for (const ok of ['https://pgpay.icicibank.com:8443/pg?tranCtx=X', 'https://secure.pgpay.icicibank.com/x', 'https://icicibank.com/x', 'https://pay.icici.com/x', 'https://icici.com/x', 'https://pgpayuat.icici.bank.in/tsp/pg/api/v2/authRedirect?tranCtx=A', 'https://pgpay.icici.bank.in/pg/api/v2/authRedirect?tranCtx=B'])
     assert.strictEqual(paymentPageUrl({ data: { redirectUrl: ok } }), new URL(ok).toString(), `${ok} accepted`);
+  for (const bad of ['http://pgpay.icici.bank.in/x', 'https://pgpay.icici.bank.in.evil.example/x', 'https://evilicici.bank.in/x', 'https://bank.in/x', 'https://user:pw@pgpay.icici.bank.in/x'])
+    assert.strictEqual(paymentPageUrl({ data: { redirectUrl: bad } }), '', `${bad} refused`);
   assert.match(checkPaymentPage({ data: { redirectUrl: 'https://evil.example/x?tranCtx=SECRET' } }).reason, /evil\.example is not an ICICI/, 'reason names the host');
   assert.ok(!checkPaymentPage({ data: { redirectUrl: 'https://evil.example/x?tranCtx=SECRET' } }).reason.includes('SECRET'), 'reason never includes the token');
   assert.strictEqual(paymentPageUrl({ data: { redirectUrl: 'https://PGPAY.icicibank.com:443/pg?tranCtx=X' } }), 'https://pgpay.icicibank.com/pg?tranCtx=X', 'normalised (case, default port)');
