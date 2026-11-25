@@ -7,7 +7,8 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Check, ShieldCheck, MapPin, X, Lock, Store, Truck } from "lucide-react";
 import { useCart } from "../../context/CartContext";
-import { useQuote, Fulfillment, METHOD_LABEL, rupees, money, pricedLine, packagingSummary, startPayment, PayStage, sharedRefusal } from "../../lib/checkoutQuote";
+import { useQuote, Fulfillment, METHOD_LABEL, rupees, money, pricedLine, packagingSummary, startPayment, PayStage, sharedRefusal, PAGE_URL_REFUSED } from "../../lib/checkoutQuote";
+import { inr } from "../../lib/orderDisplay";
 import { TEST_PAYMENT_NOTICE } from "../../lib/testPayment";
 import { useToast } from "../../context/ToastContext";
 import { getAPIURL } from "../../lib/apiClient";
@@ -339,10 +340,11 @@ export default function CheckoutPage() {
   };
 
   const showPayError = (e: unknown) => {
-      const err = e as { response?: { status?: number; data?: { message?: string; code?: string } }; code?: string; message?: string };
+      const err = e as { response?: { status?: number; data?: { message?: string; code?: string } }; code?: string; message?: string; isAxiosError?: boolean };
       const status = err.response?.status;
-      // Gateway unreachable / proxy timeout / our own timeout: nothing was charged at this step
-      const gatewayDown = [502, 503, 504].includes(status ?? 0) || err.code === "ECONNABORTED" || !err.response;
+      // Gateway unreachable / proxy timeout / our own timeout: nothing was charged at this step. A plain Error (e.g. the
+      // payment page address refused here) is not a network failure and shows its own message.
+      const gatewayDown = [502, 503, 504].includes(status ?? 0) || err.code === "ECONNABORTED" || (!!err.isAxiosError && !err.response);
       if (status === 401) {
         // Token expired or invalid - redirect to sign-in
         localStorage.removeItem("luxygalleria_user");
@@ -355,7 +357,7 @@ export default function CheckoutPage() {
         // no reply at all gets the not-charged message
         const msg = err.response?.data?.message || (gatewayDown
           ? "The ICICI payment page is not responding right now. You have not been charged. Please try again in a few minutes."
-          : "An error occurred during checkout. Please try again.");
+          : err.message === PAGE_URL_REFUSED ? PAGE_URL_REFUSED : "An error occurred during checkout. Please try again.");
         setPayError(msg);
         showToast(msg, "error");
       }
@@ -597,7 +599,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="font-sans font-bold text-sm text-slate-900">
-                        {item.currency}{pricedLine(quote, item, index).lineTotal}
+                        {inr(pricedLine(quote, item, index).lineTotal)}
                       </p>
                     </div>
                   </div>

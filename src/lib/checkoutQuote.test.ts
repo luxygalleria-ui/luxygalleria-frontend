@@ -3,7 +3,7 @@
  * Run: npx ts-node --transpile-only -O '{"module":"commonjs","moduleResolution":"node","jsx":"react-jsx"}' src/lib/checkoutQuote.test.ts
  */
 import assert from 'node:assert';
-import { takePayLock, sharedRefusal, startPayment, paymentPageUrl, PayStage } from './checkoutQuote';
+import { takePayLock, sharedRefusal, startPayment, paymentPageUrl, PayStage, PAGE_URL_REFUSED } from './checkoutQuote';
 
 /** The same shape as handleCheckout: lock before the request, release only when the start fails. */
 const makeCheckout = (initiate: () => Promise<string>) => {
@@ -120,62 +120,38 @@ const run = async () => {
   assert.strictEqual(paymentPageUrl({ data: { redirectUrl: 'https://PGPAY.icicibank.com:443/pg?tranCtx=X' } }), 'https://pgpay.icicibank.com/pg?tranCtx=X', 'normalised (case, default port)');
   console.log('✅ ICICI start: success (UAT and live hosts), untrusted/bad/missing URL, 502, timeout, blocked or stuck navigation, repeated clicks (35 checks)');
 
-  // ---- Local ICICI mock (backend npm run dev:icici-mock): its exact origin only under next dev with the origin configured
-  const env = process.env as Record<string, string | undefined>;
-  const savedEnv = { NODE_ENV: env.NODE_ENV, MOCK: env.NEXT_PUBLIC_ICICI_MOCK_ORIGIN };
-  const setMode = (nodeEnv: string | undefined, origin: string | undefined) => {
-    if (nodeEnv === undefined) delete env.NODE_ENV; else env.NODE_ENV = nodeEnv;
-    if (origin === undefined) delete env.NEXT_PUBLIC_ICICI_MOCK_ORIGIN; else env.NEXT_PUBLIC_ICICI_MOCK_ORIGIN = origin;
-  };
-  const MOCK_PAGE = 'https://localhost:8443/tsp/pg/api/v2/authRedirect?tranCtx=CTX-LG1';
+  // ---- Local ICICI mock (backend npm run dev:icici-mock): a loopback page only while the storefront itself is on loopback
+  const g = globalThis as { window?: unknown };
+  const openOn = (host: string | undefined) => { if (host === undefined) delete g.window; else g.window = { location: { hostname: host } }; };
   const at = (u: unknown) => paymentPageUrl({ data: { redirectUrl: u } });
+  const HTTP_MOCK = 'http://localhost:8443/tsp/pg/api/v2/authRedirect?tranCtx=CTX-LG2';
   let mockChecks = 0;
   const check = (actual: string, expected: string, label: string) => { assert.strictEqual(actual, expected, label); mockChecks++; };
   try {
-    // 1. Genuine ICICI UAT is accepted in every mode
-    for (const [ne, o] of [['production', undefined], ['production', 'https://localhost:8443'], ['development', 'https://localhost:8443'], [undefined, undefined]] as const) {
-      setMode(ne, o); check(at(PAGE), PAGE, `UAT accepted (NODE_ENV=${ne}, mock=${o})`);
+    for (const host of ['localhost', '127.0.0.1']) {
+      openOn(host);
+      check(at(HTTP_MOCK), HTTP_MOCK, `http mock accepted on ${host}`);
+      check(at('https://localhost:8443/x?tranCtx=A'), 'https://localhost:8443/x?tranCtx=A', `https mock accepted on ${host}`);
+      check(at('http://127.0.0.1:9000/x'), 'http://127.0.0.1:9000/x', `127.0.0.1 mock on another port accepted on ${host}`);
+      check(at(PAGE), PAGE, `real ICICI still accepted on ${host}`);
     }
-    // 2. The exact mock origin, only in local mock mode
-    setMode('development', 'https://localhost:8443');
-    check(at(MOCK_PAGE), MOCK_PAGE, 'mock page accepted in local mock mode');
-    setMode('development', 'https://localhost:8443/'); check(at(MOCK_PAGE), MOCK_PAGE, 'a trailing slash on the configured origin is fine');
-    setMode('development', 'https://127.0.0.1:8443'); check(at('https://127.0.0.1:8443/x?tranCtx=A'), 'https://127.0.0.1:8443/x?tranCtx=A', '127.0.0.1 origin');
-    // 3. Localhost is refused in production, or without the explicit mock origin
-    setMode('production', 'https://localhost:8443'); check(at(MOCK_PAGE), '', 'production build: localhost refused even with the variable set');
-    setMode('test', 'https://localhost:8443'); check(at(MOCK_PAGE), '', 'NODE_ENV test: refused');
-    setMode(undefined, 'https://localhost:8443'); check(at(MOCK_PAGE), '', 'NODE_ENV unset: refused');
-    setMode('development', undefined); check(at(MOCK_PAGE), '', 'next dev without the mock origin: refused');
-    setMode('development', ''); check(at(MOCK_PAGE), '', 'blank mock origin: refused');
-    // 4. In mock mode, anything that is not exactly the mock origin is still refused
-    setMode('development', 'https://localhost:8443');
+    for (const host of ['luxygalleria.com', 'www.luxygalleria.com', 'localhost.evil.example', undefined]) {
+      openOn(host);
+      check(at(HTTP_MOCK), '', `deployed/unknown page (${host}): localhost refused`);
+      check(at(PAGE), PAGE, `deployed/unknown page (${host}): real ICICI accepted`);
+    }
+    openOn('localhost');
     for (const [label, bad] of [
-      ['other port', 'https://localhost:9999/authRedirect'], ['default port', 'https://localhost/authRedirect'], ['127.0.0.1 vs localhost', 'https://127.0.0.1:8443/authRedirect'],
-      ['external host', 'https://evil.example/authRedirect'], ['lookalike', 'https://localhost.evil.example:8443/authRedirect'],
-      ['credentials', 'https://user:pass@localhost:8443/authRedirect'], ['http mock', 'http://localhost:8443/authRedirect'],
-      ['malformed', 'https://'], ['javascript:', 'javascript:alert(1)'], ['not a string', 8443],
-    ] as const) check(at(bad), '', `mock mode, ${label}: refused`);
-    // 4b. Plain http mock page (no certificate warning): accepted only for its exact http origin, only under next dev
-    const HTTP_MOCK = 'http://localhost:8443/tsp/pg/api/v2/authRedirect?tranCtx=CTX-LG2';
-    setMode('development', 'http://localhost:8443'); check(at(HTTP_MOCK), HTTP_MOCK, 'http mock page accepted for an http mock origin');
-    check(at('https://localhost:8443/x'), '', 'http origin configured: https on the same port is a different origin, refused');
-    check(at('http://pgpay.icicibank.com/authRedirect'), '', 'ICICI over http: refused');
-    setMode('production', 'http://localhost:8443'); check(at(HTTP_MOCK), '', 'production build: http mock refused');
-    // 5. A mock origin that is not a loopback origin with a port is ignored (never widens the allowlist)
-    for (const [label, origin, url] of [
-      ['external http origin', 'http://evil.example:8443', 'http://evil.example:8443/authRedirect'], ['external origin', 'https://evil.example', 'https://evil.example/authRedirect'],
-      ['origin with a path', 'https://localhost:8443/tsp', MOCK_PAGE], ['origin without a port', 'https://localhost', 'https://localhost/authRedirect'],
-      ['wildcard', 'https://*.localhost:8443', 'https://a.localhost:8443/x'], ['not a URL', 'localhost:8443', MOCK_PAGE],
-    ] as const) { setMode('development', origin); check(at(url), '', `configured ${label}: ignored`); }
-    // startPayment in mock mode: the mock page is navigated to; in production the same reply is refused without navigating
-    setMode('development', 'https://localhost:8443');
-    { const { h, click } = harness(reply(MOCK_PAGE)); await click(); clearTimeout(h.watchdog.current);
-      check(h.navigated.join(), MOCK_PAGE, 'startPayment navigates to the mock page in mock mode'); }
-    setMode('production', 'https://localhost:8443');
-    { const { h, click } = harness(reply(MOCK_PAGE)); await click();
-      assert.deepStrictEqual([h.navigated.length, h.stages, h.lock.current, h.errors.length], [0, ['connecting', ''], false, 1], 'production: no navigation, released, error'); mockChecks++; }
-  } finally { setMode(savedEnv.NODE_ENV, savedEnv.MOCK); }
-  console.log(`✅ local ICICI mock redirect: exact mock origin only under next dev with the origin set; production and everything else refused (${mockChecks} checks)`);
+      ['external host', 'https://evil.example/authRedirect'], ['lookalike', 'http://localhost.evil.example:8443/x'], ['credentials', 'http://user:pass@localhost:8443/x'],
+      ['ICICI over http', 'http://pgpay.icicibank.com/authRedirect'], ['javascript:', 'javascript:alert(1)'], ['not a string', 8443],
+    ] as const) check(at(bad), '', `on localhost, ${label}: refused`);
+    { const { h, click } = harness(reply(HTTP_MOCK)); await click(); clearTimeout(h.watchdog.current);
+      check(h.navigated.join(), HTTP_MOCK, 'startPayment navigates to the mock page on localhost'); }
+    openOn('luxygalleria.com');
+    { const { h, click } = harness(reply(HTTP_MOCK)); await click();
+      assert.deepStrictEqual([h.navigated.length, h.stages, h.lock.current, (h.errors[0] as Error)?.message], [0, ['connecting', ''], false, PAGE_URL_REFUSED], 'deployed: no navigation, released, clear error'); mockChecks++; }
+  } finally { openOn(undefined); }
+  console.log(`✅ local ICICI mock redirect: loopback page only while the storefront is on loopback; deployed sites refuse it (${mockChecks} checks)`);
 };
 
 run().catch((e) => { console.error('❌', e); process.exit(1); });

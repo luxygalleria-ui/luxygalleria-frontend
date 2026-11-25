@@ -169,25 +169,13 @@ export const takePayLock = (lock: { current: boolean }) => {
 /** The only hosts the browser may be sent to for payment: ICICI's UAT and live payment pages (exact match). */
 const ICICI_PAYMENT_HOSTS = new Set(["pgpayuat.icicibank.com", "pgpay.icicibank.com"]);
 
-/**
- * The local ICICI mock's payment page origin (backend `npm run dev:icici-mock`), or "" outside that setup. Both are
- * required: `next dev` (NODE_ENV "development"; Next inlines it, so a production bundle can never take this path) and
- * NEXT_PUBLIC_ICICI_MOCK_ORIGIN set to an exact loopback origin with a port, such as http://localhost:8443 (plain http, so
- * no self-signed certificate warning). Any other value (another host, no port, a path, credentials) is ignored.
- */
-const mockPaymentOrigin = (): string => {
-  if (process.env.NODE_ENV !== "development") return "";
-  const configured = (process.env.NEXT_PUBLIC_ICICI_MOCK_ORIGIN || "").trim();
-  try {
-    const o = new URL(configured);
-    const loopback = (o.protocol === "http:" || o.protocol === "https:") && (o.hostname === "localhost" || o.hostname === "127.0.0.1") && o.port !== "";
-    return loopback && o.origin === configured.replace(/\/$/, "") ? o.origin : "";
-  } catch { return ""; }
-};
+const LOOPBACK = new Set(["localhost", "127.0.0.1"]);
 
 /**
- * ICICI's payment page from the initiate reply, normalised, or "" unless it is https without credentials and either on
- * an exact ICICI payment host (default port) or, in local mock mode only, on the exact configured mock origin.
+ * ICICI's payment page from the initiate reply, normalised, or "" unless it has no credentials and is either https on
+ * an exact ICICI payment host (default port), or the local ICICI mock: a loopback page (http or https, any port)
+ * while this storefront is itself open on loopback. A deployed site is never on loopback, so it can never be sent there;
+ * locally it works under next dev or next start alike, with no env variable to keep in step with the mock.
  */
 export const paymentPageUrl = (reply: unknown): string => {
   const url = (reply as { data?: { redirectUrl?: unknown } } | null)?.data?.redirectUrl;
@@ -195,12 +183,15 @@ export const paymentPageUrl = (reply: unknown): string => {
   try {
     const u = new URL(url);
     if (u.username || u.password) return "";
-    // ICICI itself: https only. The local mock (next dev only): its exact configured origin, http allowed
     const icici = u.protocol === "https:" && ICICI_PAYMENT_HOSTS.has(u.hostname) && u.port === "";
-    const mock = mockPaymentOrigin();
-    return icici || (mock !== "" && u.origin === mock) ? u.toString() : "";
+    const here = typeof window === "undefined" ? "" : window.location.hostname;
+    const mock = (u.protocol === "http:" || u.protocol === "https:") && LOOPBACK.has(u.hostname) && LOOPBACK.has(here);
+    return icici || mock ? u.toString() : "";
   } catch { return ""; }
 };
+
+/** Shown when the server answered but its payment page address is not one the browser may be sent to. */
+export const PAGE_URL_REFUSED = "The payment page address from the server was not accepted. You have not been charged; please try again.";
 
 export type PayStage = "" | "connecting" | "redirecting";
 
@@ -225,7 +216,7 @@ export const startPayment = async (o: {
   o.setStage("connecting");
   try {
     const url = paymentPageUrl(await o.initiate());
-    if (!url) throw new Error("No payment page URL in the gateway response");
+    if (!url) throw new Error(PAGE_URL_REFUSED);
     o.setStage("redirecting");
     o.navigate(url);
     o.watchdog.current = setTimeout(() => { o.lock.current = false; o.setStage(""); o.onStuck(); }, o.stuckAfterMs ?? 20_000);
