@@ -7,7 +7,7 @@ import axios from "axios";
 import { useCart, parseWeightFromVolume } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import CartAnimation from "../CartAnimation";
-import { getImageUrl, getPlaceholderUrl, handleImageError } from "../../lib/imageUtils";
+import { getImageUrl, getPlaceholderUrl, cloudinaryResized, cloudinarySrcSet, retryOriginalThenPlaceholder } from "../../lib/imageUtils";
 import { getAPIURL } from "../../lib/apiClient";
 
 interface Product {
@@ -80,7 +80,10 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
             return (
               <img
                 key={`${product.id}-landing-${i}`}
-                src={getImageUrl(img)}
+                // Sized copies (AVIF/WebP) instead of the raw upload, which can be a 1.8 MB PNG shown at ~180 px
+                src={cloudinaryResized(getImageUrl(img), 480)}
+                srcSet={cloudinarySrcSet(getImageUrl(img), [240, 360, 480, 720])}
+                sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
                 alt={`${product.name} product image ${i + 1}`}
                 className={`absolute inset-0 w-full h-full object-contain object-center transition-all duration-500 ease-in-out group-hover:scale-105 ${hasMultipleImages
                   ? i === 0
@@ -88,8 +91,10 @@ function ProductCard({ product, isVisible, index }: { product: Product; isVisibl
                     : "opacity-0 group-hover:opacity-100"
                   : "opacity-100"
                   }`}
-                onError={handleImageError}
-                loading={index > 2 ? "lazy" : "eager"}
+                onError={retryOriginalThenPlaceholder(getImageUrl(img))}
+                // Always below the fold (after hero, intro, categories and brands)
+                loading="lazy"
+                decoding="async"
               />
             );
           })}

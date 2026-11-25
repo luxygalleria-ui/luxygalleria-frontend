@@ -11,6 +11,25 @@ const OLD_CLOUDINARY_PREFIX = /^(https?:\/\/res\.cloudinary\.com\/)dlysz5wmo\//;
 /** Rewrites only the exact old Cloudinary cloud prefix; path, version, transformations and query string are unchanged. */
 export const fixCloudinaryCloud = (url: string): string => url.replace(OLD_CLOUDINARY_PREFIX, '$1luxygalleria-staging/');
 
+const CLOUDINARY_UPLOAD = /^(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(.+)$/;
+
+/**
+ * A Cloudinary image at most `width` px wide, in the best format the browser accepts (f_auto: AVIF/WebP) at automatic
+ * quality, never upscaled (c_limit). Any other URL, or one that already carries a transformation, is returned as is.
+ * Raw uploads are often 1-2 MB PNGs shown at a few hundred pixels; this is the same picture at a fraction of the bytes.
+ */
+export const cloudinaryResized = (url: string, width: number): string => {
+  const m = CLOUDINARY_UPLOAD.exec(url);
+  if (!m || /^[a-z]{1,3}_[^/]*\//.test(m[2])) return url;
+  return `${m[1]}f_auto,q_auto,c_limit,w_${Math.round(width)}/${m[2]}`;
+};
+
+/** srcset for a Cloudinary image at the given widths, or undefined for any other URL (the plain src is used). */
+export const cloudinarySrcSet = (url: string, widths: number[]): string | undefined =>
+  CLOUDINARY_UPLOAD.test(url) && cloudinaryResized(url, widths[0]) !== url
+    ? widths.map((w) => `${cloudinaryResized(url, w)} ${w}w`).join(", ")
+    : undefined;
+
 /**
  * A URL copied from a rendered page ("Copy image address") is a Next optimizer URL, e.g.
  * https://luxygalleria.com/_next/image?url=<original>&w=3840&q=75. /_next/image refuses another optimizer URL as its
@@ -146,6 +165,22 @@ export const handleImageError = (
   img.removeAttribute('sizes');
   img.onerror = null;
   img.src = fallback;
+};
+
+/**
+ * onError for an <img> showing a resized Cloudinary copy (cloudinaryResized / cloudinarySrcSet): retry the original
+ * upload once, then fall back to the placeholder as handleImageError does.
+ */
+export const retryOriginalThenPlaceholder = (original: string) => (event: React.SyntheticEvent<HTMLImageElement, Event>): void => {
+  const img = event.currentTarget;
+  if (img.dataset.triedOriginal !== '1' && original && !original.startsWith('data:')) {
+    img.dataset.triedOriginal = '1';
+    img.removeAttribute('srcset');
+    img.removeAttribute('sizes');
+    img.src = original;
+    return;
+  }
+  handleImageError(event);
 };
 
 /**

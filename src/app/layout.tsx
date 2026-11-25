@@ -5,6 +5,7 @@ import Navbar from "../components/common/Navbar";
 import FloatingActions from "../components/common/FloatingActions";
 import Footer from "../components/common/Footer";
 import ScrollToTop from "../components/common/ScrollToTop";
+import MotionProvider from "../components/common/MotionProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,6 +61,9 @@ export default function RootLayout({
         {/* Resource hints (React hoists these to <head>) — speed up API/image connection setup */}
         {API_ORIGIN && <link rel="preconnect" href={API_ORIGIN} crossOrigin="anonymous" />}
         {API_ORIGIN && <link rel="dns-prefetch" href={API_ORIGIN} />}
+        {/* Product, banner and brand images (the hero banner is usually the LCP element) */}
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <MotionProvider>
         <ToastProvider>
           <CartProvider>
             <ScrollToTop />
@@ -72,6 +76,7 @@ export default function RootLayout({
             <FloatingActions />
           </CartProvider>
         </ToastProvider>
+        </MotionProvider>
       </body>
     </html>
   );

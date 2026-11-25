@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { CONTACT } from "../../lib/contact";
 
 const socials = [
@@ -93,11 +94,13 @@ export default function Footer() {
             <div className="col-span-2 lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left">
               <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-6 mb-4 lg:mb-6 w-full justify-center lg:justify-start">
                 <Link href="/" className="inline-flex shrink-0 items-center group" aria-label="Luxy Galleria home">
-                  <img
+                  {/* next/image: a resized AVIF/WebP of the 195 KB PNG (shown at most 180 px wide) */}
+                  <Image
                     src="/luxy_logo_footer.png"
                     alt="Luxy Galleria"
                     width={654}
                     height={393}
+                    sizes="180px"
                     className="h-auto w-[clamp(120px,15vw,180px)] object-contain mix-blend-multiply group-hover:drop-shadow-lg transition-all duration-300"
                   />
                 </Link>

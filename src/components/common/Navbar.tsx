@@ -6,9 +6,9 @@ import Link from "next/link";
 import axios from "axios";
 import { Search, User, ShoppingBag, X, Menu, LogOut } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useCart } from "../../context/CartContext";
-import { fixCloudinaryCloud, getImageUrl, handleImageError } from "../../lib/imageUtils";
+import { fixCloudinaryCloud, getImageUrl, cloudinaryResized, retryOriginalThenPlaceholder } from "../../lib/imageUtils";
 import DynamicBanner from "./DynamicBanner";
 import { getAPIURL } from "../../lib/apiClient";
 import { CONTACT } from "../../lib/contact";
@@ -169,11 +169,15 @@ export default function Navbar() {
         {/* ── Logo (Center on Mobile, Left on Desktop) ── */}
         <div className="flex items-center justify-center md:justify-start flex-1 md:flex-none z-10 min-w-0">
           <Link href="/" className="group flex items-center min-h-[44px]" aria-label="Luxy Galleria home">
-            <img
+            {/* next/image: a resized AVIF/WebP of the 654 px, 195 KB PNG (shown at most 150 px wide) */}
+            <Image
               src="/luxy_logo_trimmed.png"
               alt="Luxy Galleria"
               width={654}
               height={393}
+              // Eager, not preloaded: a high-priority preload would compete with the hero banner (the LCP image)
+              loading="eager"
+              sizes="150px"
               className="h-8 sm:h-9 lg:h-10 w-auto max-w-[110px] sm:max-w-[130px] lg:max-w-[150px] object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
             />
           </Link>
@@ -232,14 +236,14 @@ export default function Navbar() {
               className="relative min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
               aria-label="Cart"
             >
-              <motion.div
+              <m.div
                 key={cartCount}
                 initial={{ scale: 1 }}
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 0.3 }}
               >
                 <ShoppingBag size={22} strokeWidth={2} />
-              </motion.div>
+              </m.div>
               {cartCount > 0 && (
                 <span className="absolute top-1 right-0.5 min-w-[18px] h-[18px] px-1 bg-[#A68B5B] text-white text-[10px] leading-none font-bold rounded-full flex items-center justify-center border border-white">
                   {cartCount > 99 ? "99+" : cartCount}
@@ -254,7 +258,7 @@ export default function Navbar() {
             <AnimatePresence mode="wait">
               {!isSearchOpen ? (
                 /* --- Desktop Default State Icons --- */
-                <motion.div
+                <m.div
                   key="default-utilities"
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -276,14 +280,14 @@ export default function Navbar() {
                     className="relative w-10 h-10 flex items-center justify-center text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
                     aria-label="Cart"
                   >
-                    <motion.div
+                    <m.div
                       key={cartCount}
                       initial={{ scale: 1 }}
                       animate={{ scale: [1, 1.2, 1] }}
                       transition={{ duration: 0.3 }}
                     >
                       <ShoppingBag size={24} strokeWidth={2} className="w-6 h-6" />
-                    </motion.div>
+                    </m.div>
                     {cartCount > 0 && (
                       <span className="absolute top-1 right-1 w-5 h-5 bg-[#A68B5B] text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white">
                         {cartCount}
@@ -319,10 +323,10 @@ export default function Navbar() {
                       <LogOut size={20} strokeWidth={2} className="w-5 h-5" />
                     </button>
                   )}
-                </motion.div>
+                </m.div>
               ) : (
                 /* --- Desktop Search Active State --- */
-                <motion.div
+                <m.div
                   key="active-search"
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: "auto" }}
@@ -330,7 +334,7 @@ export default function Navbar() {
                   className="flex items-center gap-2 lg:gap-4"
                 >
                   {/* Search Input Container */}
-                  <motion.div
+                  <m.div
                     initial={{ width: 0 }}
                     animate={{ width: "16rem" }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
@@ -370,7 +374,7 @@ export default function Navbar() {
                                     >
                                       <div className="w-10 h-10 bg-slate-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                                         {imgUrl ? (
-                                          <img src={imgUrl} alt={p.name} className="w-full h-full object-contain" onError={handleImageError} />
+                                          <img src={cloudinaryResized(imgUrl, 96)} alt={p.name} className="w-full h-full object-contain" loading="lazy" decoding="async" onError={retryOriginalThenPlaceholder(imgUrl)} />
                                         ) : (
                                           <ShoppingBag size={16} className="text-slate-400" />
                                         )}
@@ -399,10 +403,10 @@ export default function Navbar() {
                         )}
                       </div>
                     )}
-                  </motion.div>
+                  </m.div>
 
                   {/* Close Button */}
-                  <motion.button
+                  <m.button
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.1 }}
@@ -411,12 +415,12 @@ export default function Navbar() {
                     aria-label="Close search"
                   >
                     <X size={24} strokeWidth={2} />
-                  </motion.button>
+                  </m.button>
 
 
 
                   {/* Cart Icon (Active Search state) */}
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.15 }}
@@ -426,24 +430,24 @@ export default function Navbar() {
                       className="relative w-10 h-10 flex items-center justify-center text-slate-900 hover:text-[#A68B5B] transition-colors duration-200"
                       aria-label="Cart"
                     >
-                      <motion.div
+                      <m.div
                         key={cartCount}
                         initial={{ scale: 1 }}
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 0.3 }}
                       >
                         <ShoppingBag size={24} strokeWidth={2} className="w-6 h-6" />
-                      </motion.div>
+                      </m.div>
                       {cartCount > 0 && (
                         <span className="absolute top-1 right-1 w-5 h-5 bg-[#A68B5B] text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white">
                           {cartCount}
                         </span>
                       )}
                     </Link>
-                  </motion.div>
+                  </m.div>
 
                   {/* Profile Icon */}
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
@@ -464,8 +468,8 @@ export default function Navbar() {
                         <User size={24} strokeWidth={2} className="w-6 h-6" />
                       )}
                     </Link>
-                  </motion.div>
-                </motion.div>
+                  </m.div>
+                </m.div>
               )}
             </AnimatePresence>
           </div>
@@ -474,7 +478,7 @@ export default function Navbar() {
         {/* ── Mobile Search Overlay ── */}
         <AnimatePresence>
           {isSearchOpen && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -524,7 +528,7 @@ export default function Navbar() {
                               >
                                 <div className="w-10 h-10 bg-slate-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                                   {imgUrl ? (
-                                    <img src={imgUrl} alt={p.name} className="w-full h-full object-contain" onError={handleImageError} />
+                                    <img src={cloudinaryResized(imgUrl, 96)} alt={p.name} className="w-full h-full object-contain" loading="lazy" decoding="async" onError={retryOriginalThenPlaceholder(imgUrl)} />
                                   ) : (
                                     <ShoppingBag size={16} className="text-slate-400" />
                                   )}
@@ -553,14 +557,14 @@ export default function Navbar() {
                   )}
                 </div>
               )}
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
         {/* ── Mobile Menu Overlay ── */}
         <AnimatePresence>
           {isMobileMenuOpen && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
@@ -612,7 +616,7 @@ export default function Navbar() {
                   WHATSAPP US
                 </a>
               </nav>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

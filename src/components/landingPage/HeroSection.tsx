@@ -2,38 +2,32 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { getImageUrl, getPlaceholderUrl, reportImageError } from "../../lib/imageUtils";
+import { getPlaceholderUrl, reportImageError, cloudinarySrcSet } from "../../lib/imageUtils";
 import { getAPIURL } from "../../lib/apiClient";
-
-interface IBanner {
-  _id: string;
-  title: string;
-  description: string;
-  image: string;
-  mobileImage?: string;
-  status: string;
-}
-
-interface ISlide {
-  id: string;
-  image: string;
-  mobileImage: string | null;
-  alt: string;
-  headline: string;
-  subheadline: string;
-}
+import { toSlides, type ISlide } from "../../lib/banners";
 
 const SLIDE_DELAY_MS = 6000;
 const BANNER_CACHE_KEY = "luxy:banners";
 const HERO_IMAGE_TIMEOUT_MS = 12000;
+// Sized Cloudinary copies (AVIF/WebP) for a full-width banner: mobile art is square, desktop 8:3
+const MOBILE_WIDTHS = [480, 750, 1080];
+const DESKTOP_WIDTHS = [768, 1280, 1600, 2048];
+const heroSrcSet = (url: string, mobileArt: boolean) => cloudinarySrcSet(url, mobileArt ? MOBILE_WIDTHS : DESKTOP_WIDTHS);
 
-function BannerImage({ slide, isMobile, priority }: { slide: ISlide; isMobile: boolean; priority: boolean }) {
+// isMobile null: not measured yet (server render, first paint) — the <picture> source then picks the mobile art by media query
+function BannerImage({ slide, isMobile, priority }: { slide: ISlide; isMobile: boolean | null; priority: boolean }) {
   const preferred = isMobile ? slide.mobileImage || slide.image : slide.image || slide.mobileImage || "";
   const alternate = preferred === slide.image ? slide.mobileImage : slide.image;
   const fallback = getPlaceholderUrl("Luxury Collection");
   const [src, setSrc] = useState(preferred || fallback);
+  // A sized copy that failed is retried once as the original upload before trying the alternate art
+  const [plain, setPlain] = useState(false);
+  const srcSet = plain || src === fallback ? undefined : heroSrcSet(src, src === slide.mobileImage);
+  const mobileSource = isMobile === null && !plain && src === preferred && slide.mobileImage && slide.mobileImage !== src
+    ? heroSrcSet(slide.mobileImage, true) ?? slide.mobileImage
+    : undefined;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
@@ -48,9 +42,13 @@ function BannerImage({ slide, isMobile, priority }: { slide: ISlide; isMobile: b
   }, [src, fallback]);
 
   return (
+    <picture>
+    {mobileSource && <source media="(max-width: 767px)" srcSet={mobileSource} sizes="100vw" />}
     <img
       ref={imgRef}
       src={src}
+      srcSet={srcSet}
+      sizes={srcSet ? "100vw" : undefined}
       alt={slide.alt}
       className="absolute inset-0 block h-full w-full object-cover"
       fetchPriority={priority ? "high" : "auto"}
@@ -58,9 +56,8 @@ function BannerImage({ slide, isMobile, priority }: { slide: ISlide; isMobile: b
       onLoad={() => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
       }}
-      onError={(event) => {
-        const image = event.currentTarget;
-        image.onerror = null;
+      onError={() => {
+        if (srcSet) { setPlain(true); return; }
         reportImageError(src);
         if (alternate && src === preferred && alternate !== preferred) {
           setSrc(alternate);
@@ -69,13 +66,15 @@ function BannerImage({ slide, isMobile, priority }: { slide: ISlide; isMobile: b
         setSrc(fallback);
       }}
     />
+    </picture>
   );
 }
 
-export default function HeroSection() {
+/** initialSlides: the banners as rendered by the server; when absent (API unreachable then), they are fetched here. */
+export default function HeroSection({ initialSlides }: { initialSlides?: ISlide[] }) {
   // null = still fetching; render a skeleton instead of placeholder content
-  const [allSlides, setAllSlides] = useState<ISlide[] | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [allSlides, setAllSlides] = useState<ISlide[] | null>(initialSlides ?? null);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -96,10 +95,10 @@ export default function HeroSection() {
   }, []);
 
   useEffect(() => {
+    // Banners rendered by the server (with the page) are already current: no second request on the critical path
+    if (initialSlides) return;
     let cancelled = false;
     const apiURL = getAPIURL();
-    // Same resolver as every other image: /uploads/ paths go to the backend origin, whatever form NEXT_PUBLIC_BACKEND_URL takes
-    const abs = getImageUrl;
 
     const fetchBanners = async () => {
       // Show the last good banners instantly (stale-while-revalidate), then refresh from the API.
@@ -109,16 +108,7 @@ export default function HeroSection() {
       } catch {}
       try {
         const res = await axios.get(`${apiURL}/banners`, { timeout: 10000 });
-        const slides: ISlide[] = (res.data?.data ?? [])
-          .filter((b: IBanner) => b.status === "ACTIVE" && b.image)
-          .map((b: IBanner) => ({
-            id: b._id,
-            image: abs(b.image),
-            mobileImage: b.mobileImage ? abs(b.mobileImage) : null,
-            alt: b.title || "Luxy Galleria",
-            headline: b.title,
-            subheadline: b.description,
-          }));
+        const slides = toSlides(res.data?.data);
         if (cancelled) return;
         setAllSlides(slides);
         try { localStorage.setItem(BANNER_CACHE_KEY, JSON.stringify(slides)); } catch {}
@@ -132,16 +122,26 @@ export default function HeroSection() {
     return () => { cancelled = true; };
   }, []);
 
-  // Warm the browser cache with valid slide images
+  // Warm the browser cache with the other slides, once the page has loaded (never competing with the first banner),
+  // at the same srcset/sizes the slide will use so the browser picks the same copy
   useEffect(() => {
-    if (!allSlides) return;
-    allSlides.forEach((s) => {
-      const targetSrc = isMobile ? s.mobileImage || s.image : s.image;
-      if (!targetSrc || targetSrc.startsWith('data:')) return;
-      const img = new window.Image();
-      img.onerror = () => {};
-      img.src = targetSrc;
-    });
+    if (!allSlides || isMobile === null) return;
+    let cancelled = false;
+    const warm = () => {
+      if (cancelled) return;
+      allSlides.slice(1).forEach((s) => {
+        const targetSrc = isMobile ? s.mobileImage || s.image : s.image;
+        if (!targetSrc || targetSrc.startsWith('data:')) return;
+        const img = new window.Image();
+        img.onerror = () => {};
+        const set = heroSrcSet(targetSrc, targetSrc === s.mobileImage);
+        if (set) { img.sizes = "100vw"; img.srcset = set; }
+        img.src = targetSrc;
+      });
+    };
+    if (document.readyState === "complete") warm();
+    else window.addEventListener("load", warm, { once: true });
+    return () => { cancelled = true; window.removeEventListener("load", warm); };
   }, [allSlides, isMobile]);
 
   // Preloader timer
@@ -219,7 +219,7 @@ export default function HeroSection() {
       {/* Preloader */}
       <AnimatePresence>
         {isLoading && (
-          <motion.div
+          <m.div
             key="preloader"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -230,22 +230,22 @@ export default function HeroSection() {
               LUXY GALLERIA
             </h1>
             <div className="w-64 md:w-80 h-[2px] bg-slate-100 overflow-hidden relative">
-              <motion.div
+              <m.div
                 initial={{ width: 0 }}
                 animate={{ width: "100%" }}
                 transition={{ duration: 2, ease: "easeInOut" }}
                 className="h-full bg-[#A68B5B]/60"
               />
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
-      {/* Background & Content Layer */}
-      <AnimatePresence mode="sync">
+      {/* Background & Content Layer — a server-rendered first slide is visible in the HTML (under the preloader), so it can paint as soon as it loads */}
+      <AnimatePresence mode="sync" initial={false}>
         {finalSlides.map((slide, index) =>
           index === activeSlide ? (
-            <motion.div
+            <m.div
               key={slide.id}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -270,7 +270,7 @@ export default function HeroSection() {
                   {slide.subheadline}
                 </p>
               </div>
-            </motion.div>
+            </m.div>
           ) : null
         )}
       </AnimatePresence>

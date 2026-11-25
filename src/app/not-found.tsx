@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 export default function NotFound() {
   return (
     <main className="flex-grow flex flex-col items-center justify-center bg-white px-6 py-32 md:py-48">
       <div className="max-w-2xl w-full text-center space-y-8">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
@@ -21,9 +21,9 @@ export default function NotFound() {
           <p className="font-sans font-normal text-lg md:text-xl text-slate-500 leading-relaxed max-w-lg mx-auto">
             The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
           </p>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
@@ -35,7 +35,7 @@ export default function NotFound() {
           >
             Return to Home
           </Link>
-        </motion.div>
+        </m.div>
       </div>
     </main>
   );
