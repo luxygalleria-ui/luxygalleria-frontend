@@ -25,12 +25,16 @@ interface VideoCardProps extends VideoTestimonial {
 function AutoplayVideoThumbnail({ youtubeId, clientName }: { youtubeId: string; clientName: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  // The autoplay player (~1 MB of YouTube JS plus the video stream) mounts on the first hover only, and is shown once
+  // loaded; touch devices never hover, so they never download it (it was ~4 MB per page load, hidden at opacity 0)
+  const [wantPlayer, setWantPlayer] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
 
   return (
     <div
       ref={containerRef}
       className="relative w-full h-full bg-slate-900 rounded-2xl overflow-hidden border border-white/5 group"
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={() => { setIsHovered(true); setWantPlayer(true); }}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* YouTube Thumbnail as Background */}
@@ -43,17 +47,18 @@ function AutoplayVideoThumbnail({ youtubeId, clientName }: { youtubeId: string; 
 
       {/* Muted Autoplay Video Overlay (shows on hover with smooth transition) */}
       <div
-        className={`absolute inset-0 transition-opacity duration-500 ${isHovered ? "opacity-100" : "opacity-0"
+        className={`absolute inset-0 transition-opacity duration-500 ${isHovered && playerReady ? "opacity-100" : "opacity-0"
           }`}
       >
-        <iframe
+        {wantPlayer && <iframe
           src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&rel=0&showinfo=0&modestbranding=1&loop=1&playlist=${youtubeId}`}
           title={`${clientName} Video Testimonial`}
           className="w-full h-full border-0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           style={{ pointerEvents: isHovered ? "auto" : "none" }}
-        />
+          onLoad={() => setPlayerReady(true)}
+        />}
       </div>
 
       {/* Dark Overlay */}

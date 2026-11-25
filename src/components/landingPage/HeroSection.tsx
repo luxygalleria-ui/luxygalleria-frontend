@@ -241,8 +241,10 @@ export default function HeroSection({ initialSlides }: { initialSlides?: ISlide[
         )}
       </AnimatePresence>
 
-      {/* Background & Content Layer — a server-rendered first slide is visible in the HTML (under the preloader), so it can paint as soon as it loads */}
-      <AnimatePresence mode="sync" initial={false}>
+      {/* Background & Content Layer — the first slide fades in (it sits under the preloader anyway). Its image is still in
+          the HTML with fetchpriority=high, so it downloads right away; starting visible made the banner the LCP element and
+          tied LCP to the image download (PageSpeed mobile 70 -> 59) for a paint nobody sees behind the preloader. */}
+      <AnimatePresence mode="sync">
         {finalSlides.map((slide, index) =>
           index === activeSlide ? (
             <m.div
