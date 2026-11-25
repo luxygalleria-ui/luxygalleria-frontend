@@ -35,9 +35,12 @@ function BannerImage({ slide, isMobile, priority }: { slide: ISlide; isMobile: b
   const fallback = getPlaceholderUrl("Luxury Collection");
   const [src, setSrc] = useState(preferred || fallback);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     if (src === fallback) return;
+    // Loaded before hydration (cached): onLoad never fires, so never start the hung-load timer
+    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) return;
     timeoutRef.current = setTimeout(() => setSrc(fallback), HERO_IMAGE_TIMEOUT_MS);
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -46,6 +49,7 @@ function BannerImage({ slide, isMobile, priority }: { slide: ISlide; isMobile: b
 
   return (
     <img
+      ref={imgRef}
       src={src}
       alt={slide.alt}
       className="absolute inset-0 block h-full w-full object-cover"

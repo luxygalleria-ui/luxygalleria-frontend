@@ -8,7 +8,7 @@ import { useToast } from "../../context/ToastContext";
 import { useCart } from "../../context/CartContext";
 import { fixCloudinaryCloud, getImageUrl, handleImageError } from "../../lib/imageUtils";
 import { pinStateProblem } from "../../lib/addressRules";
-import { paymentBadge, refundNote, toneClass } from "../../lib/orderDisplay";
+import { paymentBadge, refundNote, toneClass, inr, itemsSubtotal } from "../../lib/orderDisplay";
 import LinkGoogleButton from "../../components/auth/LinkGoogleButton";
 import { getAPIURL } from "../../lib/apiClient";
 
@@ -422,7 +422,7 @@ export default function ProfilePage() {
                             <p className="text-xs text-slate-500 mt-1">{`${String(new Date(order.createdAt).getDate()).padStart(2, '0')}/${String(new Date(order.createdAt).getMonth() + 1).padStart(2, '0')}/${new Date(order.createdAt).getFullYear()}`}</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-sm text-slate-900">₹{order.total}</p>
+                            <p className="font-bold text-sm text-slate-900">{inr(order.total)}</p>
                             <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${order.orderStatus === 'delivered' ? 'bg-green-100 text-green-700' :
                               order.orderStatus === 'cancelled' ? 'bg-red-100 text-red-700' :
                                 order.orderStatus === 'processing' ? 'bg-[#A68B5B]/10 text-[#6B4423]' :
@@ -469,7 +469,7 @@ export default function ProfilePage() {
                           </div>
                           <div>
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Amount</p>
-                            <p className="text-sm font-bold text-slate-900">₹{order.total}</p>
+                            <p className="text-sm font-bold text-slate-900">{inr(order.total)}</p>
                           </div>
                           <div>
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Order ID</p>
@@ -505,14 +505,14 @@ export default function ProfilePage() {
                                   {item.image ? (
                                     <img 
                                       src={getImageUrl(item.image)} 
-                                      alt={item.product?.name || 'Product variant'} 
+                                      alt={item.name || item.product?.name || 'Product variant'} 
                                       className={`w-full h-full object-contain ${(order.orderStatus === 'delivered' || order.orderStatus === 'cancelled') ? 'grayscale' : ''}`} 
                                       onError={handleImageError}
                                     />
                                   ) : item.product?.images?.[0] ? (
                                     <img 
                                       src={getImageUrl(item.product.images[0])} 
-                                      alt={item.product?.name} 
+                                      alt={item.name || item.product?.name || 'Product'} 
                                       className={`w-full h-full object-contain ${(order.orderStatus === 'delivered' || order.orderStatus === 'cancelled') ? 'grayscale' : ''}`} 
                                       onError={handleImageError}
                                     />
@@ -522,10 +522,10 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="flex-1">
                                   <h4 className="font-bold text-sm text-slate-900">
-                                    {item.product?.name || 'Product unavailable'}
+                                    {item.name || item.product?.name || 'Product unavailable'}
                                     {item.size && <span className="text-xs text-[#8B5E34] ml-2 font-sans font-semibold">({item.size})</span>}
                                   </h4>
-                                  <p className="text-xs text-slate-500 mt-1">Qty: {item.quantity} | Price: ₹{item.price}</p>
+                                  <p className="text-xs text-slate-500 mt-1">Qty: {item.quantity} × {inr(item.price)} = {inr(item.subtotal ?? item.price * item.quantity)}</p>
                                 </div>
                               </div>
                             ))}
@@ -555,38 +555,38 @@ export default function ProfilePage() {
                             <div className="w-full sm:w-64 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col gap-2">
                               <div className="flex justify-between items-center text-xs text-slate-500 font-sans">
                                 <span>Subtotal</span>
-                                <span className="font-semibold text-slate-700">₹{order.subtotal !== undefined ? order.subtotal : (order.total - (order.shippingFee || 0) + (order.discount || 0))}</span>
+                                <span className="font-semibold text-slate-700">{inr(order.subtotal ?? itemsSubtotal(order.items))}</span>
                               </div>
                               <div className="flex justify-between items-center text-xs text-slate-500 font-sans">
                                 <span>{order.fulfillmentMethod === 'pickup' ? 'Store Pickup' : 'Shipping Fee'}</span>
                                 <span className="font-semibold text-slate-700">
                                   {order.fulfillmentMethod === 'pickup'
-                                    ? (order.pickupFee > 0 ? `₹${order.pickupFee}` : 'Free')
-                                    : order.shippingFee !== undefined ? (order.shippingFee > 0 ? `₹${order.shippingFee}` : 'Free') : 'Free'}
+                                    ? (order.pickupFee > 0 ? inr(order.pickupFee) : 'Free')
+                                    : order.shippingFee !== undefined ? (order.shippingFee > 0 ? inr(order.shippingFee) : 'Free') : 'Free'}
                                 </span>
                               </div>
                               {order.specialPackagingFee > 0 && (
                                 <div className="flex justify-between items-center text-xs text-slate-500 font-sans">
                                   <span>Special Packaging</span>
-                                  <span className="font-semibold text-slate-700">₹{order.specialPackagingFee}</span>
+                                  <span className="font-semibold text-slate-700">{inr(order.specialPackagingFee)}</span>
                                 </div>
                               )}
                               {order.tax?.enabled && (
                                 <div className="flex justify-between items-center text-xs text-slate-500 font-sans">
                                   <span>{order.tax.pricesIncludeTax ? 'GST (included)' : 'GST'}</span>
-                                  <span className="font-semibold text-slate-700">₹{order.tax.taxAmount}</span>
+                                  <span className="font-semibold text-slate-700">{inr(order.tax.taxAmount)}</span>
                                 </div>
                               )}
                               {order.discount > 0 && (
                                 <div className="flex justify-between items-center text-xs text-slate-500 font-sans">
                                   <span>Discount</span>
-                                  <span className="font-semibold text-green-600">-₹{order.discount}</span>
+                                  <span className="font-semibold text-green-600">-{inr(order.discount)}</span>
                                 </div>
                               )}
                               <div className="h-px bg-slate-200 my-1" />
                               <div className="flex justify-between items-center text-sm font-bold text-slate-900 font-sans">
                                 <span>Total Paid</span>
-                                <span>₹{order.total}</span>
+                                <span>{inr(order.total)}</span>
                               </div>
                             </div>
                           </div>

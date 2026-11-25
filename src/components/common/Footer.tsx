@@ -178,11 +178,13 @@ export default function Footer() {
         </div>
   
         {/* Bottom bar */}
-        <div className="pt-4 pb-20 md:pb-4 lg:py-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-center md:justify-between gap-4">
+        <div className="py-4 lg:py-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-center md:justify-between gap-4">
           <p className="text-[clamp(11px,1vw,12px)] text-slate-500 text-center lg:text-left w-full">
             © {new Date().getFullYear()} <span className="font-bold text-[#8B5E34]">Luxy Galleria</span>. All rights reserved.
           </p>
         </div>
+        {/* Empty dock for the WhatsApp / back-to-top buttons: they show only while this whole strip is on screen */}
+        <div data-fab-dock aria-hidden="true" className="h-20" />
       </div>
     </footer>
   );

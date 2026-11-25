@@ -11,6 +11,7 @@ import { useCart } from "../../context/CartContext";
 import { fixCloudinaryCloud, getImageUrl, handleImageError } from "../../lib/imageUtils";
 import DynamicBanner from "./DynamicBanner";
 import { getAPIURL } from "../../lib/apiClient";
+import { CONTACT } from "../../lib/contact";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -601,6 +602,15 @@ export default function Navbar() {
                 >
                   ABOUT US
                 </Link>
+                <a
+                  href={`https://wa.me/${CONTACT.whatsapp}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="font-sans font-bold text-base tracking-[0.15em] uppercase text-green-700 hover:text-green-800 transition-colors py-3 border-b border-slate-100"
+                >
+                  WHATSAPP US
+                </a>
               </nav>
             </motion.div>
           )}

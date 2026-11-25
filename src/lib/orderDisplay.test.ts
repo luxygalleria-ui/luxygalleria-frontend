@@ -3,7 +3,7 @@
  * Run: npx ts-node --transpile-only -O '{"module":"commonjs","moduleResolution":"node","jsx":"react-jsx"}' src/lib/orderDisplay.test.ts
  */
 import assert from 'node:assert';
-import { paymentBadge, refundNote } from './orderDisplay';
+import { inr, itemsSubtotal, paymentBadge, refundNote } from './orderDisplay';
 
 let checks = 0;
 const eq = (a: unknown, b: unknown, m: string) => { assert.deepStrictEqual(a, b, m); checks++; };
@@ -27,3 +27,12 @@ const cancelledUnrefunded = { orderStatus: 'cancelled', paymentStatus: 'complete
 eq(paymentBadge(cancelledUnrefunded).label, 'Refund in progress', 'cancelled, refund still due');
 
 console.log(`✅ order history: payment/refund badge and note distinguish Cancelled from Refunded (${checks} checks)`);
+
+// Money formatting and the legacy items subtotal (order views)
+for (const [n, want] of [[1299, "₹1,299"], [30.5, "₹30.50"], [489, "₹489"], [0, "₹0"], [125000.25, "₹1,25,000.25"], [undefined, "₹0"], [NaN, "₹0"], [399.999, "₹400"]] as const) {
+  assert.strictEqual(inr(n as number), want, String(n));
+}
+assert.strictEqual(itemsSubtotal([{ subtotal: 798 }, { price: 99, quantity: 3 }]), 1095, "stored line subtotal first, else price x qty");
+assert.strictEqual(itemsSubtotal([{ price: 0.1, quantity: 3 }]), 0.3, "rounded to paise");
+assert.strictEqual(itemsSubtotal(undefined), 0);
+console.log("✅ order money: inr() formatting and legacy items subtotal (11 checks)");
