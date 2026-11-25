@@ -3,7 +3,7 @@
  * Run: npx ts-node --transpile-only -O '{"module":"commonjs","moduleResolution":"node","jsx":"react-jsx"}' src/lib/checkoutQuote.test.ts
  */
 import assert from 'node:assert';
-import { takePayLock, sharedRefusal, startPayment, paymentPageUrl, PayStage, PAGE_URL_REFUSED } from './checkoutQuote';
+import { takePayLock, sharedRefusal, startPayment, paymentPageUrl, checkPaymentPage, PayStage, PAGE_URL_REFUSED } from './checkoutQuote';
 
 /** The same shape as handleCheckout: lock before the request, release only when the start fails. */
 const makeCheckout = (initiate: () => Promise<string>) => {
@@ -82,7 +82,7 @@ const run = async () => {
   for (const [label, bad] of [
     ['missing', undefined], ['plain http', 'http://pgpayuat.icicibank.com/tsp/pg/api/v2/authRedirect?tranCtx=AB'],
     ['unknown host', 'https://evil.example/authRedirect'], ['lookalike host', 'https://pgpayuat.icicibank.com.evil.example/authRedirect'],
-    ['untrusted subdomain', 'https://fake.pgpay.icicibank.com/authRedirect'], ['non-standard port', 'https://pgpay.icicibank.com:8443/authRedirect'],
+    ['suffix lookalike', 'https://noticicibank.com/authRedirect'], ['icici.com lookalike', 'https://icici.com.evil.example/x'], ['http on icici.com', 'http://pay.icici.com/x'],
     ['credentials', 'https://user:pass@pgpay.icicibank.com/authRedirect'], ['malformed', 'https://'], ['not a URL', 'nonsense'],
     ['javascript:', 'javascript:alert(1)'], ['not a string', 42],
   ] as const) {
@@ -117,6 +117,11 @@ const run = async () => {
   }
   assert.strictEqual(paymentPageUrl({ data: { redirectUrl: PAGE } }), PAGE);
   assert.strictEqual(paymentPageUrl(null), '');
+  // Any ICICI Bank host over https is accepted (live, UAT, a new subdomain, an explicit port)
+  for (const ok of ['https://pgpay.icicibank.com:8443/pg?tranCtx=X', 'https://secure.pgpay.icicibank.com/x', 'https://icicibank.com/x', 'https://pay.icici.com/x', 'https://icici.com/x'])
+    assert.strictEqual(paymentPageUrl({ data: { redirectUrl: ok } }), new URL(ok).toString(), `${ok} accepted`);
+  assert.match(checkPaymentPage({ data: { redirectUrl: 'https://evil.example/x?tranCtx=SECRET' } }).reason, /evil\.example is not an ICICI/, 'reason names the host');
+  assert.ok(!checkPaymentPage({ data: { redirectUrl: 'https://evil.example/x?tranCtx=SECRET' } }).reason.includes('SECRET'), 'reason never includes the token');
   assert.strictEqual(paymentPageUrl({ data: { redirectUrl: 'https://PGPAY.icicibank.com:443/pg?tranCtx=X' } }), 'https://pgpay.icicibank.com/pg?tranCtx=X', 'normalised (case, default port)');
   console.log('✅ ICICI start: success (UAT and live hosts), untrusted/bad/missing URL, 502, timeout, blocked or stuck navigation, repeated clicks (35 checks)');
 
@@ -149,7 +154,7 @@ const run = async () => {
       check(h.navigated.join(), HTTP_MOCK, 'startPayment navigates to the mock page on localhost'); }
     openOn('luxygalleria.com');
     { const { h, click } = harness(reply(HTTP_MOCK)); await click();
-      assert.deepStrictEqual([h.navigated.length, h.stages, h.lock.current, (h.errors[0] as Error)?.message], [0, ['connecting', ''], false, PAGE_URL_REFUSED], 'deployed: no navigation, released, clear error'); mockChecks++; }
+      assert.deepStrictEqual([h.navigated.length, h.stages, h.lock.current, (h.errors[0] as Error)?.message.startsWith(PAGE_URL_REFUSED), /localhost:8443/.test((h.errors[0] as Error)?.message)], [0, ['connecting', ''], false, true, true], 'deployed: no navigation, released, clear error naming the host'); mockChecks++; }
   } finally { openOn(undefined); }
   console.log(`✅ local ICICI mock redirect: loopback page only while the storefront is on loopback; deployed sites refuse it (${mockChecks} checks)`);
 };

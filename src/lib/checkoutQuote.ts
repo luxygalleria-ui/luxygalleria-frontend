@@ -166,29 +166,36 @@ export const takePayLock = (lock: { current: boolean }) => {
   return true;
 };
 
-/** The only hosts the browser may be sent to for payment: ICICI's UAT and live payment pages (exact match). */
-const ICICI_PAYMENT_HOSTS = new Set(["pgpayuat.icicibank.com", "pgpay.icicibank.com"]);
-
+/** ICICI Bank's own domains: the payment page may be on any of their hosts (UAT, live, or a new one ICICI moves to). */
+const ICICI_DOMAINS = ["icicibank.com", "icici.com"];
+const iciciHost = (h: string) => ICICI_DOMAINS.some((d) => h === d || h.endsWith(`.${d}`));
 const LOOPBACK = new Set(["localhost", "127.0.0.1"]);
 
 /**
- * ICICI's payment page from the initiate reply, normalised, or "" unless it has no credentials and is either https on
- * an exact ICICI payment host (default port), or the local ICICI mock: a loopback page (http or https, any port)
- * while this storefront is itself open on loopback. A deployed site is never on loopback, so it can never be sent there;
- * locally it works under next dev or next start alike, with no env variable to keep in step with the mock.
+ * Checks the payment page from the initiate reply. Accepted (normalised URL, reason ""): https without credentials on
+ * icicibank.com / icici.com or any subdomain; or the local ICICI mock, a loopback page (http or https), only while this
+ * storefront is itself open on loopback, so a deployed site is never sent to localhost. Anything else: url "" and a
+ * reason naming the host (never the full URL: its tranCtx is a payment token).
  */
-export const paymentPageUrl = (reply: unknown): string => {
-  const url = (reply as { data?: { redirectUrl?: unknown } } | null)?.data?.redirectUrl;
-  if (typeof url !== "string") return "";
-  try {
-    const u = new URL(url);
-    if (u.username || u.password) return "";
-    const icici = u.protocol === "https:" && ICICI_PAYMENT_HOSTS.has(u.hostname) && u.port === "";
-    const here = typeof window === "undefined" ? "" : window.location.hostname;
-    const mock = (u.protocol === "http:" || u.protocol === "https:") && LOOPBACK.has(u.hostname) && LOOPBACK.has(here);
-    return icici || mock ? u.toString() : "";
-  } catch { return ""; }
+export const checkPaymentPage = (reply: unknown): { url: string; reason: string } => {
+  const raw = (reply as { data?: { redirectUrl?: unknown } } | null)?.data?.redirectUrl;
+  if (typeof raw !== "string" || !raw) return { url: "", reason: "the server sent no payment page address" };
+  let u: URL;
+  try { u = new URL(raw); } catch { return { url: "", reason: "the payment page address is not a valid URL" }; }
+  if (u.username || u.password) return { url: "", reason: `the payment page address on ${u.hostname} contains credentials` };
+  const here = typeof window === "undefined" ? "" : window.location.hostname;
+  if (LOOPBACK.has(u.hostname)) {
+    return LOOPBACK.has(here) && (u.protocol === "http:" || u.protocol === "https:")
+      ? { url: u.toString(), reason: "" }
+      : { url: "", reason: `the server sent a local test payment page (${u.host}); it is only allowed while the shop runs on localhost. The server is pointed at the local ICICI mock` };
+  }
+  if (!iciciHost(u.hostname)) return { url: "", reason: `${u.host} is not an ICICI Bank payment host` };
+  if (u.protocol !== "https:") return { url: "", reason: `the ICICI payment page on ${u.host} is not https` };
+  return { url: u.toString(), reason: "" };
 };
+
+/** The accepted payment page URL, or "" (see checkPaymentPage for why). */
+export const paymentPageUrl = (reply: unknown): string => checkPaymentPage(reply).url;
 
 /** Shown when the server answered but its payment page address is not one the browser may be sent to. */
 export const PAGE_URL_REFUSED = "The payment page address from the server was not accepted. You have not been charged; please try again.";
@@ -215,8 +222,11 @@ export const startPayment = async (o: {
   if (!takePayLock(o.lock)) return;
   o.setStage("connecting");
   try {
-    const url = paymentPageUrl(await o.initiate());
-    if (!url) throw new Error(PAGE_URL_REFUSED);
+    const { url, reason } = checkPaymentPage(await o.initiate());
+    if (!url) {
+      console.error(`[checkout] payment page refused: ${reason}`);
+      throw new Error(`${PAGE_URL_REFUSED} (${reason})`);
+    }
     o.setStage("redirecting");
     o.navigate(url);
     o.watchdog.current = setTimeout(() => { o.lock.current = false; o.setStage(""); o.onStuck(); }, o.stuckAfterMs ?? 20_000);

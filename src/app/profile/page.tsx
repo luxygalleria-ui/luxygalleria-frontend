@@ -10,6 +10,8 @@ import { fixCloudinaryCloud, getImageUrl, handleImageError } from "../../lib/ima
 import { pinStateProblem } from "../../lib/addressRules";
 import { paymentBadge, refundNote, toneClass, inr, itemsSubtotal } from "../../lib/orderDisplay";
 import LinkGoogleButton from "../../components/auth/LinkGoogleButton";
+// Google sign-in script only on pages that use it (not on checkout: its popup polling logs COOP warnings)
+import GoogleOAuthWrapper from "../../components/auth/GoogleOAuthWrapper";
 import { getAPIURL } from "../../lib/apiClient";
 
 interface UserProfile {
@@ -382,7 +384,7 @@ export default function ProfilePage() {
                     Welcome back, {user.name.split(' ')[0]}. Here&apos;s what&apos;s happening with your account.
                   </p>
                 </div>
-                <LinkGoogleButton token={user.token} />
+                <GoogleOAuthWrapper><LinkGoogleButton token={user.token} /></GoogleOAuthWrapper>
 
                 {/* Profile Completion Warning */}
                 {!user.phone && (

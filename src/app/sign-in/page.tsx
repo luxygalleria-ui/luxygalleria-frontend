@@ -11,6 +11,8 @@ import { Eye, EyeOff, ShieldCheck, UserPlus, ArrowRight } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
 import { useCart } from "../../context/CartContext";
 import GoogleAuthButton from "../../components/auth/GoogleAuthButton";
+// Google sign-in script only on pages that use it (not on checkout: its popup polling logs COOP warnings)
+import GoogleOAuthWrapper from "../../components/auth/GoogleOAuthWrapper";
 import { getAPIURL } from "../../lib/apiClient";
 import { authErrorMessage } from "../../lib/authErrors";
 
@@ -217,7 +219,7 @@ export default function SignInPage() {
 
           {/* Google SSO */}
           <div className="mb-10">
-            <GoogleAuthButton mode="signin" />
+            <GoogleOAuthWrapper><GoogleAuthButton mode="signin" /></GoogleOAuthWrapper>
           </div>
 
           {/* Footer */}

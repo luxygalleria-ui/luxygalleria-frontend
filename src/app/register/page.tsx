@@ -10,6 +10,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Eye, EyeOff, ShieldCheck, ArrowRight } from "lucide-react";
 import GoogleAuthButton from "../../components/auth/GoogleAuthButton";
+// Google sign-in script only on pages that use it (not on checkout: its popup polling logs COOP warnings)
+import GoogleOAuthWrapper from "../../components/auth/GoogleOAuthWrapper";
 import { getAPIURL } from "../../lib/apiClient";
 import { authErrorMessage } from "../../lib/authErrors";
 import { useToast } from "../../context/ToastContext";
@@ -356,7 +358,7 @@ export default function RegisterPage() {
 
           {/* Google SSO */}
           <div className="mb-10">
-            <GoogleAuthButton mode="register" />
+            <GoogleOAuthWrapper><GoogleAuthButton mode="register" /></GoogleOAuthWrapper>
           </div>
 
           {/* Footer */}

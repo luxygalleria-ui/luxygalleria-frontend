@@ -44,7 +44,6 @@ export const metadata: Metadata = {
 
 import { CartProvider } from "../context/CartContext";
 import { ToastProvider } from "../context/ToastContext";
-import GoogleOAuthWrapper from "../components/auth/GoogleOAuthWrapper";
 import { getBaseURL } from "../lib/apiClient";
 
 export default function RootLayout({
@@ -63,16 +62,14 @@ export default function RootLayout({
         {API_ORIGIN && <link rel="dns-prefetch" href={API_ORIGIN} />}
         <ToastProvider>
           <CartProvider>
-            <GoogleOAuthWrapper>
-              <ScrollToTop />
-              <Navbar />
-              {/* pt accounts for fixed navbar (64px mobile / 80px desktop) + promo banner (~36px) */}
-              <div className="pt-20 lg:pt-28">
-                {children}
-              </div>
-              <Footer />
-              <FloatingActions />
-            </GoogleOAuthWrapper>
+            <ScrollToTop />
+            <Navbar />
+            {/* pt accounts for fixed navbar (64px mobile / 80px desktop) + promo banner (~36px) */}
+            <div className="pt-20 lg:pt-28">
+              {children}
+            </div>
+            <Footer />
+            <FloatingActions />
           </CartProvider>
         </ToastProvider>
       </body>

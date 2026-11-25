@@ -357,7 +357,7 @@ export default function CheckoutPage() {
         // no reply at all gets the not-charged message
         const msg = err.response?.data?.message || (gatewayDown
           ? "The ICICI payment page is not responding right now. You have not been charged. Please try again in a few minutes."
-          : err.message === PAGE_URL_REFUSED ? PAGE_URL_REFUSED : "An error occurred during checkout. Please try again.");
+          : err.message?.startsWith(PAGE_URL_REFUSED) ? err.message : "An error occurred during checkout. Please try again.");
         setPayError(msg);
         showToast(msg, "error");
       }
