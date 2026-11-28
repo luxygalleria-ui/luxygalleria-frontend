@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Eye, EyeOff, ShieldCheck, UserPlus, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, UserPlus, ArrowRight } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
 import { useCart } from "../../context/CartContext";
 import GoogleAuthButton from "../../components/auth/GoogleAuthButton";
@@ -81,39 +81,13 @@ export default function SignInPage() {
   const clearApiError = () => { if (apiError) { setApiError(null); setIsStaffAccount(false); } };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row pt-0">
-      {/* ── Left Panel: Brand Context ── */}
-      <div className="bg-[#F5F0EB] md:w-1/2 flex flex-col justify-center px-6 py-0 md:p-16 lg:p-24 relative overflow-hidden">
-        {/* Subtle decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#e8ddd4]/60 to-transparent rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#d4c5b5]/40 to-transparent rounded-full blur-2xl" />
-
-        <div className="max-w-lg mx-auto relative z-10 w-full">
-          <p className="font-sans font-bold text-xs uppercase tracking-[0.25em] text-[#A68B5B] mb-6 md:mb-8">
-            LUXY GALLERIA LUXURY COMMERCE
-          </p>
-
-          <h1 className="font-serif font-normal text-4xl md:text-5xl lg:text-6xl text-[#0A192F] leading-tight mb-6">
-            Discover Premium Imported Collections
-          </h1>
-
-          <p className="font-sans text-slate-600 text-base leading-relaxed mb-12 max-w-sm">
-            Access exclusive imported beverages, gourmet snacks, premium chocolates, and international delicacies from Luxy Galleria. Sign in to manage your orders, wishlist, and enjoy a seamless shopping experience.
-          </p>
-
-          <div className="flex items-center gap-3 text-slate-700">
-            <ShieldCheck size={20} className="text-slate-900" />
-            <span className="font-sans font-medium text-sm">Premium Imported Products</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Right Panel: Sign In Form ── */}
-      <div className="bg-white md:w-1/2 flex flex-col justify-center px-6 py-10 md:p-16 lg:p-24">
+    <div className="min-h-screen flex flex-col pt-0">
+      {/* ── Sign In Form ── */}
+      <div className="bg-white flex-1 flex flex-col justify-center px-6 py-10 md:p-16 lg:p-24">
         <div className="max-w-lg mx-auto w-full">
-          <h2 className="font-sans font-bold text-3xl sm:text-4xl md:text-5xl text-slate-900 mb-3">
+          <h1 className="font-sans font-bold text-3xl sm:text-4xl md:text-5xl text-slate-900 mb-3">
             Sign In
-          </h2>
+          </h1>
           <p className="font-sans text-slate-500 text-base mb-10">
             Enter your credentials to continue.
           </p>
