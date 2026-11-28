@@ -397,7 +397,7 @@ export default function ProductDetailPage() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-white pt-30">
+    <div className="min-h-screen bg-white">
 
       {/* ── Breadcrumb ── */}
       <nav
@@ -408,17 +408,17 @@ export default function ProductDetailPage() {
         <ChevronRight size={12} />
         <Link href="/products" className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] hover:text-slate-700 transition-colors">Products</Link>
         <ChevronRight size={12} />
-        <span className="text-slate-700 font-semibold line-clamp-1">{selectedVariant?.name || product.name}</span>
+        <span className="text-slate-700 font-semibold line-clamp-1 min-w-0 break-all sm:break-normal">{selectedVariant?.name || product.name}</span>
       </nav>
 
       {/* ── Main Section ── */}
       <section className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
 
           {/* ── Left: Image Gallery ── */}
           <div className="flex flex-col gap-4">
             {/* Main Image */}
-            <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center min-h-[28rem]">
+            <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center w-full max-w-xl mx-auto lg:max-w-none">
               {showVariantImage && selectedVariant?.image ? (
                 <ResilientImage
                   src={getImageUrl(selectedVariant.image)}
@@ -427,7 +427,7 @@ export default function ProductDetailPage() {
                   sizes="(max-width: 1024px) 100vw, 600px"
                   loading="eager"
                   fetchPriority="high"
-                  className="absolute inset-0 w-full h-full object-contain"
+                  className="absolute inset-0 w-full h-full object-contain p-4 sm:p-6"
                 />
               ) : (
                 galleryImages.map((src, i) => (
@@ -440,7 +440,7 @@ export default function ProductDetailPage() {
                     loading={i === 0 ? "eager" : "lazy"}
                     // The first gallery image is this page's LCP element; the rest stay lazy
                     fetchPriority={i === 0 ? "high" : "auto"}
-                    className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ${i === activeImage ? "opacity-100" : "opacity-0"}`}
+                    className={`absolute inset-0 w-full h-full object-contain p-4 sm:p-6 transition-opacity duration-500 ${i === activeImage ? "opacity-100" : "opacity-0"}`}
                   />
                 ))
               )}
@@ -459,7 +459,7 @@ export default function ProductDetailPage() {
                     key={`${product.id}-thumb-${i}`}
                     onClick={() => handleThumbnailClick(i)}
                     aria-label={`View image ${i + 1}`}
-                    className={`relative w-24 h-24 rounded-3xl overflow-hidden border-2 transition-all duration-200 flex-shrink-0 ${i === activeImage ? "border-[#A68B5B] shadow-lg scale-105" : "border-slate-200 hover:border-slate-400"}`}
+                    className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-50 border-2 transition-all duration-200 flex-shrink-0 ${i === activeImage ? "border-[#A68B5B] shadow-lg scale-105" : "border-slate-200 hover:border-slate-400"}`}
                   >
                     <ResilientImage
                       src={src}
@@ -468,7 +468,7 @@ export default function ProductDetailPage() {
                       sizes="96px"
                       // Shown right under the main image, and the same file as the (eager) LCP image: never lazy
                       loading="eager"
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain p-1.5"
                     />
                   </button>
                 ))}
@@ -717,7 +717,7 @@ export default function ProductDetailPage() {
                     alt={p.name}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"
-                    className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                    className="absolute inset-0 w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
                 <div className="p-4 text-center">

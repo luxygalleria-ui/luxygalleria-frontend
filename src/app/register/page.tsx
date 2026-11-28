@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Eye, EyeOff, ShieldCheck, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import GoogleAuthButton from "../../components/auth/GoogleAuthButton";
 // Google sign-in script only on pages that use it (not on checkout: its popup polling logs COOP warnings)
 import GoogleOAuthWrapper from "../../components/auth/GoogleOAuthWrapper";
@@ -104,24 +104,16 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row pt-0">
       {/* ── Left Panel: Brand Context ── */}
-      <div className="bg-[#F5F0EB] lg:w-5/12 flex flex-col justify-center px-6 py-0 lg:p-16 xl:p-24 relative overflow-hidden">
+      <div className="bg-[#F5F0EB] lg:w-5/12 flex flex-col justify-center px-6 py-8 lg:p-16 xl:p-24 relative overflow-hidden">
         <div className="max-w-md mx-auto relative z-10 w-full">
-          <p className="font-sans font-bold text-xs uppercase tracking-[0.25em] text-[#A68B5B] mb-6 lg:mb-8">
+          <p className="font-sans font-bold text-xs uppercase tracking-[0.25em] text-[#A68B5B] mb-3 lg:mb-8">
             LUXY GALLERIA MEMBERSHIP
           </p>
           
-          <h1 className="font-serif font-normal text-4xl lg:text-5xl xl:text-6xl text-[#0A192F] leading-tight mb-6">
+          <h1 className="font-serif font-normal text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-[#0A192F] leading-tight">
             Join the World of Premium Imports
           </h1>
           
-          <p className="font-sans text-slate-600 text-base leading-relaxed mb-12 max-w-sm">
-            Create your account to discover premium imported drinks, gourmet snacks, exclusive collections, and enjoy faster checkout with personalized recommendations.
-          </p>
-          
-          <div className="flex items-center gap-3 text-slate-700">
-            <ShieldCheck size={20} className="text-slate-900" />
-            <span className="font-sans font-medium text-sm">Exclusive Member Benefits</span>
-          </div>
         </div>
       </div>
 

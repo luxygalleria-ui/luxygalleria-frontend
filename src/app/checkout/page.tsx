@@ -9,7 +9,6 @@ import { Check, ShieldCheck, MapPin, X, Lock, Store, Truck } from "lucide-react"
 import { useCart } from "../../context/CartContext";
 import { useQuote, Fulfillment, METHOD_LABEL, rupees, money, pricedLine, packagingSummary, startPayment, PayStage, sharedRefusal, PAGE_URL_REFUSED } from "../../lib/checkoutQuote";
 import { inr } from "../../lib/orderDisplay";
-import { TEST_PAYMENT_NOTICE } from "../../lib/testPayment";
 import { useToast } from "../../context/ToastContext";
 import { getAPIURL } from "../../lib/apiClient";
 import { pinStateProblem } from "../../lib/addressRules";
@@ -704,12 +703,6 @@ export default function CheckoutPage() {
                 ICICI Bank secure payment (cards, net banking, UPI)
               </label>
             </fieldset>
-
-            {quote?.testPayment && (
-              <p role="alert" data-testid="uat-test-notice" className="mb-4 rounded-xl border-2 border-red-600 bg-red-50 p-3 text-center text-xs font-bold uppercase tracking-wide text-red-800">
-                {TEST_PAYMENT_NOTICE}
-              </p>
-            )}
 
             {/* Why the pay button is disabled, right beside it (the details may be scrolled out of view) */}
             {!isLoadingShipping && !isRedirecting && (addressProblem || billingProblem || (!quote && quoteError)) && (
